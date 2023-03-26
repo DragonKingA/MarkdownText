@@ -252,7 +252,7 @@ int main()
 
 ### A
 
-签到题
+签到题	
 
 ```c++
 #include <iostream>
