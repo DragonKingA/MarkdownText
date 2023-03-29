@@ -1443,24 +1443,22 @@ int main()
 
 
 
-| 序号 | 题号       | 标题                                                         | 题型                | 难度评级 |
-| ---- | ---------- | :----------------------------------------------------------- | ------------------- | -------- |
-| 1    | hdu 1166   | [敌兵布阵](https://vjudge.csgrandeur.cn/problem/HDU-1166)    | 单点修改 + 区间查询 | ⭐        |
-| 2    | poj 1195   | [Mobile phones](http://poj.org/problem?id=1195)              | 二维基础树状数组    | ⭐        |
-| 3    | 洛谷 P3368 | [【模板】树状数组 2](https://www.luogu.com.cn/problem/P3368) | 区间修改 + 单点查询 | ⭐        |
-| 4    | 洛谷 P2357 | [守墓人](https://www.luogu.com.cn/problem/P2357)             | 区间修改 + 区间查询 | ⭐⭐       |
-| 5    | 洛谷 P1908 | [逆序对](https://www.luogu.com.cn/problem/P1908)             | 偏序问题 + 离散化   | ⭐⭐       |
-| 6    | 洛谷 P3531 | [[POI2012\]LIT-Letters](https://www.luogu.com.cn/problem/P3531) | 偏序问题            | ⭐⭐⭐      |
-| 7    | 洛谷 P1637 | [三元上升子序列](https://www.luogu.com.cn/problem/P1637)     | 偏序问题变式        | ⭐⭐⭐      |
-| 8    | 洛谷 P2184 | [贪婪大陆](https://www.luogu.com.cn/problem/P2184)           | 区间覆盖问题        | ⭐⭐⭐      |
-| 9    | 洛谷 P5142 | [区间方差](https://www.luogu.com.cn/problem/P5142)           | 前缀和 + 逆元       | ⭐⭐⭐⭐     |
-| 10   |            |                                                              |                     |          |
-|      |            |                                                              |                     |          |
-|      |            |                                                              |                     |          |
-|      |            |                                                              |                     |          |
-|      |            |                                                              |                     |          |
-|      |            |                                                              |                     |          |
-|      |            |                                                              |                     |          |
+| 序号 | 题号       | 标题                                                         | 题型                                                         | 难度评级 |
+| ---- | ---------- | :----------------------------------------------------------- | ------------------------------------------------------------ | -------- |
+| 1    | hdu 1166   | [敌兵布阵](https://vjudge.csgrandeur.cn/problem/HDU-1166)    | 单点修改 + 区间查询                                          | ⭐        |
+| 2    | poj 1195   | [Mobile phones](http://poj.org/problem?id=1195)              | 二维基础树状数组                                             | ⭐        |
+| 3    | 洛谷 P3368 | [【模板】树状数组 2](https://www.luogu.com.cn/problem/P3368) | 区间修改 + 单点查询                                          | ⭐        |
+| 4    | 洛谷 P2357 | [守墓人](https://www.luogu.com.cn/problem/P2357)             | 区间修改 + 区间查询                                          | ⭐⭐       |
+| 5    | 洛谷 P1908 | [逆序对](https://www.luogu.com.cn/problem/P1908)             | 偏序问题 + 离散化                                            | ⭐⭐       |
+| 6    | 洛谷 P3531 | [[POI2012\]LIT-Letters](https://www.luogu.com.cn/problem/P3531) | 偏序问题                                                     | ⭐⭐⭐      |
+| 7    | 洛谷 P1637 | [三元上升子序列](https://www.luogu.com.cn/problem/P1637)     | 偏序问题变式                                                 | ⭐⭐⭐      |
+| 8    | 洛谷 P2184 | [贪婪大陆](https://www.luogu.com.cn/problem/P2184)           | 区间覆盖问题                                                 | ⭐⭐⭐      |
+|      | 洛谷 P5094 | [[USACO04OPEN\] MooFest G 加强版](https://www.luogu.com.cn/problem/P5094) | 前缀和 + 排序                                                | ⭐⭐⭐⭐     |
+|      |            |                                                              |                                                              |          |
+|      | 洛谷 P5142 | [区间方差](https://www.luogu.com.cn/problem/P5142)           | 前缀和 + 数论（[逆元\|分数取模](https://blog.csdn.net/godleaf/article/details/79844074)） | ⭐⭐⭐⭐⭐    |
+|      |            |                                                              |                                                              |          |
+|      |            |                                                              |                                                              |          |
+|      |            |                                                              |                                                              |          |
 
 
 
