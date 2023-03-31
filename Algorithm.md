@@ -1483,42 +1483,12 @@ int main()
 | 4    | 洛谷 P2357 | [守墓人](https://www.luogu.com.cn/problem/P2357)             | 区间修改 + 区间查询                                          | ⭐⭐       |
 | 5    | 洛谷 P1908 | [逆序对](https://www.luogu.com.cn/problem/P1908)             | 偏序问题（权值树状数组） + 离散化                            | ⭐⭐       |
 | 6    | 洛谷 P3531 | [[POI2012\]LIT-Letters](https://www.luogu.com.cn/problem/P3531) | 偏序问题（权值树状数组）                                     | ⭐⭐⭐      |
-| 7    | 洛谷 P1637 | [三元上升子序列](https://www.luogu.com.cn/problem/P1637)     | 三元偏序问题（权值树状数组）                                 | ⭐⭐⭐      |
+| 7    | 洛谷 P1637 | [三元上升子序列](https://www.luogu.com.cn/problem/P1637)     | 二维偏序问题（权值树状数组）                                 | ⭐⭐⭐      |
 | 8    | 洛谷 P2184 | [贪婪大陆](https://www.luogu.com.cn/problem/P2184)           | 区间覆盖问题                                                 | ⭐⭐⭐      |
-| 9    | 洛谷 P1972 | [[SDOI2009] HH的项链](https://www.luogu.com.cn/problem/P1972) | 前缀和 + 离线排序                                            | ⭐⭐⭐⭐     |
-|      |            | 采花？                                                       |                                                              |          |
+| 9    | 洛谷 P1972 | [[SDOI2009] HH的项链](https://www.luogu.com.cn/problem/P1972) | 二维偏序问题 + 离线排序                                      | ⭐⭐⭐⭐     |
 | 10   | 洛谷 P5094 | [[USACO04OPEN\] MooFest G 加强版](https://www.luogu.com.cn/problem/P5094) | 前缀和 + 排序                                                | ⭐⭐⭐⭐     |
 | 11   | 洛谷 P5142 | [区间方差](https://www.luogu.com.cn/problem/P5142)           | 前缀和 + 数论（[逆元\|分数取模](https://blog.csdn.net/godleaf/article/details/79844074)） | ⭐⭐⭐⭐     |
-|      |            | LOG？                                                        |                                                              |          |
-|      |            |                                                              |                                                              |          |
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+| 12   | 洛谷 P4113 | [[HEOI2012\]采花](https://www.luogu.com.cn/problem/P4113)    | 三维偏序问题 + 离线排序                                      | ⭐⭐⭐⭐⭐    |
 
 
 
