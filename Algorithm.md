@@ -990,7 +990,7 @@ int main()
 
 
 
-
+ 
 
 
 
@@ -1475,20 +1475,25 @@ int main()
 
 
 
+### 题目
+
 | 序号 | 题号       | 标题                                                         | 题型                                                         | 难度评级 |
 | ---- | ---------- | :----------------------------------------------------------- | ------------------------------------------------------------ | -------- |
 | 1    | hdu 1166   | [敌兵布阵](https://vjudge.csgrandeur.cn/problem/HDU-1166)    | 单点修改 + 区间查询                                          | ⭐        |
 | 2    | poj 1195   | [Mobile phones](http://poj.org/problem?id=1195)              | 二维基础树状数组                                             | ⭐        |
 | 3    | 洛谷 P3368 | [【模板】树状数组 2](https://www.luogu.com.cn/problem/P3368) | 区间修改 + 单点查询                                          | ⭐        |
 | 4    | 洛谷 P2357 | [守墓人](https://www.luogu.com.cn/problem/P2357)             | 区间修改 + 区间查询                                          | ⭐⭐       |
-| 5    | 洛谷 P1908 | [逆序对](https://www.luogu.com.cn/problem/P1908)             | 偏序问题（权值树状数组） + 离散化                            | ⭐⭐       |
-| 6    | 洛谷 P3531 | [[POI2012\]LIT-Letters](https://www.luogu.com.cn/problem/P3531) | 偏序问题（权值树状数组）                                     | ⭐⭐⭐      |
-| 7    | 洛谷 P1637 | [三元上升子序列](https://www.luogu.com.cn/problem/P1637)     | 二维偏序问题（权值树状数组）                                 | ⭐⭐⭐      |
-| 8    | 洛谷 P2184 | [贪婪大陆](https://www.luogu.com.cn/problem/P2184)           | 区间覆盖问题                                                 | ⭐⭐⭐      |
-| 9    | 洛谷 P1972 | [[SDOI2009] HH的项链](https://www.luogu.com.cn/problem/P1972) | 二维偏序问题 + 离线排序                                      | ⭐⭐⭐⭐     |
-| 10   | 洛谷 P5094 | [[USACO04OPEN\] MooFest G 加强版](https://www.luogu.com.cn/problem/P5094) | 前缀和 + 排序                                                | ⭐⭐⭐⭐     |
-| 11   | 洛谷 P5142 | [区间方差](https://www.luogu.com.cn/problem/P5142)           | 前缀和 + 数论（[逆元\|分数取模](https://blog.csdn.net/godleaf/article/details/79844074)） | ⭐⭐⭐⭐     |
-| 12   | 洛谷 P4113 | [[HEOI2012\]采花](https://www.luogu.com.cn/problem/P4113)    | 三维偏序问题 + 离线排序                                      | ⭐⭐⭐⭐⭐    |
+| 5    | 洛谷 P2184 | [贪婪大陆](https://www.luogu.com.cn/problem/P2184)           | 区间覆盖问题                                                 | ⭐⭐⭐      |
+| 6    | 洛谷 P5094 | [[USACO04OPEN\] MooFest G 加强版](https://www.luogu.com.cn/problem/P5094) | 前缀和 + 排序                                                | ⭐⭐⭐⭐     |
+| 7    | 洛谷 P5142 | [区间方差](https://www.luogu.com.cn/problem/P5142)           | 前缀和 + 数论（[逆元\|分数取模](https://blog.csdn.net/godleaf/article/details/79844074)） | ⭐⭐⭐⭐     |
+| 8    | 洛谷 P1908 | [逆序对](https://www.luogu.com.cn/problem/P1908)             | 偏序问题（权值树状数组） + 离散化                            | ⭐⭐       |
+| 9    | 洛谷 P3531 | [[POI2012\]LIT-Letters](https://www.luogu.com.cn/problem/P3531) | 偏序问题（权值树状数组）                                     | ⭐⭐⭐      |
+| 10   | 牛客       | [牛客 数星星 Stars](https://ac.nowcoder.com/acm/problem/50428) | 二维偏序模板（权值树状数组）                                 | ⭐⭐       |
+| 11   | 洛谷 P1637 | [三元上升子序列](https://www.luogu.com.cn/problem/P1637)     | 二维偏序问题（权值树状数组）                                 | ⭐⭐⭐      |
+| 12   | 洛谷 P1972 | [[SDOI2009] HH的项链](https://www.luogu.com.cn/problem/P1972) | 二维偏序问题 + 离线排序                                      | ⭐⭐⭐⭐     |
+| 13   | 洛谷 P4113 | [[HEOI2012\]采花](https://www.luogu.com.cn/problem/P4113)    | 三维偏序问题 + 离线排序                                      | ⭐⭐⭐⭐⭐    |
+
+
 
 
 
@@ -3627,6 +3632,32 @@ int main()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+## KMP字符串匹配算法
+
+---
+
+### 应用场景
+
+给定一个**主串**（以 S 代替）和**模式串**（以 P 代替），要求找出 P 在 S 中出现的位置，此即串的模式匹配问题。
 
 
 
