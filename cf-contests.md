@@ -369,11 +369,132 @@ int main()
 
 # Div 3
 
+## Round 863
+
+### A ~ B
+
+```c++
+//A
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    string s;
+    while(t--)
+    {
+        int n;
+        string  x;
+        cin >> n >> x >> s;
+        int ok = 0;
+        for(int i = 0; i < s.size();i ++)
+        {
+            char num = s[i];
+            if(num < x[0])
+            {
+                s = s.substr(0, i) + x + s.substr(i);
+                ok = 1;
+                break;
+            }
+        }
+        if(!ok) s = s + x;
+        cout << s << '\n';
+    }
+    return 0;
+}
 
 
 
+//B
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+int cal(int x, int y, int m)
+{
+    if(x <= m && y <= m) return max(abs(x - m), abs(y - m));
+    else if(x <= m && y > m) return max(abs(x - m), abs(y - (m + 1)));
+    else if(x > m && y <= m) return max(abs(x - (m + 1)), abs(y - m));
+    else return max(abs(x - (m + 1)), abs(y - (m + 1)));
+}
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n, x1, y1, x2, y2;
+        cin >> n >> x1 >> y1 >> x2 >> y2;
+        int m = n / 2;
+        cout << abs(cal(x1, y1, m) - cal(x2, y2, m)) << '\n';
+    }
+    return 0;
+}
+```
 
+### C
 
+```c++
+//C 思维模拟
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+#include <string>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int a[N];
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    int tex = 0;
+    while(t--)
+    {
+        int n;
+        cin >> n;
+        n--;
+        for(int i = 1; i <= n; i++) cin >> a[i];
+        if(n == 1)
+        {
+            cout << a[1] << " 0\n";
+            continue;
+        }
+        if(a[1] < a[2]) cout << "0 " << a[1] << " ";
+        else cout << a[1] << " " << a[2] << " ";
+        for(int i = 2; i < n; i++)
+        {
+            cout << min(a[i], a[i + 1]) << " ";
+        }
+        cout << a[n] << '\n';
+    }
+    return 0;
+}
+//7 3 4 4 4 5 
+//7 3 3 4 4 4 5 
+
+//0' 1 2 2 3 3 2 2 1 0'
+//0  1 2 2 3 2 2 1 1
+```
 
 
 

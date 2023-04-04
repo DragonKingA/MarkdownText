@@ -4976,7 +4976,9 @@ KMP字符串匹配算法（仅适用单模即只有一个模式串 P）：时间
 
 **lps[] 的预处理**
 
-定义：`lps[j]` 的值等于 `P[0] ~ P[j - 1]` 这部分连续子串的前缀集合和后缀集合的最长交集的长度 —— 最长公共前后缀。
+定义：`lps[j]` 的值等于 `P[0] ~ P[j]` 这部分连续子串的前缀集合和后缀集合的最长交集的长度 —— 最长公共前后缀。
+
+（也有的是定义 `lps[j]` 指向 `p[0] ~ p[j - 1]`，具体写法上有细微区别）
 
 朴素方法 `O(n ^ 3)`：
 
@@ -5018,7 +5020,7 @@ vector<int> prefix_function(string s)
 }
 ```
 
-第二个优化 `O(n)`：
+*第二个优化 `O(n)`：
 
 在第一个优化的基础上，我们不妨更全面地探讨剩余的情况：当 `s[i + 1] ≠ s[lps[i]]` 时。
 
@@ -5047,4 +5049,67 @@ vector<int> prefix_function(string s)
 ```
 
 
+
+
+
+
+
+
+
+
+
+
+
+[P3375 【模板】KMP字符串匹配](https://www.luogu.com.cn/problem/P3375)
+
+```c++
+#include <cstdio>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cstring>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false); cout.tie(0);}
+const int N = 1e6 + 10;
+
+int lps[N];//这里 lps[i] 是指 p[0] ~ p[i] 的lps
+string s, p;
+
+void getlps(string p)
+{
+    int plen = p.size();
+    lps[0] = 0;
+    for(int i = 1; i < plen; i++)
+    {
+        int j = lps[i - 1];
+        while(j > 0 && p[i] != p[j]) j = lps[j - 1];
+        if(p[i] == p[j]) ++j;//新增字符与 s[j] 相等就增长
+        lps[i] = j;
+    }
+}
+
+void kmp(string s, string p)
+{
+    getlps(p);//预处理 lps[i]
+    int slen = s.size(), plen = p.size();
+    int j = 0;
+    for(int i = 0; i < slen; i++)//在主串上匹配
+    {
+        while(j > 0 && s[i] != p[j]) j = lps[j - 1];
+        if(s[i] == p[j]) ++j;
+        if(j == plen) cout << i - plen + 2 << '\n';//若 P 完全匹配 S'，输出 S 的匹配起始位置
+    }
+    //输出 lps[i]
+    for(int i = 0; i < plen; i++) cout << lps[i] << ' ';
+}
+
+int main()
+{
+    untie();
+    cin >> s >> p;
+    kmp(s, p);
+    return 0;
+}
+```
 
