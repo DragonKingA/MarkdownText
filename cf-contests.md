@@ -496,9 +496,60 @@ int main()
 //0  1 2 2 3 2 2 1 1
 ```
 
+### E
 
+```c++
+//E. 数论
+//我们知道对于十进制数来说它是由 0 ~ 9 的十个数字组成，现在我们要知道仅由 0 ~ 3 和 5 ~ 9 的九个数字组成(即类似九进制数)的第 k 个数。
+//此时 k 的数值就相当于由十个数字组成的十进制数 k 的位置，问第 k 个类九进制数相当于问 k 转换为类九进制数的数值。
+//普通九进制数相当于由 0 ~ 8 的九个数字组成 0 1 2 3 4 5 6 7 8
+//而我们需要的是特殊的九进制数，由 0 1 2 3 5 6 7 8 9 这九个数字组成，对于 0 1 2 3 这段跟普通九进制一样，
+//而对于 4 5 6 7 8 -> 5 6 7 8 9 相当于向右移一位（对应数位+1），故对于算出的普通九进制数的数位 x 若 x > 3 则需要 x++，得到类九进制数 
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <vector>
 
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+int T;
 
+void Solve()
+{
+    ll k;
+    cin >> k;
+    vector<int> num;
+    //先求出普通九进制数的各数位，并且先求出的数位是低位，即还需要翻转
+    while(k)
+    {
+        num.push_back(k % 9);
+        k /= 9;
+    }
+    reverse(num.begin(), num.end());
+    for(auto x : num)
+    {
+        if(x > 3) cout << x + 1;
+        else cout << x;
+    }
+    cout << '\n';
+}
+
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
 
 

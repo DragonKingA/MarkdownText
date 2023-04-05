@@ -5079,7 +5079,7 @@ string s, p;
 void getlps(string p)
 {
     int plen = p.size();
-    lps[0] = 0;
+    lps[0] = 0;//首字符没有真前后缀（不能为自身）
     for(int i = 1; i < plen; i++)
     {
         int j = lps[i - 1];
@@ -5109,6 +5109,365 @@ int main()
     untie();
     cin >> s >> p;
     kmp(s, p);
+    return 0;
+}
+```
+
+### 例题
+
+```c++
+1.P1470 [USACO2.3]最长前缀 Longest Prefix（KMP + DP）
+//kmp匹配求得集合中各元素在字符串 S 中的出现位置，再用 dp 求得最长前缀长度
+#include <cstdio>
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false); cout.tie(0);}
+const int N = 2e5 + 10;
+
+int lps[N], dp[N];
+vector<string> v;
+vector<int> id[N];//id[x] 表示 s 的长度为 x 的前缀的匹配成功的模串长度集
+string s, x;
+
+void getlps(string p, int plen)
+{
+    lps[0] = 0;
+    for(int i = 1; i < plen; i++)
+    {
+        int j = lps[i - 1];
+        while(j && p[i] != p[j]) j = lps[j - 1];
+        if(p[i] == p[j]) ++j;
+        lps[i] = j;
+    }
+}
+
+void kmp(string s, string p)
+{
+    int slen = s.size(), plen = p.size();
+    getlps(p, plen);
+    for(int i = 0, j = 0; i < slen; i++)
+    {
+        while(j && s[i] != p[j]) j = lps[j - 1];
+        if(s[i] == p[j]) ++j;
+        if(j == plen) id[i + 1].push_back(plen);
+    }
+}
+
+int main()
+{
+    untie();
+    while(cin >> s)
+    {
+        if(s[0] == '.') break;
+        v.push_back(s);
+    }
+    s = "";
+    while(cin >> x) s += x;//可能有多行
+    int slen = s.size();
+    for(auto str : v) kmp(s, str);
+    dp[0] = 1;//意义是对那些 plen 正好组成当前长度 i 记为可延伸状态。
+    for(int i = 1; i <= slen; i++)//枚举到达第 i 个字符 s[i - 1] 时(枚举长度)
+        for(int j = 0; j < id[i].size(); j++)//枚举可选择的方案
+            if(dp[i - id[i][j]]) dp[i] = 1;//可从上一个状态上延长
+    int res = 0;
+    for(int i = 1; i <= slen; i++) 
+        if(dp[i]) res = max(res, i);//组成串能到达的最长长度
+    cout << res;
+    return 0;
+}
+
+
+
+2.Radio Transmission 无线传输（最短循环节问题）
+假设有长为 m 的循环节 k，分别讨论：
+① 长为 n 的字符串 S 由若干个完整的 k 组成（以下举例由 4 个 k 组成）
+    k	  k      k      k
+|______|______|______|______|
+|=========lps========|		  那么这就是 lps 的长度
+    			    |===m==| 而这段就是单个循环节的长度
+显然有 n - lps = m
+② 最后一个 k 不完整，即只截取了 k 的小段长为 m0 的前缀 k0 （以下举例由 5 个 k 组成，其中第 5 个 k 不完整）
+    k     k      k       k    k0
+|______|______|______|______|___|
+|===========lps==========|
+    		 ⬇
+不难发现，lps就是 3 * k + k0
+    k     k      k    k0  k-k0 k0
+|______|______|______|___|__|___|
+|===========lps==========|
+       |===========lps==========|
+    				       |=m0|
+不难发现此时 n - lps = (m - m0) + m0 = m
+总结：最短循环节长度为 n - lps[n]
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+const int N = 1e6 + 10;
+int lps[N];
+char s[N];
+void getlps(char *s, int len)
+{
+    for(int i = 1; i < len; i++)
+    {
+        int j = lps[i - 1];
+        while(j && s[i] != s[j]) j = lps[j - 1];
+        if(s[i] == s[j]) ++j;
+        lps[i] = j;
+    }
+}
+int main()
+{
+    int n;
+    scanf("%d%s", &n, s);
+    getlps(s, n);
+    printf("%d\n", n - lps[n - 1]);//这里 lps[n - 1] 代表 s[0] ~ s[n - 1] 即长度为 n 的前缀的 lps长度。
+    return 0;
+}
+
+
+
+3.Period（最短循环节问题）
+//对于 S 的所有前缀 s（包括它自己），若 s 是由若干个完整的最短循环节 k 组成，则输出 s 的长度 和 最短循环节在 s 中的个数
+#include <cstdio>
+#include <algorithm>
+#include <string>
+#include <iostream>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false); cout.tie(0);}
+const int N = 1e6 + 10;
+
+int n, lps[N];
+string s;
+
+void getlps(int slen)
+{
+    for(int i = 1; i < slen; i++)
+    {
+        int j = lps[i - 1];
+        while(j && s[i] != s[j]) j = lps[j - 1];
+        if(s[i] == s[j]) ++j;
+        lps[i] = j;
+
+        int len = i + 1, k = len - lps[i];//最短循环节长度 k
+        if(lps[i] && len % k == 0) 		  //必须由若干个完整的 k 组成，强调 k 是完整出现的
+            cout << len << ' ' << len / k << '\n';
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    while(cin >> n)
+    {
+        if(!n) break;
+        cin >> s;
+        int slen = s.size();
+        cout << "Test case #" << T++ << '\n';
+        getlps(slen);
+        cout << '\n';
+    }
+    return 0;
+}
+
+
+
+4.Theme Section（前后缀问题）
+//问题相当于求 字符串s 的 lps 然后得到公共前后缀的长度 k，再判断 s 的中缀 k 是否存在（在前缀 k 后，且在后缀 k 前），存在则输出 k
+#include <cstdio>
+#include <algorithm>
+#include <string>
+#include <iostream>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false); cout.tie(0);}
+const int N = 1e6 + 10;
+
+int t, lps[N];
+string s;
+
+int getlps(int slen)
+{
+    for(int i = 1; i < slen; i++)
+    {
+        int j = lps[i - 1];
+        while(j && s[i] != s[j]) j = lps[j - 1];
+        if(s[i] == s[j]) ++j;
+        lps[i] = j;                    
+    }
+    return lps[slen - 1];
+}
+
+int main()
+{
+    untie();
+    cin >> t;
+    while(t--)
+    {
+        cin >> s;
+        int slen = s.size();
+        int k = getlps(slen), ok = 0;
+        k = min(slen / 2, k);//前后缀长度不超过 s 长度的一半，如 "aaa" 的 lps = 2，当实际前后缀长度为 1
+        if(!k) 
+        {
+            cout << "0\n";
+            continue;
+        }
+        for(int i = k; i < slen - k; i++)
+        {
+            if(lps[i] == k)//判断中缀 k 是否存在
+            {
+                ok = 1;
+                break;
+            }
+        }
+        if(ok) cout << k << '\n';
+        else cout << "0\n";
+    }
+    return 0;
+}    
+
+
+
+5.hdu 2328 Corporate Identity（最长公共子串问题 - KMP + 暴力）
+//求 n 个字符串的最长公共子串（优先字典序最小）
+//既然是求公共子串 lcs，那么可以先取第一个字符串 p 作为模式串，并枚举它的所有后缀来求 lps
+//这样相当于包含了所有可能的公共子串情况
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false); cout.tie(0);}
+const int N = 4e3 + 10, M = 210;
+
+int n, plen, lps[M];
+string s[N], p;
+
+void getlps(int st)
+{
+    for(int i = 1; i + st < plen; i++)
+    {
+        int j = lps[i - 1];
+        while(j && p[i + st] != p[j + st]) j = lps[j - 1];
+        if(p[i + st] == p[j + st]) ++j;
+        lps[i] = j;
+    }
+}
+int kmp(string s, int st)
+{
+    int res = 0, slen = s.size();
+    for(int i = 0, j = 0; i < slen; i++)
+    {
+        while(j && s[i] != p[j + st]) j = lps[j - 1];
+        if(s[i] == p[j + st]) ++j;
+        res = max(res, j);
+    }
+    return res;
+}
+int Solve(int st)
+{
+    int len = M;
+    getlps(st);
+    for(int i = 0; i < n; i++) len = min(len, kmp(s[i], st));//模串后缀与其他字串的所有最长匹配长度的最小值，就是公共最长匹配长度。
+    return len;
+}
+bool cmp(int st_now, int st_last, int len)//字典序比较
+{
+    for(int i = 0; i < len; i++)
+        if(p[i + st_now] != p[i + st_last])
+            return p[i + st_now] < p[i + st_last];
+    return 0;
+}
+
+int main()
+{
+    untie();
+    while(cin >> n)
+    {
+        if(!n) break;
+        cin >> p;//模式串
+        n--;
+        plen = p.size();
+        int ind = 0, len = 0;//最长公共子串在 p 中位置 ind 及其长度 len
+        for(int i = 0; i < n; i++) cin >> s[i];
+        for(int i = 0; i < plen; i++)//取 p 的后缀，每个后缀求前缀lps，这样才能枚举到所有子串情况
+        {
+            int res = Solve(i);
+            if(res > len || (res == len && cmp(i, ind, len)))//若等于则看字典序先后
+            {
+                len = res, ind = i;
+                // cout << "TEXT : " << len << " " << ind << '\n';
+            }
+        }
+        if(!len) 
+        {
+            cout << "IDENTITY LOST\n";
+            continue;
+        }
+        for(int i = ind; i < ind + len; i++) cout << p[i];
+        cout << '\n';
+    }
+    return 0;
+}
+
+
+
+*6.动物园
+//定义数组 cnt[i] 为 前 i 个字符可重叠的相同前后缀个数，用这个来推出不重叠的相同前后缀个数 num[i]
+//如长度为 8 的字符串 s = "abacdaba"，我们注意 "aba" 的存在，首先易知对于 "aba" 有 cnt[3] = 1
+//再看整个字符串 s，有 cnt[8] = 2，这是由于公共前后缀有 "a" 和 "aba" 两个，
+//记前缀 "aba" 为 pre，后缀 "aba" 为 suf，在求解 lps 的过程中，已知 pre == suf 即 pre的前缀'a' 与 suf的前缀'a' 是相同的 或者看 pre的后缀'a' 与 suf的后缀'a' 是相同的，又已知 cnt[3] = 1 即 pre的前缀'a'和后缀'a'是相同的，故 pre的前缀'a' 和 suf的后缀'a'是相同的，那么对于 cnt[8] 除了 "aba" 的贡献外还有 'a' 的贡献，故 cnt[8] = 2。
+//再如 s = "aaacdaaa" 等。。。
+//故当前 cnt[i] = 1（前后缀相同） + 该前缀（后缀）自身的 cnt[j]
+#include <cstdio>
+#include <algorithm>
+#include <iostream>
+#include <cstring>
+using namespace std;
+const int N = 1e6 + 10, mod = 1e9 + 7;
+
+int T, lps[N];
+int cnt[N];
+char s[N];
+
+void getlps(int len)
+{
+    cnt[1] = 1, lps[0] = 0;
+    for(int i = 1; i < len; i++)
+    {
+        int j = lps[i - 1];
+        while(j && s[i] != s[j]) j = lps[j - 1];
+        if(s[i] == s[j]) ++j;
+        lps[i] = j;
+        cnt[i + 1] = cnt[j] + 1;
+    }
+}
+
+int main()
+{
+    scanf("%d", &T);
+    while(T--)
+    {
+        scanf("%s", s);
+        int len = strlen(s);
+        long long res = 1;
+        getlps(len);
+        int j = 0;
+        for(int i = 1; i < len; i++)
+        {
+            // int j = lps[i - 1]; 这里这样写会 TLE
+            while(j && s[i] != s[j]) j = lps[j - 1];
+            if(s[i] == s[j]) ++j;
+            while(j > (i + 1) / 2) j = lps[j - 1];//只能取不重叠的次长度
+            res = res * (cnt[j] + 1ll) % mod;
+        }
+        printf("%lld\n", res);
+    }
     return 0;
 }
 ```
