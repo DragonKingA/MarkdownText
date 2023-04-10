@@ -383,7 +383,73 @@ A、B、C 签到
 
 
 
+---
 
+## ABC 297
 
+### D
 
+```c++
+//给定 a 和 b，操作每次把大的数减去小的数，直到 a == b，求这期间的操作次数，
+//类似辗转相除法
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+void Solve()
+{
+    ll a, b, ans = 0;
+    cin >> a >> b;
+    while(a != b)//恒有 a > b
+    {
+        swap(a, b);
+        if(a % b == 0)
+        {
+            ans += a / b - 1;
+            break;
+        }
+        ans += a / b;
+        a %= b;
+    }
+    cout << ans << '\n';
+}
+int main()
+{
+    // while(1)
+    // {
+        Solve();
+    // }
+    return 0;
+}
+```
+
+### E
+
+```c++
+//求单个或若干数组合的和的第 k 小个
+//优先队列动态取第 k 小，每次加入 n 个组合和，并用 map 判重
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+ll a[100];
+map<ll, bool> vis;
+priority_queue<ll, vector<ll>, greater<ll> > q;
+int main()
+{
+    ll n, k, cnt = 0, now = 0;
+    cin >> n >> k;
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    q.push(0LL);
+    while(cnt <= k)
+    {
+        now = q.top(); q.pop();
+        if(vis[now]) continue;
+        for(int i = 0; i < n; ++i) 
+            q.push(now + a[i]);
+        vis[now] = 1;
+        ++cnt;
+    }
+    cout << now;//不能输出 q.top()，因为答案已经被 pop 了
+    return 0;
+}
+```
 
