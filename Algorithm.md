@@ -5582,6 +5582,35 @@ int main()
 
 
 4.P8725 [蓝桥杯 2020 省 AB3] 画中漂流
+//dp[i][j] 表示当到时间 i 时 剩下体力 j 的方案数，上一秒到当前秒要么消耗了体力，要么不消耗
+//由于要求体力必须花光，故答案为 dp[t][0]
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int N = 3e3 + 10, M = 15e2 + 10, mod = 1e9 + 7;
+int d, t, m;
+int dp[N][M];
+int main()
+{
+    cin >> d >> t >> m;
+    dp[0][m] = 1;
+    for(int i = 1; i <= t; ++i)//枚举时间
+    {
+        for(int j = 0; j <= m; ++j)//枚举体力剩余量，则消耗量为 m - j
+        {
+            int now = d + (m - j) - (i - (m - j));
+            if(now > 0) dp[i][j] = (dp[i - 1][j] + dp[i - 1][j + 1]) % mod;
+        }
+    }
+    cout << (dp[t][0] % mod);
+    return 0;
+}
+
+
+
+5.
+
+
 
 
 
@@ -5609,13 +5638,262 @@ int main()
 
 ## 区间dp
 
-> 
+> 在**区间**上进行动态规划，求解一段区间上的最优解。主要是通过**合并小区间的最优解**进而得出整个**大区间上最优解**的dp算法
+
+### 核心思路
+
+把区间**分割成一个个小区间，求解每个小区间的最优解，再合并小区间得到大区间最优解**即可
+
+1. 枚举区间长度`len`为每次分割成的小区间长度（由短到长不断合并），
+
+2. 内层枚举该长度下的区间起点 `l`，并由 `len` 得到区间终点 `r`，
+
+3. 然后在`[l, r]`之间枚举分割点 `k`，求解这段小区间在某个分割点下的最优解（即枚举出合成区间`[l, r]`的最优合并方式）
+
+4. ***写出特定的状态转移方程***
+
+5. 基础代码实现 `O(n^3)`：
+
+   ```c++
+   for(int len = 2; len <= n; ++len)//长度应从 2 开始
+   {
+       for(int l = 1; l + len - 1 <= n; ++l)//条件为右端点 r = l + len - 1  <=  n
+       {
+           int r = l + len - 1;
+           for(int k = l; k < r; ++k)//枚举合并点
+           {
+               dp[l][r] = min(dp[l][r], dp[l][k] + dp[k + 1][r] + cost);//cost 为合并两连续子区间的代价
+           }
+       }
+   }
+   ```
+
+### **四边形不等式优化** 
+
+思路：在查找最优分割点 `k` 的时候，浪费了大量时间。现把**最优分割点**存起，在查找的时候利用保存的最优分割点来优化查找过程。
+
+基本概念：
+
+* 记两个交叉区间 `A = [i, j]` 和 `B = [i', j']`，有 `A ∩ B = [i', j]`，`A ∪ B = [i, j']`;
+
+* 区间包含的单调性：如果对于**`i ≤ i' < j ≤ j'`**，有 **`cost(i', j) ≤ cost(i, j')`**，那么说明 cost函数 具有区间包含的单调性。也有 `(A ∩ B) ≤ (A ∪ B)`（可以理解为**如果小区间 `[i', j]` 包含于大区间 `[i, j']` 中，那么小区间的cost函数值不超过大区间的cost函数值** ）。
+* 四边形不等式：如果对于**`i ≤ i' < j ≤ j'`**，有 **`cost(i, j) + cost(i', j') ≤ cost(i', j) + cost(i, j')`**，我们称函数 cost 满足四边形不等式。也有 `A + B ≤ (A ∩ B) + (A ∪ B)`（可以理解为两个交叉区间的cost值和不超过小区间与大区间的cost值和——**交叉小于包含**）。
+
+两个定理：
+
+* 如果上述的 cost函数 同时满足**区间包含单调性**和**四边形不等式性质**，那么 函数dp 也满足四边形不等式性质，我们再定义`opt(i, j)`表示`dp(i, j)` 取得最优值时对应的下标 k（即 `i ≤ k ≤ j` 时，k 处的 dp 值为最优，则 `opt(i, j) = k`）。
+
+* 假如 `dp(i, j)` 满足四边形不等式，那么 `opt(i, j)`(自变量为 i、j 两个变量) 单调，
+
+  即`opt(i, j) ≤ opt(i, j + 1) ≤ opt(i + 1, j + 1)`，也即 `opt(i, j - 1) ≤ opt(i, j) ≤ opt(i + 1, j)`。
+
+总结：
+
+* dp转移方程：`dp(i, j) = min{dp(i, k - 1), dp(k, j)} + cost(i, j)，其中 opt(i, j - 1) ≤ k ≤ opt(i + 1, j)`
+* 区间 `[l, r]`的最优分割点 k 在两个子区间 `[l, r - 1]` 和 `[l + 1, r]` 的最优分割点 k1，k2 间，即 `k ∈ [k1, k2]`。
+* 算法复杂度优化至逼近 `O(n ^ 2)`。
+
+代码实现：
+
+```c++
+int opt[N][N];
+for(int i = 1; i <= n; ++i) opt[i][i] = i;//初始化
+for(int len = 2; len <= n; ++len)//从 len = 1 开始会出错，因为 opt[l][r - 1] 会存在 opt[1][0]，故出错
+{
+    for(int l = 1; l + len - 1 <= n; ++l)
+    {
+        int r = l + len - 1, cost = s[r] - s[l - 1];
+        for(int k = opt[l][r - 1]; k <= opt[l + 1][r]; ++k)//四边形不等式优化
+        {
+            if(dp[l][r] > dp[l][k] + dp[k + 1][r] + cost)
+            {
+                dp[l][r] = dp[l][k] + dp[k + 1][r] + cost;
+                opt[l][r] = k;//最优分割点更新
+            }
+        }
+    }
+}
+```
+
+
+
+### **例题**
+
+```c++
+1.P1775 石子合并（弱化版）（模板）
+//dp[l][r] 为合并区间[l, r]的最小代价（完成了 r - l 次合并）
+//每次合并成区间[l, r]经历 len - 1 次合并，而最后一次合并花费 s[r] - sum[l - 1] 的代价
+//基础做法
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 1e3 + 10;
+int s[N], dp[N][N];
+int main()
+{
+    int n;
+    cin >> n;
+    memset(dp, 0x7f, sizeof(dp));
+    for(int i = 1; i <= n; ++i)
+    {
+        cin >> s[i];
+        s[i] += s[i - 1];//前缀和方便取区间代价
+        dp[i][i] = 0;//初始化，自合并的代价为 0
+    }
+    for(int len = 2; len <= n; ++len)   
+    {
+        for(int l = 1; l + len - 1 <= n; ++l)
+        {
+            int r = l + len - 1;
+            int cost = s[r] - s[l - 1];//合并任意两个连续子区间 [l, k] 和 [k + 1, r] 所需的代价
+            for(int k = l; k < r; ++k)
+            {
+                dp[l][r] = min(dp[l][r], dp[l][k] + dp[k + 1][r] + cost);
+            }
+        }
+    }
+    cout << dp[1][n];
+    return 0;
+}
+//四边形不等式优化 O(n ^ 2)
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 1e3 + 10;
+int s[N], dp[N][N], opt[N][N];
+int main()
+{
+    int n;
+    cin >> n;
+    memset(dp, 0x7f, sizeof(dp));
+    for(int i = 1; i <= n; ++i)
+    {
+        cin >> s[i];
+        s[i] += s[i - 1];
+        dp[i][i] = 0;
+        opt[i][i] = i;//最优分割点初始化
+    }
+    for(int len = 2; len <= n; ++len)//从 len = 1 开始会出错，因为 opt[l][r - 1] 会存在 opt[1][0]，故出错
+    {
+        for(int l = 1; l + len - 1 <= n; ++l)
+        {
+            int r = l + len - 1, cost = s[r] - s[l - 1];
+            for(int k = opt[l][r - 1]; k <= opt[l + 1][r]; ++k)//四边形不等式优化
+            {
+                if(dp[l][r] > dp[l][k] + dp[k + 1][r] + cost)
+                {
+                    dp[l][r] = dp[l][k] + dp[k + 1][r] + cost;
+                    opt[l][r] = k;//最优分割点更新
+                }
+            }
+        }
+    }
+    cout << dp[1][n];
+    return 0;
+}
+
+
+
+2.P1880 [NOI1995] 石子合并（环上问题）
+//不同于弱化版的链状问题，该问题基于一个环路，故需要转换为链上问题
+//将长度为 n 的环路展开成链状，并延伸至 2 * n - 1 长度即可，在这上面取得的所有区间即所有可能的环区间
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 500;
+int n, a[N], s[N], dp1[N][N], dp2[N][N];
+int main()
+{
+    memset(dp1, 0x7f, sizeof(dp1));
+    memset(dp2, -1, sizeof(dp2));
+    cin >> n;
+    int nn = (n << 1) - 1;
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    for(int i = n + 1; i <= nn; ++i) a[i] = a[i - n];
+    for(int i = 1; i <= nn; ++i)
+    {
+        s[i] = s[i - 1] + a[i];
+        dp1[i][i] = dp2[i][i] = 0;
+    }
+    for(int len = 2; len <= nn; ++len)
+    {
+        for(int l = 1; l + len - 1 <= nn; ++l)
+        {
+            int r = l + len - 1;
+            int cost = s[r] - s[l - 1];
+            for(int k = l; k < r; ++k)
+            {
+                dp1[l][r] = min(dp1[l][r], dp1[l][k] + dp1[k + 1][r] + cost);
+                dp2[l][r] = max(dp2[l][r], dp2[l][k] + dp2[k + 1][r] + cost);
+            }
+        }
+    }
+    int xmin = 2e9, xmax = 0;
+    for(int st = 1; st + n - 1 <= nn; ++st)
+    {
+        int ed = st + n - 1;
+        xmin = min(xmin, dp1[st][ed]);
+        xmax = max(xmax, dp2[st][ed]);
+    }
+    cout << xmin << "\n" << xmax;
+    return 0;
+}
+
+
+
+3.Brackets
+//定义 dp[l][r] 为区间[l, r]内最长匹配长度
+//如果 s[l]为'('或'['，且对应 s[r]为')'或']'，则 dp[l][r] = dp[l + 1][r - 1] + 2 （内层区间加上匹配的最外一层） 
+//如果 s[l] != s[r]，则至少可以
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+using namespace std;
+const int N = 200;
+string s;
+int dp[N][N];
+int main()
+{
+    while(cin >> s)
+    {
+        if(s[0] == 'e') break;
+        memset(dp, 0, sizeof(dp));
+        int n = s.size();
+        s = '*' + s;
+        for(int len = 2; len <= n; ++len)
+        {
+            for(int l = 1; l + len - 1 <= n; ++l)
+            {
+                int r = l + len - 1;
+                if((s[l] == '(' && s[r] == ')') || (s[l] == '[' && s[r] == ']')) //若可匹配则这样更新，但此时不一定是最优解
+                    dp[l][r] = dp[l + 1][r - 1] + 2;
+                for(int k = l; k < r; ++k)//不论可不可匹配都取最优分割（因为不一定直接匹配就比分割合并来的大），如 ()[]()，显然分割合并为6，比匹配左右界的4大
+                {
+                    dp[l][r] = max(dp[l][r], dp[l][k] + dp[k + 1][r]);
+                }
+            }
+        }
+        cout << dp[1][n] << '\n';
+    }
+    return 0;
+}
+
+
+
+4.Multiplication Puzzle
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+```
 
 
 
@@ -5633,9 +5911,9 @@ int main()
 
 > 通过**将 K 种状态压缩为 K进制整数**来达到优化转移的目的
 
-举个例子，现有 n 个集合，每个集合有 m 个元素，设元素值为 1 ~ M，假设 M = 8。想知道如何组合最少个集合，来使得它们的并集含有  所有种元素值（即 1 ~ M 的元素值都有）。现保证至少有一种组合能选到所有种元素值。在动态规划的过程中，我们定义 dp[j] 表示构成该组合 j 所需最少集合个数，转移方程即 `dp[集合 i + 当前组合 j] = min(dp[集合 i + 当前组合 j], dp[当前组合 j] + 1)`，我们令下一个状态为 `to = 集合 i + 当前组合 j`，则有 `dp[to] = min(dp[to], dp[j] + 1)`。
+举个例子，现有 n 个集合，每个集合有 m 个元素，设元素值为 1 ~ M，假设 M = 8。想知道如何组合最少个集合，来使得它们的并集含有  所有种元素值（即 1 ~ M 的元素值都有）。现保证至少有一种组合能选到所有种元素值。在动态规划的过程中，我们定义 `dp[j]` 表示构成该组合 j 所需最少集合个数，转移方程即 `dp[集合 i + 当前组合 j] = min(dp[集合 i + 当前组合 j], dp[当前组合 j] + 1)`，我们令下一个状态为 `to = 集合 i + 当前组合 j`，则有 `dp[to] = min(dp[to], dp[j] + 1)`。
 
-问题就在于如何将 dp[j] 的下标 j 表达成一种组合情况，我们知道上述例子元素值的状态只有两种状态：有 或 没有，容易联想到 0 和 1，显然，用  **M 位二进制数**能表达其组合情况，如 `00001010` 可表示只有第 2、4 种元素值存在。
+问题就在于如何将 `dp[j]` 的下标 `j` 表达成一种组合情况，我们知道上述例子元素值的状态只有两种状态：有 或 没有，容易联想到 0 和 1，显然，用  **M 位二进制数**能表达其组合情况，如 `00001010` 可表示只有第 2、4 种元素值存在。
 
 那么状压dp的精髓就在于：**用 M 位 K 进制数 表示 M 种元素（每种元素都有 K 种状态）的状态序列**
 
