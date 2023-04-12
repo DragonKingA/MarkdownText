@@ -5841,7 +5841,7 @@ int main()
 3.Brackets
 //定义 dp[l][r] 为区间[l, r]内最长匹配长度
 //如果 s[l]为'('或'['，且对应 s[r]为')'或']'，则 dp[l][r] = dp[l + 1][r - 1] + 2 （内层区间加上匹配的最外一层） 
-//如果 s[l] != s[r]，则至少可以
+//如果 s[l] != s[r]，则至少可以取两连续子区间的合并
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -5879,16 +5879,118 @@ int main()
 
 
 4.Multiplication Puzzle
+//每次删除一个卡片，现删除中间所有卡片，最后会留下左右两端的两个卡片，求最小代价
+//记 dp[l][r] 表示区间[l, r]经过最佳删除方案后剩下卡片l、r的最小删除代价
+//删除区间的长度至少为3，即中间元素至少有1个，遍历 k 分割两个区间时，显然 dp[l][k] 和 dp[k][r] 恰好是分开的连续子区间（因为两端点不算）
+//dp[l][k] + dp[k][r] 就代表删除 [l + 1, k - 1] 和 [k + 1, r - 1] 元素后剩下卡片 l, k, r 的合并，即此时删除卡片 k 为一次合并
+//重点在于初始状态的初始化
+//初始化法1：
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+using namespace std;
+const int N = 200, inf = 0x7fffffff;
+int n, c[N], dp[N][N];
+int main()
+{
+    memset(dp, 0x7f, sizeof(dp));//初始化为无穷大
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> c[i];
+    for(int l = 1; l + 1 <= n; ++l) dp[l][l + 1] = 0;//初始化 len = 2 时代价为 0，这样 len = 3 时能正确地取到初始合法值 dp[l][r] = c[l] * c[k] * c[r]
+    for(int len = 3; len <= n; ++len)
+    {
+        for(int l = 1; l + len - 1 <= n; ++l)
+        {
+            int r = l + len - 1;
+            for(int k = l + 1; k < r; ++k)
+            {
+                dp[l][r] = min(dp[l][r], dp[l][k] + dp[k][r] + c[l] * c[k] * c[r]);
+            }
+        }
+    }
+    cout << dp[1][n] << '\n';
+    return 0;
+}
+//初始化法2：
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+using namespace std;
+const int N = 200, inf = 0x7fffffff;
+int n, c[N], dp[N][N];
+int main()
+{
+    // memset(dp, 0x7f, sizeof(dp)); //这里直接这样初始化是错的
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> c[i];
+    for(int l = 1; l + 2 <= n; ++l) dp[l][l + 2] = c[l] * c[l + 1] * c[l + 2];//初始化 len = 3
+    for(int len = 4; len <= n; ++len)//len = 3 已经被计算过了
+    {
+        for(int l = 1; l + len - 1 <= n; ++l)
+        {
+            int r = l + len - 1;
+            dp[l][r] = inf;//首次计算前才需要重新初始化
+            for(int k = l + 1; k < r; ++k)
+            {
+                dp[l][r] = min(dp[l][r], dp[l][k] + dp[k][r] + c[l] * c[k] * c[r]);
+            }
+        }
+    }
+    cout << dp[1][n] << '\n';
+    return 0;
+}
 
 
 
+5.Cheapest Palindrome（最小花费回文串）
+//题意：有加入一个字符或删除一个字符的操作（任意次），但它们都有对应代价，求由原串组成回文串的最小代价和
+//可知对于任意一个子串如 bcc，对同一个字符 b，进行删除或者在对应对称位置插入它（cc 或 bccb），结果都是等效的，应直接取花费代价最小者。
+//对于 s[l] == s[r]，则无需花费任何代价，直接继承小区间的状态 dp[l][r] = dp[l + 1][r - 1]。因为第 l 个和第 r 个字符相等就意味着把序列 [l, r] 变成回文串只需要把 l + 1 ~ r - 1 变成回文串即可，所需代价是相同的。
+//而当 s[l] != s[r]，这时候 [l, r] 一定不是回文序列，只需看 l 和 r 上字符，又由于当前 len 是从小到大枚举的，此时必有至少一个 len - 1 的子串是回文序列
+//现需从两个 len - 1 的子串中取最小代价，即 dp[l][r] = min(dp[l + 1][r] + cost[l], dp[l][r - 1] + cost[r])，如当前 len = 4 的 baca，找到已得到的 len = 3 回文子串中的最小代价方，这里显然是对 b 操作（取最小代价操作）即 dp[l][r] = dp[l + 1][r] + cost[l]。
+//注意单个字符无代价即 dp[i][i] = 0，以及对于 len = 2 且 s[l] == s[r] 时也是无代价 —— 实际上 dp 数组初始值都为 0，然后在计算 dp[l][r] 前一刻先赋无穷大 inf 即可。
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <map>
+using namespace std;
+const int N = 2e3 + 10, inf = 0x7fffffff;
+int t, m;
+string s;
+map<char, int> cost;
+int dp[N][N];
+int main()
+{
+    cin >> t >> m >> s;
+    int n = s.size();
+    s = ' ' + s;
+    for(int i = 0; i < t; ++i)
+    {
+        char ch[3];
+        int add, del;
+        cin >> ch >> add >> del;
+        cost[ch[0]] = min(add, del);
+    }
+    for(int len = 2; len <= n; ++len)
+    {
+        for(int l = 1; l + len - 1 <= n; ++l)
+        {
+            int r = l + len - 1;
+            dp[l][r] = inf;//其他仍为 0，这样能得到初始长度 len = 2 的初始代价
+            if(s[l] == s[r]) dp[l][r] = dp[l + 1][r - 1];//当 len = 2 时有 s[l] = s[r]，则代价初始化为 0（而正好 dp 数组原始值为 0）
+            else dp[l][r] = min(dp[l + 1][r] + cost[s[l]], dp[l][r - 1] + cost[s[r]]);//两个 len - 1 的子串中选择最小操作代价，即分别对左右端字符讨论
+        }
+    }
+    cout << dp[1][n] << '\n';
+    return 0;
+}
 
 
 
-
-
-
-
+6.
 
 
 
