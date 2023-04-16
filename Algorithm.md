@@ -3595,6 +3595,202 @@ int main()
 
 
 
+---
+
+# 二. 图论
+
+---
+
+## 基础概念
+
+顶点（Vertex）：图G中的数据元素称为顶点。一条边连接两个顶点。
+
+无向图：若图G中的每条边都是没有方向的，则称图G为无向图。
+
+有向图：若图G中的每条边都是有方向的，则称图G是有向图。
+
+弧：即有向边。边的终点被称为弧头，起始点被称为弧尾。
+
+度（degree）：一个顶点的度就是与该顶点相关联的边的数目。
+
+出度：有向图中，顶点所连接的出边的数量。
+
+入度：有向图中，顶点所连接的入边的数量。
+
+环：环是一条只有第一个和最后一个顶点重复的非空路径。
+
+有向无环图：又称 DAG图，即没有环的有向图。DAG图是动态规划和记忆化搜索的结构基础。
+
+子图（Subgraph）：由图中部分节点以及这些节点间的边组成的图。
+
+连通图（Connected Graph）：若图G中的任意两个结点 u 和 v，结点 u 与结点 v 相互可达，则成图G是连通图。
+
+连通分量（Connected Component）：各节点间至少存在一条边可以连通。
+
+树: 树就是无环连通图。互不相连的树组成的集合称为森林。具有n个顶点和n-1条边的连通图，是树的充要条件。如果一个无向连通图不包含回路(连通图中不存在环)，那么就是一棵树。
+
+生成树：含有连通图全部顶点并有 n - 1 条边的连通子图。
+
+邻接矩阵: 所谓矩阵其实就是二维数组。对于有n个顶点的图 G = (V, E) 来说，我们可以用一个 n × n 的矩阵 A 来表示 G 中各顶点的相邻关系。如果点 i 和 点 j 之间存在边(或弧)，则 `A[i][j] = 1`，否则 `A[i][j] = 0`。一个图的邻接矩阵是唯一的，矩阵的大小只与顶点个数N有关。
+
+邻接表：邻接表的思想是，对于图中的每一个顶点，用一个数组来记录这个点和哪些点相连。由于相邻的点会动态的添加，所以对于每个点，我们需要用 vector 来记录。
+
+
+
+## 图的存储
+
+* **邻接矩阵**
+
+  直接用 `gra[i][j] = w` 表示边 `(i, j)` 的权值 w。若为无权边，则用 1 表示有边，否则 0 表示无边
+
+* 邻接表
+
+  用链表`vector<Edge> e[N]` 存，e[u] = {邻居点 v 的集合 及 到该点的边权`<u, v>`}。
+
+  ```c++
+  #include <iostream>
+  #include <algorithm>
+  #include <vector>
+  using namespace std;
+  #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+  const int N = 1e3 + 5;
+  int n, m;//n个点，m条边         
+  struct Edge{
+      // int from, to, w;//from 一般不需要，直接去掉即可
+      int to, w;
+      Edge(){}
+      Edge(int a, int b) { to = a, w = b;}
+  };
+  vector<Edge> e[N];
+  void init()
+  {
+      for(int i = 0; i <= n; i++)
+          e[i].clear();
+  }
+  int main()
+  {
+      untie();
+      init();
+      cin >> n >> m;
+      for(int i = 0; i < m; i++)
+      {
+          int u, v, w;
+          cin >> u >> v >> w;
+          e[u].push_back(Edge(v, w));
+          //无向边加上下句
+          //e[v].push_back(Edge(u, w));
+      }
+      //遍历各节点的所有邻居
+      for(int u = 0; u <= n; u++)
+      {
+          if(e[u].empty()) continue;
+          cout << "node " << u << " 's neighbours: ";
+          for(auto v : e[u])//或 for(int i = 0; i < e[u].size(); i++)
+          {
+              cout << v.to << " ";//不同于链式前向星，这里会按插入顺序输出
+          }
+          cout << '\n';
+      }
+      return 0;
+  }
+  ```
+
+* 链式前向星
+
+  ```c++
+  //1.节点编号范围为 0 ~ n - 1
+  #include <iostream>
+  #include <algorithm>
+  #include <vector>
+  using namespace std;
+  #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+  const int N = 1e3 + 5, M = 2e3 + 5;                 //N为最大结点数，M为最多边数
+  int n, m, head[N], cnt = 0;                         //head[u]指向 u 的一个邻居在edge[]中的存储位置 即 连着 u 的最后一条边(按录入顺序的最后者), cnt记录当前可存储位置
+  struct node{
+      int from, to, next;                             //from为边的起点(一般不需要)，to为边的终点，next为 u 的下一个邻居
+      int w;                                          //边权
+  }edge[M];
+  void init()
+  {
+      for(int i = 0; i < N; i++) head[i] = -1;        //点初始化
+      for(int i = 0; i < M; i++) edge[i].next = -1;   //边初始化
+      cnt = 0;
+  }
+  void addedge(int u, int v, int w)
+  {
+      edge[cnt] = node{u, v, head[u], w};
+      //edge[cnt].next = head[u] 将已录入位置存起，对于同一个起点 u，最终是从最后录入的位置连向最先录入的位置以遍历所有邻居
+      head[u] = cnt++;
+  }
+  int main()
+  {
+      untie();
+      init();
+      cin >> n >> m;                                  //n个点，m条边
+      for(int i = 0; i < m; i++)
+      {
+          int u, v, w;
+          cin >> u >> v >> w;
+          addedge(u, v, w);
+      }
+      //遍历各节点的所有邻居
+      for(int u = 0; u <= n; u++)
+      {
+          if(!~head[u]) continue;
+          cout << "node " << u << " 's neighbours: ";
+          for(int i = head[u]; ~i; i = edge[i].next)//~i = -(i + 1) ，这里相当于 i != -1
+              cout << edge[i].to << " ";
+          cout << '\n';
+      }
+      return 0;
+  }
+  
+  
+  
+  //*2.节点编号范围为 1 ~ n，这里就可以用 0 表示空，而不是 -1，省去 init() 函数
+  #include <iostream>
+  #include <algorithm>
+  using namespace std;
+  #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+  const int N = 1e3 + 5, M = 2e3 + 5;
+  int n, m, head[N], cnt = 1;
+  struct node{ 
+      int to, next, w;
+      node(){}
+      node(int a, int b, int c) { to = a, next = b, w = c;}
+  }edge[M];
+  void addedge(int u, int v, int w)
+  {
+      edge[cnt] = node(v, head[u], w);
+      head[u] = cnt++;
+  }
+  int main()
+  {
+      untie();
+      cin >> n >> m;                                  
+      for(int i = 0; i < m; i++)
+      {
+          int u, v, w;
+          cin >> u >> v >> w;
+          addedge(u, v, w);
+          // 无向边加上下句，并且注意判重
+          // addedge(v, u, w);
+      }
+      //遍历各节点的所有邻居
+      for(int u = 1; u <= n; u++)
+      {
+          if(!head[u]) continue;
+          cout << "node " << u << " 's neighbours: ";
+          for(int i = head[u]; i; i = edge[i].next)//为 0 时停止
+              cout << edge[i].to << " ";
+          cout << '\n';
+      }
+      return 0;
+  }
+  ```
+
+  
+
 
 
 
@@ -3623,7 +3819,7 @@ int main()
 
 ---
 
-# 二. 字符串
+# 三. 字符串
 
 ---
 
@@ -5484,7 +5680,7 @@ int main()
 
 
 
-# 三. 动态规划
+# 四. 动态规划
 
 ---
 
@@ -5696,6 +5892,7 @@ int main()
 * dp转移方程：`dp(i, j) = min{dp(i, k - 1), dp(k, j)} + cost(i, j)，其中 opt(i, j - 1) ≤ k ≤ opt(i + 1, j)`
 * 区间 `[l, r]`的最优分割点 k 在两个子区间 `[l, r - 1]` 和 `[l + 1, r]` 的最优分割点 k1，k2 间，即 `k ∈ [k1, k2]`。
 * 算法复杂度优化至逼近 `O(n ^ 2)`。
+* **注意四边形不等式的左界 `opt[][]` 是与 `dp[][]` 的下标一一对应的**
 
 代码实现：
 
@@ -5718,6 +5915,16 @@ for(int len = 2; len <= n; ++len)//从 len = 1 开始会出错，因为 opt[l][r
     }
 }
 ```
+
+
+
+### 二维区间dp
+
+不同于一维区间dp（`dp[l][r]`）同时只管理一个类型的区间，而二维区间dp（`dp[l1][r1][l2][r2]`）可同时管理两种类型的区间，此时两种区间在某一状态下是相互影响的，产生的权值结果也是共同作用下的结果。
+
+
+
+
 
 
 
@@ -6033,9 +6240,8 @@ int main()
 7.Clear the String
 //题意：给定长度为 n 的字符串，每次可以删除一段只有一种字符的连续子串，求删完整个字符串所需的最少操作次数。
 //特判若 len == 2，dp[l][r] = 1 + (s[l] != s[r])
-//当 len > 2，若 s[l] == s[r]，则此时区间 [l, r - 1] 和 [l + 1, r] 是等效的，把其中一个端点字符 s[l] 或 s[r] 纳入中间区间 [l + 1, r- 1] 内
-//就可以得到加上 外层相同字符对<s[l], s[r]> 之后的删除次数，这样就能考虑到 s[l] 与 s[l + 1] 或者说 s[r] 与 s[r - 1] 的关系
-//如 aabcba，对于 aabcb 和 abcba，前者先删去 aa 再加上 bcb 的操作次数，后者先进行 bcb 的删除再删去 aa，它是等效的
+//当 len > 2，若 s[l] == s[r]，则此时区间 [l, r - 1] 和 [l + 1, r] 是等效的，把其中一个端点字符 s[l] 或 s[r] 纳入中间区间 [l + 1, r- 1] 内，就可以得到加上 外层相同字符对<s[l], s[r]> 之后的删除次数，这样就能考虑到 s[l] 与 s[l + 1] 或者说 s[r] 与 s[r - 1] 的关系
+//如 aabcba，对于子状态 aabcb 和 abcba，前者先删去 aa 再加上 bcb 的操作次数，后者先进行 bcb 的删除再删去 aa，它是等效的
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 600, inf = 0x7fffffff;
@@ -6064,7 +6270,7 @@ int main()
     return 0;
 }
     
-    
+
     
 8.关路灯
 //题意：要关 n 个路灯，每秒走一格，每秒每个仍开着的灯会消耗电能（功率 * 时间），走的时候可以掉转方向，现给定初始位置 x，问关完全部路灯所需最小功耗。
@@ -6113,7 +6319,40 @@ int main()
 //题意：给定 n 个村庄和 m 个邮局，求 m 个邮局按最佳方案放置后，计算每个村庄和最近的邮局之间所有距离的最小可能的总和。
 //定义 dp[i][j] 为共放置 i 个邮局后前 j 个村庄的最小距离总和。可知，邮局放在中间位置（偶数则中间两个位置都可）得到距离和最小，定义 cost() 函数计算。
 //状态转移：枚举断点 k，从上一个状态（已经用 i - 1 个邮局规划好 [1, k] 的村庄）再安置一个邮局来规划 [k + 1, j] 的村庄，最后综合起来就是用 i 个邮局来规划 [1, j] 的村庄的最优方案，即dp[i][j] = min(dp[i - 1][k] + w(k + 1, j)) ，k ∈ [0, j)
-//若不进行优化则 70pts，故需要用四边形不等式优化 断点k 的遍历（这里 opt 两个维度的变化互换了，因为本题满足的凸性不同于其他题）
+//若不进行优化则 70pts，故需要用四边形不等式优化 断点k 的遍历（这里 opt 两个维度的变化互换了，或者可以将外层的两层循环顺序互换且内层逆序遍历，因为本题满足的凸性不同于其他题）
+//70pts（供理解）
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 3e3 + 10, inf = 0x7fffffff;
+int n, m;
+int xx[N], sum[N], dp[N][N];
+int cost(int x, int y)
+{
+    int mid = x + y >> 1, xmid = sum[mid] - sum[mid - 1], len1 = mid - x, len2 = y - mid;
+    return sum[x - 1] + sum[y] + (len1 - len2) * xmid - sum[mid - 1] - sum[mid];
+}
+int main()
+{
+    memset(dp, 0x7f, sizeof(dp));
+    cin >> n >> m;
+    for(int i = 1; i <= n; ++i) cin >> xx[i];
+    sort(xx + 1, xx + 1 + n);//坐标位置可能是乱序的
+    for(int i = 1; i <= n; ++i) sum[i] = sum[i - 1] + xx[i];
+    dp[0][0] = 0;
+    for(int i = 1; i <= m; ++i)//枚举邮局数
+    {
+        for(int j = 1; j <= n; ++j)//前 j 个村庄
+        {
+            for(int k = 0; k < j; ++k)//分成已安排好的村庄区间（前 k 个） 和 待加入邮局的村庄区间[k + 1, j]，后者加入最优距离代价cost
+            {
+                dp[i][j] = min(dp[i][j], dp[i - 1][k] + cost(k + 1, j));
+            }
+        }
+    }
+    cout << dp[m][n] << '\n';
+    return 0;
+}
+//优化后 AC
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 3e3 + 10, inf = 0x7fffffff;
@@ -6143,6 +6382,7 @@ int main()
         opt[i][n + 1] = n;//重点初始化，因为开始时 opt[][n + 1] 是没计算过的，直接赋初始值为右端点
         for(int j = n; j > 0; --j)//前 j 个村庄，由于下面用到 opt[][j + 1]，故逆序遍历
         {
+            //四边形不等式的左界 opt[i - 1][j] 与 dp[i - 1][k] 的下标一一对应
             for(int k = opt[i - 1][j]; k <= opt[i][j + 1]; ++k)//分成已安排好的村庄区间（前 k 个） 和 待加入邮局的村庄区间[k + 1, j]，后者加入最优距离代价cost
             {
                 int now = dp[i - 1][k] + cost(k + 1, j);
@@ -6158,17 +6398,160 @@ int main()
     cout << dp[m][n] << '\n';
     return 0;
 }
+//或者定义 dp[i][j] 为前 i 个村庄放了 j 个邮局，并且将双层循环顺序交换，此处四边形不等式就是熟悉的，
+//四边形不等式的左界 opt[i][j - 1] 与 dp[k][j - 1] 的下标一一对应
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 3e3 + 10, inf = 0x7fffffff;
+int n, m;
+int xx[N], sum[N], opt[N][N], dp[N][N];
+int cost(int x, int y)
+{
+    int mid = x + y >> 1, xmid = sum[mid] - sum[mid - 1], len1 = mid - x, len2 = y - mid;
+    return sum[x - 1] + sum[y] + (len1 - len2) * xmid - sum[mid - 1] - sum[mid];
+}
+int main()
+{
+    memset(dp, 0x7f, sizeof(dp));
+    cin >> n >> m;
+    for(int i = 1; i <= n; ++i) cin >> xx[i];
+    sort(xx + 1, xx + 1 + n);//坐标位置可能是乱序的
+    for(int i = 1; i <= n; ++i) 
+    {
+        sum[i] = sum[i - 1] + xx[i];
+    }
+
+    dp[0][0] = 0;
+    for(int j = 1; j <= m; ++j)//枚举邮局
+    {
+        opt[n + 1][j] = n;
+        for(int i = n; i > 0; --i)//枚举村庄
+        {
+            for(int k = opt[i][j - 1]; k <= opt[i + 1][j]; ++k)//分成已安排好的村庄区间（前 k 个） 和 待加入邮局的村庄区间[k + 1, j]，后者加入最优距离代价cost
+            {
+                int now = dp[k][j - 1] + cost(k + 1, i);
+                if(now < dp[i][j])
+                {
+                    dp[i][j] = now;
+                    opt[i][j] = k;
+                }
+            }
+        }
+    }
+
+    cout << dp[n][m] << '\n';
+    return 0;
+}
 
 
 
-10.Coloring Brackets
+*10.Coloring Brackets
+//题意：给定长度为 n 的合法括号字符序列，每个括号有三种状态：不上色、红色 和 蓝色；
+//要求匹配的一对括号中必须有且仅有一个有颜色，且任意两个相邻括号的颜色必须不同（但可以都无色）。求填色方案数。
+//由于相邻括号有限制，必须增设左右端点颜色状态方便区间状态合并，即定义 dp[l][r][x][y] 为区间 [l, r] 上左端点颜色为 x，右端点颜色为 y 时的方案数
+//已知每个括号符号都有其唯一对应的另一个括号符号，单纯的用 s[l] == '(' && s[r] == ')' 来判断配对区间显然是不可取的，
+//故用 p[i] = j 记录与 i 上字符相匹配的字符的位置 j。
+//当 p[l] == r 时，说明 [l, r] 为匹配区间，直接继承中间区间的状态
+//当 p[l] != r 时，则需要遍历断点方案，且只需 p[l] = k 处作为断点即可，合并时采用乘法原理
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int N = 800, mod = 1e9 + 7;
+int n, top = 0, sta[N], p[N];//p[i] 记录与 i 相匹配的字符的位置
+ll dp[N][N][3][3];
+string s;
+void init()//预处理 p[i]，而 sta[i] 为接收括号字符 '(' 的栈，当遇到 ')' 时将一个 ')' 出栈
+{
+    for(int i = 1; i <= n; ++i)
+    {
+        if(s[i] == '(') sta[++top] = i;
+        else
+        {
+            int pos = sta[top--];
+            p[i] = pos;
+            p[pos] = i;
+        }
+    }
+}
+int main()
+{
+    cin >> s;
+    n = s.size();
+    s = '*' + s;
+    init();
 
+    for(int len = 2; len <= n; ++len)
+    {
+        for(int l = 1; l + len - 1 <= n; ++l)
+        {
+            int r = l + len - 1;
+            if(p[l] == r) //为匹配区间
+            {
+                if(len == 2) //特判长度为 2 时，初始化dp状态
+                {
+                    dp[l][r][0][1] = dp[l][r][0][2] = dp[l][r][1][0] = dp[l][r][2][0] = 1;
+                    continue;
+                }
+                //分别继承中间区间的对应状态
+                for(int i = 0; i < 3; ++i)
+                { 
+                    for(int j = 0; j < 3; ++j)
+                    {
+                        if(j != 1) dp[l][r][0][1] = (dp[l][r][0][1] + dp[l + 1][r - 1][i][j]) % mod;
+                        if(j != 2) dp[l][r][0][2] = (dp[l][r][0][2] + dp[l + 1][r - 1][i][j]) % mod;
+                        if(i != 1) dp[l][r][1][0] = (dp[l][r][1][0] + dp[l + 1][r - 1][i][j]) % mod;
+                        if(i != 2) dp[l][r][2][0] = (dp[l][r][2][0] + dp[l + 1][r - 1][i][j]) % mod;
+                    }
+                }
+            }
+            else //不为匹配区间
+            {
+                int k = p[l];//仅此处能作为断点
+                for(int x = 0; x < 3; ++x)
+                    for(int y = 0; y < 3; ++y)
+                        for(int p = 0; p < 3; ++p)
+                            for(int q = 0; q < 3; ++q)
+                                if(p == 0 || q == 0 || p != q) //相邻两个若有颜色，则颜色不能相同
+                                    dp[l][r][x][y] = (dp[l][r][x][y] + dp[l][k][x][p] * dp[k + 1][r][q][y] % mod) % mod;//乘法原理
+            }
+        }
+    }
+
+    ll ans = 0;
+    for(int i = 0; i < 3; ++i)
+        for(int j = 0; j < 3; ++j)
+            ans = (ans + dp[1][n][i][j]) % mod;
+    cout << ans << '\n';
+    return 0;
+}
 
 
 
 
 
 ```
+
+
+
+---
+
+## 树形dp
+
+> 树形 DP，即在**树上**进行的 DP。由于树固有的递归性质，树形 DP 一般都是 **dfs 递归** 进行的。
+
+### 核心思路
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6259,4 +6642,487 @@ int main()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+## DP优化
+
+### 四边形不等式优化
+
+
+
+
+
+#### 针对一维线性dp
+
+
+
+
+
+
+
+#### 针对一维区间dp（二维dp）
+
+
+
+
+
+
+
+---
+
+类的学习
+
+```c++
+//Point(类与构造)
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+class Point{
+    public:
+        Point(){ x = 0, y = 0;}
+        Point(double a, double b)
+        {
+            x = a, y = b;
+        }
+        double getX()
+        {
+            return x;
+        }
+        double getY()
+        {
+            return y;
+        }
+        void setX(double xx)
+        {
+            x = xx;
+        }
+        void setY(double yy)
+        {
+            y = yy;
+        }
+        double distanceToAnotherPoint(Point P)
+        {
+            double xx = P.x - x, yy = P.y - y;
+            return sqrt(xx * xx + yy * yy);
+        }
+    private:
+        double x, y;
+};
+int t;
+int main()
+{
+    untie();
+    cin >> t;
+    while(t--)
+    {
+        Point p1, p2;
+        double x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        p1.setX(x1);
+        p1.setY(y1);
+        p2.setX(x2);
+        p2.setY(y2);
+        cout << fixed << setprecision(2) << "Distance of Point(" << p1.getX() << "," << p1.getY() << ") to Point(" << p2.getX() << "," << p2.getY() << ") is " << p1.distanceToAnotherPoint(p2) << '\n';
+    }
+    return 0;
+}
+
+
+
+2.Date(类与构造)
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+int mon[15] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+bool judge(int y)
+{
+    return y % 400 == 0 || (y % 4 == 0 && y % 100 != 0);
+}
+class Date{
+    public:
+  		Date(){year = 1900, month = 1, day = 1;}
+        Date(int y, int m, int d)
+        {
+            year = y, month = m, day = d;
+        }
+        int getYear()
+        {
+            return year;
+        }
+        int getMonth()
+        {
+            return month;
+        }
+        int getDay()
+        {
+            return day;
+        }
+        void setDate(int y, int m, int d)
+        {
+            year = y, month = m, day = d;
+        }
+        void print()
+        {
+            cout << year << '/';
+            if(month < 10) cout << "0";
+            cout << month << '/';
+            if(day < 10) cout << "0";
+            cout << day << '\n';
+        }
+        void addOneDay()
+        {
+            int d = day + 1, m = month, y = year;
+            if(d > mon[month] + (month == 2 ? judge(y) : 0)) ++m, d = 1;
+            if(m > 12) ++y, m = 1;
+            year = y, month = m, day = d;
+        }
+    private:
+        int year, month, day;
+};
+int t;
+int main()
+{
+    untie();
+    cin >> t;
+    for(int i = 1; i <= t; ++i)
+    {
+        Date now = Date();
+        int y, m, d;
+        cin >> y >> m >> d;
+        if(i & 1) now = Date(y, m, d);
+        else now.setDate(y, m, d); 
+        cout << "Today is ";
+        now.print();
+        now.addOneDay();
+        cout << "Tomorrow is ";
+        now.print();
+    }
+    return 0;
+}
+
+
+
+3.分数类（类与构造）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+class CFraction{
+    public:
+        CFraction(){ fz = 0, fm = 1;}
+        CFraction(int fz_val, int fm_val)
+        {
+            fz = fz_val, fm = fm_val;
+        }
+        CFraction add(const CFraction &r)
+        {
+            return CFraction(fz * r.fm + r.fz * fm, fm * r.fm);
+        }
+        CFraction sub(const CFraction &r)
+        {
+            return CFraction(fz * r.fm - r.fz * fm, fm * r.fm);
+        }
+        CFraction mul(const CFraction &r)
+        {
+            return CFraction(fz * r.fz, fm * r.fm);
+        }
+        CFraction div(const CFraction &r)
+        {
+            return CFraction(fz * r.fm, fm * r.fz);
+        }
+        int getGCD()
+        {
+            int r = fm;
+            int a = fz > 0 ? fz : -fz;
+            int b = fm > 0 ? fm : -fm;
+            while (a % b != 0)
+            {
+                r = a % b;
+                a = b;
+                b = r;
+            }
+            return b;
+        }
+        void print()
+        {
+            int gcd = getGCD();
+            int flag = -1;
+            fz /= gcd, fm /= gcd;
+            if((fz < 0 && fm < 0) || (fz > 0 && fm > 0)) flag = 1;
+            if(flag > 0) cout << fz << '/' << fm << '\n';
+            else if(fz < 0) cout << fz << '/' << fm << '\n';
+            else cout << '-' << fz << '/' << (-fm) << '\n';
+        }
+    private:
+        int fz, fm;
+};
+int t;
+int main()
+{
+    untie();
+    cin >> t;
+    while(t--)
+    {
+        char ch;
+        int fz, fm;
+        cin >> fz >> ch >> fm;
+        CFraction c1(fz, fm);
+        cin >> fz >> ch >> fm;
+        CFraction c2(fz, fm);
+        CFraction c3;
+        c3 = c1.add(c2);
+        c3.print();
+        c3 = c1.sub(c2);
+        c3.print();
+        c3 = c1.mul(c2);
+        c3.print();
+        c3 = c1.div(c2);
+        c3.print();
+        cout << '\n';
+    }
+    return 0;
+}
+
+
+
+4.Point_Array(类+构造+对象数组)
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+class Point{
+    public:
+        Point()
+        { 
+            x = 0;
+            y = 0;
+            cout << "Constructor.\n";
+        }
+        Point(double xx, double yy)
+        {
+            x = xx, y = yy;
+        }
+        ~Point()
+        {
+            cout << "Distructor.\n";
+        }
+        double getX()
+        {
+            return x;
+        }
+        double getY()
+        {
+            return y;
+        }
+        void setXY(double x1, double y1)
+        {
+            x = x1, y = y1;
+        }
+        void setX(double xx)
+        {
+            x = xx;
+        }
+        void setY(double yy)
+        {
+            y = yy;
+        }
+        double getDisTo(Point &p)
+        {
+            double xx = x - p.getX(), yy = y - p.getY();
+            return sqrt(xx * xx + yy * yy);
+        }
+    private:
+        double x, y;
+};
+int t, n;
+int main()
+{
+    untie();
+    cin >> t;
+    while(t--)
+    {
+        cin >> n;
+        Point *p = new Point[n];
+        for(int i = 0; i < n; ++i)
+        {
+            double x, y;
+            cin >> x >> y;
+            p[i].setXY(x, y);
+        }
+        int ii = 0, jj = 0;
+        double dis = 0;
+        for(int i = 0; i < n; ++i)
+        {
+            for(int j = 0; j < n; ++j)
+            {
+                if(i == j) continue;
+                double now = p[i].getDisTo(p[j]);
+                if(dis < now)
+                {
+                    ii = i;
+                    jj = j;
+                    dis = now;
+                }
+            }
+        }
+        if(ii > jj) swap(ii, jj);
+        cout << fixed << setprecision(2) << "The longeset distance is " << dis << ",between p[" << ii << "] and p[" << jj << "].\n";
+        delete[] p;
+    }
+    return 0;
+}
+
+
+
+5.Point_Array(类+构造+对象数组)
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+class CStack{
+    public:
+        CStack()
+        {
+            a = new int[10];
+            top = 0;
+            size = 10;
+            cout << "Constructor.\n";
+        }
+        CStack(int sz)
+        {
+            a = new int[sz];
+            top = 0;
+            size = sz;
+            cout << "Constructor.\n";
+        }
+        ~CStack()
+        {
+            delete[] a;
+            cout << "Destructor.\n";
+        }
+        int get(int index)
+        {
+            return a[index];
+        }
+        void push(int n)
+        {
+            a[top++] = n;
+        }
+        int isEmpty()
+        {
+            return top == 0;
+        }
+        int isFull()
+        {
+            return top == size;
+        }
+        int pop()
+        {
+            return a[--top];
+        }
+    private:
+        int *a;
+        int size;
+        int top;
+};
+int t, n;
+int main()
+{
+    untie();
+    cin >> t;
+    while(t--)
+    {
+        cin >> n;
+        CStack sta(n);
+        for(int i = 0, x; i < n; ++i)
+        {
+            cin >> x;
+            sta.push(x);
+        }
+        while(!sta.isEmpty())
+        {
+            cout << sta.pop();
+            if(!sta.isEmpty()) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}
+
+```
 

@@ -453,3 +453,178 @@ int main()
 }
 ```
 
+
+
+---
+
+## ABC 298
+
+### B
+
+multiset 的应用，它可以自动排序，且可以被遍历
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int n;
+set<int> id[N];//id[num] 数字所在的集合编号集
+multiset<int> box[N];//box[] 该集合的有序可重复数集 
+int main()
+{
+    untie();
+    int q, op, i, j;
+    cin >> n;
+    cin >> q;
+    while(q--)
+    {
+        cin >> op;
+        if(op == 1)
+        {
+            cin >> i >> j;
+            box[j].insert(i);
+            id[i].insert(j);
+        }
+        else if(op == 2)
+        {
+            cin >> j;
+            for(auto x : box[j])
+            {
+                cout << x << " ";
+            }
+            cout << '\n';
+        }
+        else
+        {
+            cin >> i;
+            for(auto x : id[i])
+            {
+                cout << x << " ";
+            }
+            cout << '\n';
+        }
+    }
+    return 0;
+}
+```
+
+### C
+
+数据很水，不用怕炸 stl 的复杂度，以后遇到这种题要大胆写
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+
+int n, q;
+map<int, set<int> > mp;
+vector<int> box[N];
+
+int main()
+{
+    untie();
+    cin >> n >> q;
+    while(q--)
+    {
+        int op;
+        int num, x;
+        cin >> op;
+        if(op == 1)
+        {
+            cin >> num >> x;
+            box[x].push_back(num);
+            mp[num].insert(x);
+        }
+        else if(op == 2)
+        {
+            cin >> x;
+            priority_queue<int, vector<int>, greater<int> > pq;
+            for(auto m : box[x])
+            {
+                pq.push(m);
+            }
+            while(!pq.empty())
+            {
+                cout << pq.top() << ' ';
+                pq.pop();
+            }
+            cout << '\n';
+        }
+        else
+        {
+            cin >> num;
+            for(auto x : mp[num])
+            {
+                cout << x << ' ';
+            }
+            cout << '\n';
+        }
+    }
+    return 0;
+}
+```
+
+### D
+
+模拟题
+
+题意：数串初始为 “1”，有三种操作：在右端加入数字 x，删去左端数字，输出数串。
+
+思路：用数组 a[i] 存起第 i 个数字，用左右指针 l 和 r 来管理删除和添加，并动态管理数串结果 ans。
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 6e5 + 10, mod = 998244353;
+ll q, num = 1, a[N];
+
+ll quick_pow(ll base, ll index)//base = 10
+{
+    ll ans = 1;
+    base %= mod;
+    for(; index; index >>= 1)
+    {
+        if(index & 1) ans = ans * base % mod;
+        base = base * base % mod;
+    }
+    return ans % mod;
+}
+
+int main()
+{
+    untie();
+    cin >> q;
+    int r = 1, l = 0;
+    a[1] = 1;
+    while(q--)
+    {
+        int op;
+        cin >> op;
+        if(op == 1)
+        {
+            cin >> a[++r];
+            num = (num * 10 + a[r]) % mod;
+        }
+        else if(op == 2)
+        {
+            ++l;
+            num = (num - a[l] * quick_pow(10, r - l) % mod + mod) % mod;
+        }
+        else
+        {
+            cout << num % mod << '\n';
+        }
+    }
+    return 0;
+}
+```
+
+
+

@@ -351,15 +351,186 @@ int main()
 }
 ```
 
+---
 
+## Round 866
 
+### A
 
+模拟题
 
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+int T;
+string s;
+void Solve()
+{
+    ll ans = 0;
+    cin >> s;
+    int n = s.size();
+    s = '*' + s;
+    if(n == 1 && s[1] == '^')
+    {
+        cout << "1\n";
+        return;
+    }
+    for(int i = 1; i <= n; ++i)
+    {
+        while(i <= n && s[i] == '^') ++i;
+        int t = i;
+        while(i <= n && s[i] == '_') ++i;
+        ll num = i - t + 1;
+        ans += num - (s[t - 1] == '^') - (s[i] == '^');
+    }
+    cout << ans << '\n';
+}
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
+### B
 
+模拟题
 
+```c++
+//找规律，可以发现串成环处理后的最多连续1的个数与答案的关系。
+//因为如"110011"，左右两边的1在一定次的变换下必能连续起来，如某行 "111100"，故可以认为 "110011" 等效为 "111100"。所以必须对原串延长出一个循环体或者说是成环处理。
+//观察案例"011110"，如果一行中最多的连续1的个数为x， 则只有一行矩形的面积为x * 1 ，两行的面积为 (x - 1) * 2 ,三行的面积是(x - 2) * 3 。最终面积有一个最大值，也就是 (x - i - 1) * i, i 为 x / 2 向上取整。
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+string s;
+void Solve()
+{
+    cin >> s;
+    ll n = s.size();
+    s += s;//使之成环
+    ll cnt0 = 0, cnt1 = 0;
+    for(int i = 0; i < n; ++i)
+    {
+        cnt0 += s[i] == '0';
+        cnt1 += s[i] == '1';
+    }
+    if(cnt1 == 0)
+    {
+        cout << "0\n";
+        return;
+    }
+    if(cnt0 == 0)
+    {
+        cout << n * n << '\n';//必须特判
+        return;
+    }
 
+    n = s.size();
+    ll ans = 0, len = 0;//ans 为最长连续1的长度
+    for(int i = 0; i < n; ++i)
+    {
+        if(s[i] == '1') ++len;
+        else len = 0;
+        ans = max(len, ans);
+    }
+    if(ans & 1)
+    {
+        cout << (ans / 2 + 1) * (ans / 2 + 1) << '\n';
+    }
+    else
+    {
+        cout << (ans / 2 + 1) * (ans / 2) << '\n';
+    }
+}
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
+### C
+
+模拟思维题
+
+```c++
+//思路：必要条件是要使得 a 没有 mex + 1 这个值，那么获取最长的两端 mex + 1 值的下标 l, r，将 [l, r] 变成 mex 值，同时这样就算不出 mex()
+//也相当于给 mex + 1 提供可能性，最后再重新算一次 mex()，比对是否是 原mex值 + 1 即可
+//注意，特判 a 是否包含 0 ~ n - 1 所有种数，即此时 mex == n，这样恒不可能出现 mex + 1
+//此后还需要特判 mex + 1 是否本来就没出现过，那么必然符合条件。如 0 0，其中 mex = 1，而 2 没出现过，则 mex + 1 必存在
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int n, a[N];
+map<int, int> mp;
+void Solve()
+{
+    cin >> n;
+
+    int mex = 0, t = 0;
+    mp.clear();
+    for(int i = 1; i <= n; ++i) 
+    {
+        cin >> a[i];
+        mp[a[i]] = i;
+    }
+    while(mp[mex]) ++mex;
+    if(mex == n)
+    {
+        cout << "No\n";
+        return;
+    }
+
+    t = mex;
+    int R = mp[++mex];//mex + 1
+    if(R == 0)
+    {
+        cout << "Yes\n";
+        return;
+    }
+    bool ok = 0;
+    for(int i = 1; i <= R; ++i)
+    {
+        if(a[i] == mex) ok = 1;
+        if(ok) a[i] = t;
+    }
+
+    mex = 0;
+    mp.clear();
+    for(int i = 1; i <= n; ++i) mp[a[i]] = i;
+    while(mp[mex]) ++mex;
+
+    cout << ((t + 1 == mex) ? "Yes":"No") << '\n';
+}
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
 
 
