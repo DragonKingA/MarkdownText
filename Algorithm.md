@@ -3754,14 +3754,13 @@ int main()
   #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
   const int N = 1e3 + 5, M = 2e3 + 5;
   int n, m, head[N], cnt = 1;
-  struct node{ 
+  struct Edge{
       int to, next, w;
-      node(){}
-      node(int a, int b, int c) { to = a, next = b, w = c;}
-  }edge[M];
-  void addedge(int u, int v, int w)
+      Edge(int a = 0, int b = 0, int c = 0) { to = a, next = b, w = c;}
+  }e[M];
+  void addedge(int u, int v, int w = 0)
   {
-      edge[cnt] = node(v, head[u], w);
+      e[cnt] = Edge(v, head[u], w);
       head[u] = cnt++;
   }
   int main()
@@ -3781,12 +3780,13 @@ int main()
       {
           if(!head[u]) continue;
           cout << "node " << u << " 's neighbours: ";
-          for(int i = head[u]; i; i = edge[i].next)//为 0 时停止
-              cout << edge[i].to << " ";
+          for(int i = head[u]; i; i = e[i].next)//为 0 时停止
+              cout << e[i].to << " ";
           cout << '\n';
       }
       return 0;
   }
+  
   ```
 
   
@@ -6202,30 +6202,32 @@ int main()
 
 
 6.Zuma（最少删除次数）
-//题意：给定长度为 n 的字符串，每次可以删除一段只有一种字符的连续子串，求删完整个字符串所需的最少操作次数。
-//特判若 len == 2，dp[l][r] = 1 + (s[l] != s[r])
-//当 len > 2，若 s[l] == s[r]，则此时区间 [l, r - 1] 和 [l + 1, r] 是等效的，把其中一个端点字符 s[l] 或 s[r] 纳入中间区间 [l + 1, r- 1] 内
-//就可以得到加上 外层相同字符对<s[l], s[r]> 之后的删除次数，这样就能考虑到 s[l] 与 s[l + 1] 或者说 s[r] 与 s[r - 1] 的关系
-//如 aabcba，对于 aabcb 和 abcba，前者先删去 aa 再加上 bcb 的操作次数，后者先进行 bcb 的删除再删去 aa，它是等效的
+// 据题意单个字符要消耗一次，即初始化 dp[i][i] = 1
+// 当s[i] == s[i+1]时dp[i][i+1] = 1
+// 当s[i] != s[i+1]时dp[i][i+1] = 2
+// 当s[i] == s[j] 时 dp[i][j] = dp[i+1][j-1] 这是因为当移除[i+1,j-1]内的所有子串的最后一次时,如果s[i]==s[j]那么也同样可以同时移掉[i][j]这一层
+// 剩下的情况我们枚举断点 k 更新即可
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 600, inf = 0x7fffffff;
-int n, dp[N][N];
-string s;
+int n, a[N], dp[N][N];
 int main()
 {
-    cin >> n >> s;
-    s = ' ' + s;
-    for(int i = 1; i <= n; ++i) dp[i][i] = 1;
+    cin >> n;
+    for(int i = 1; i <= n; ++i) 
+    {
+        cin >> a[i];
+        dp[i][i] = 1;
+    }
     for(int len = 2; len <= n; ++len)
     {
         for(int l = 1; l + len - 1 <= n; ++l)
         {
             int r = l + len - 1;
             dp[l][r] = inf;
-            if(len == 2) dp[l][r] = (s[l] == s[r] ? 1 : 2);
-            else if(s[l] == s[r]) dp[l][r] = dp[l + 1][r];//或者 dp[l][r - 1] 也行
-            for(int k = l; k < r; ++k)
+            if(len == 2) dp[l][r] = (a[l] == a[r] ? 1 : 2);//特判长度为 2 时
+            else if(a[l] == a[r]) dp[l][r] = dp[l + 1][r - 1];//len > 2 时，直接继承中间区间的次数，不会增加删除操作次数
+            for(int k = l; k < r; ++k)//分割的情况，如 1 2 1 4 4 分成 {1 2 1} 和 {4 4} 处理，即两次
             {
                 dp[l][r] = min(dp[l][r], dp[l][k] + dp[k + 1][r]);
             }
@@ -6541,15 +6543,269 @@ int main()
 
 ### 核心思路
 
+- 树的遍历，用 **dfs** 从**根节点**开始进行记忆化搜索
+- 从树**最深处**开始往回进行**dp**，用**子节点**dp值来更新**父节点**dp值
+
+### 最大独立集问题
+
+> 独立集是指图 G 中**两两互不相邻**的顶点构成的集合。最大独立集是该类顶点数量最多的独立集。
+
+定义dp状态：
+
+* `dp[u][0]`：以 u 为根的子树不选择 u 的最多选中结点数目
+* `dp[u][1]`：以 u 为根的子树选择 u 的最多选中结点数目
+
+状态转移：
+
+* 不选 u ：在选与不选 v 中取最优解，即 `dp[u][0] += max(dp[v][0], dp[v][1])`
+* 选中 u：由于相邻点不能同时选，故只能不选子结点 v，即 `dp[u][1] += dp[v][0]`
+
+```c++
+1.没有上司的舞会
+//题意：有 n 名职员，编号为1 … n，他们的关系是一棵以老板为根节点的树，父节点就是其子节点的直接上司。每个职员有一个快乐指数 Hi，并给定从属关系，
+//现在要召开一场舞会，使得没有职员和直接上司一起参会。主办方希望邀请一部分职员参会，使得所有参会职员的快乐指数总和最大，求这个最大值。
+//思路：建图时是上司连向下属。对于一个结点要求父节点被选定后不能选，但父节点以上的结点被选定后仍能选，故这里需要dp进行状态转移。
+//定义 dp[u][0/1] 代表以 u 为根的子树中不选与选 u 的最大权值和
+//选择 u 时，以 u 为父节点的子节点 v 不能选，即 dp[u][1] += dp[v][0]
+//不选 u 时，v 从选与不选两个状态中去最大者，即 dp[u][0] += max(dp[v][0], dp[v][1])
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 6e3 + 100, M = N;
+int n, m, head[N], a[N], cnt = 1;
+bool isson[N];
+int dp[N][2];
+struct Edge{
+    int to, next, w;
+    Edge(int a = 0, int b = 0, int c = 0) { to = a, next = b, w = c;}
+    void add(int u, int v, int c = 0){ *this = Edge(v, head[u], c), head[u] = cnt++;}
+}e[M];
+void dfs(int u)
+{
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        dfs(v);//先dfs到叶子节点，从子节点向上更新dp状态
+        //更新父节点信息
+        dp[u][1] += dp[v][0];
+        dp[u][0] += max(dp[v][0], dp[v][1]);
+    }
+}
+int main()
+{
+    cin >> n;
+    m = n - 1;
+    for(int i = 1; i <= n; ++i) cin >> dp[i][1];//初始化选 i 时的价值
+    for(int i = 1; i <= m; ++i)
+    {
+        int v, u;
+        cin >> v >> u;
+        e[cnt].add(u, v);
+        isson[v] = 1;//标记为非根节点
+    }
+    int root = 0;
+    for(int i = 1; i <= n; ++i)//该图有且只有一个根节点
+    {
+        if(!isson[i])
+        {
+            root = i;
+            break;
+        }
+    }
+    dfs(root);
+    cout << max(dp[root][0], dp[root][1]) << '\n';
+    return 0;
+}
+
+
+```
+
+---
+
+### 最小顶点覆盖问题
+
+> 在树中选出**尽量少**的节点，使得树上**每一条边**都**至少有一端**的节点被选中。
+
+定义dp状态：
+
+* `dp[u][0]`：以 u 为根的子树不选择 u 的最少选中结点数目
+* `dp[u][1]`：以 u 为根的子树选择 u 的最少选中结点数目
+
+状态转移：
+
+* 不选 u ：由于每条边至少需要一端选中，那么必须选子结点 v，即 `dp[u][0] += dp[v][1]`
+* 选中 u：在选与不选 v 中取最优解，即 `dp[u][1] += min(dp[v][0], dp[v][1])`
+
+```c++
+1.P2016 战略游戏
+//题意：在一颗树上的某些结点放置士兵，使得士兵们综合起来额能观察到树上所有的边（即所有边都与士兵点相连），求投入士兵的最少数量。
+//思路：题意保证为一颗树，且题意是为无向图，但在树上可以当作有向图解决，故直接从根节点开始搜索。
+// dp[u][1]:以 u 为根的子树在 u 上 放置 的士兵的最少所需的士兵数目
+// dp[u][0]:以 u 为根的子树在 u 上不放置的士兵的最少所需的士兵数目
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 1e4, M = N;
+int n, m, head[N], a[N], cnt = 1, root = 0;
+bool isson[N];
+int dp[N][2];
+struct Edge{
+    int to, next, w;
+    Edge(int a = 0, int b = 0, int c = 0) { to = a, next = b, w = c;}
+}e[M];
+void addedge(int u, int v, int w = 0)
+{
+    e[cnt] = Edge(v, head[u], w);
+    head[u] = cnt++;
+}
+void dfs(int u)
+{
+    //初始化
+    dp[u][0] = 0;
+    dp[u][1] = 1;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        dfs(v);
+        dp[u][1] += min(dp[v][0], dp[v][1]);//放的话，选择放了(也有可能成为最优解)和不放士兵的子树的最少数量者
+        dp[u][0] += dp[v][1];//不放士兵就得加上放了士兵的子树
+    }
+}
+int main()
+{
+    untie();
+    cin >> n;
+    for(int i = 1; i <= n; ++i)
+    {
+        int u, k, v;
+        cin >> u >> k;
+        ++u;
+        while(k--)
+        {
+            cin >> v;
+            ++v;
+            addedge(u, v);
+            isson[v] = 1;
+        }
+    }
+    for(int i = 1; i <= n; ++i)
+    {
+        if(!isson[i])
+        {
+            root = i;
+            break;
+        }
+    }
+    dfs(root);
+    cout << min(dp[root][0], dp[root][1]) << '\n';
+    return 0;
+}
+
+
+```
+
+---
+
+### 最小支配集问题
+
+> 在树中选出**尽量少**的节点，使得树上**每个点**要么**被选**、要么被它的相邻点支配（即该点**有相邻点被选**）
+
+以 [[P2899]Cell Phone Network G](https://www.luogu.com.cn/problem/P2899) 为例：
+
+* 题意：给定一个有 n 个结点及 n - 1 条边的**无向无根**图，问选中结点的最少数量，使得所有结点要么自身被选中，要么其至少一个邻居结点被选中。
+* 状态定义（以下dp状态都是认为结点 u 下的所有子树上的结点都已被覆盖，然后**讨论覆盖 u 的三种方式**）：
+  *  `dp[u][0]`：结点 u 被**自己**覆盖（u 被选中）的最小花费。
+  *  `dp[u][1]`：结点 u 被其**父节点 fa** 覆盖（即其父节点被选中，此时不用选中 u）的最小花费。
+  *  `dp[u][2]`：结点 u 被其**子节点 v** 覆盖（即至少存在一个子节点被选中，此时不用选中 u）的最小花费。
+* 状态转移：
+  * 由于 u 下结点都已被覆盖，且 `dp[u][0]` 保证了 u 被选中即被覆盖，则直接从子节点转移出最小花费的状态，即 `dp[u][0] += min(dp[v][0], dp[v][1], dp[v][2])`。
+  * 此时 u 没被选中，被父节点 fa 覆盖，则其子节点 v 要么自己覆盖自己，要么 v 的子节点覆盖 v，就是不能被 u 覆盖，即 `dp[u][1] += min(dp[v][0], dp[v][2])`。
+  * 首先作为 v 的父节点 u 没被选中，那么至少状态 `dp[v][1]` 不用考虑转移到当前结点 u 上，初步得到 `dp[u][2] += min(dp[v][0], dp[v][2])`。但这样会产生一个问题，会出现 `dp[u][2]` 全是 `dp[v][2]` 转移过来的情况，而这样就说明 u 的**子节点全都没有被选中，也就不可能覆盖 u**，所以初步转移方程显然不够完善，则我们需要用 `flag` 标记判断是否全是 `dp[v][2]` 转移过来的：
+    * `flag == 1` ：说明 `dp[u][2]` 至少一次由 `dp[v][0]` 转移过来，则无需多余操作。
+    * `flag == 0` ：说明 `dp[u][2]` 全都由 `dp[v][2]` 转移过来，需要取一个最优花费的子节点 v 的状态 `dp[_v][0]`。为方便操作，每次由 `dp[v][2]` 转移时记录 `p = min(dp[v][0] - dp[v][2])`，最终 `p = dp[v][0] - dp[_v][2]`，然后需要重算时再给 `dp[u][2] += p`，这样就加上了 `dp[_v][0]` 还抵消了该递归层上错误转移的 `dp[_v][2]`（**反悔机制**）。
+
+实现代码：
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 1e4 + 10, M = N, inf = N;
+int n, m, head[N], cnt = 1;
+int dp[N][3];
+struct Edge{
+    int to, next, w;
+    Edge(int a = 0, int b = 0, int c = 0) { to = a, next = b, w = c;}
+}e[M << 1];//记得无向边需要开两倍空间
+int _min(int x1, int x2, int x3) { return x1 < x2 ? (x1 < x3 ? x1 : x3) : (x2 < x3 ? x2 : x3);}
+void addedge(int u, int v, int w = 0)
+{
+    e[cnt] = Edge(v, head[u], w);
+    head[u] = cnt++;
+}
+void dfs(int u, int fa = -1)// fa 防止 dfs 成环
+{
+    dp[u][0] = 1;
+    dp[u][1] = dp[u][2] = 0;
+
+    bool flag = 0;
+    int p = inf;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        dfs(v, u);
+        dp[u][0] += _min(dp[v][0], dp[v][1], dp[v][2]);
+        dp[u][1] += min(dp[v][0], dp[v][2]);
+        if(dp[v][0] <= dp[v][2])
+        {
+            flag = 1;
+            dp[u][2] += dp[v][0];
+        }
+        else//反悔 - 虽然现在选了 dp[v][2]，但可能反悔选回该层的 dp[v][0]
+        {
+            p = min(p, dp[v][0] - dp[v][2]);
+            dp[u][2] += dp[v][2];
+        }
+    }
+    if(!flag) dp[u][2] += p;
+}
+int main()
+{
+    untie();
+    cin >> n;
+    m = n - 1;
+    int u, v;
+    for(int i = 1; i <= m; ++i)
+    {
+        cin >> u >> v;
+        addedge(u, v);
+        addedge(v, u);//方向不定，无向图
+    }
+    dfs(u);//无根，随便选个点开始
+    cout << min(dp[u][0], dp[u][2]) << '\n';
+    return 0;
+}
+```
+
+其他例题：
+
+```c++
+
+```
+
+
+
+---
+
+### 树上背包问题
 
 
 
 
 
+---
 
-
-
-
+### 换根dp问题（二次扫描问题）
 
 
 
