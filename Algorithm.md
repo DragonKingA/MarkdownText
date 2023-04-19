@@ -6807,15 +6807,160 @@ int main()
 
 ### 换根dp问题（二次扫描问题）
 
+> 通常不会指定根结点，并且**根结点的变化**会对一些值，例如**子结点深度和、点权和**等产生影响。通常需要**两次 DFS**，第一次 DFS **预处理**诸如深度，点权和之类的信息，在第二次 DFS 开始运行**换根动态规划**。
+>
 
+以 [[P3478 POI2008] STA-Station](https://www.luogu.com.cn/problem/P2986) 为例：
 
+* 题意：给定一棵有 n 个点的树，请求出一个结点，使得以这个结点为根时，所有结点的深度之和最大。
 
+* 思路：已知树中所有点都是连通的，现
 
+  * 定义结点 u 的子树结点数量（包括 u） `sz[u] = 1 + Σsz[v]` （v 为 u 的子节点）方便处理整个子树的深度变化
+  * 定义dp状态 dp[u] 表示以结点 u 为根时**所有结点的深度和**即 `dp[u] = Σdepth[i] (1 <= i <= n)`
 
+  * 初始化：用**第一次 dfs** 预处理 `sz[u]`，同时初始化dp首项 `dp[1]` 的值
 
+  * 状态转移：**第二次 dfs** 考虑由父节点向子节点更新 `dp[u] -> dp[v]`（自顶向下）即**“根节点由 u 变成 v 时所有节点深度和的变化”**，则有：
 
+    * 所有**在** v 的子树上的结点深度全部 -1（因为由 u -> v，这些结点更接近根节点了），则总深度减少 `sz[v]`
+    * 所有**不在** v 的子树上的结点深度全部 +1（这些结点更远离根节点了），则总深度增加 `n - sz[v]`
 
+    综合来说：进行自顶向下的更新，对子节点 v 有 `dp[v] = dp[u] - sz[v] + (n - sz[v]) = dp[u] + n - 2 * sz[v]`。（注意：该dp更新容易爆 int，一般开 **long long**）
 
+实现代码：
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 1e6 + 100;
+struct Edge{
+    int to, next;
+    Edge(int a = 0, int b = 0) { to = a, next = b;}
+}e[N << 1];
+int n, cnt = 1;
+int ans = 1;//答案为结点编号
+int head[N];
+ll sz[N], dp[N];
+void addedge(int u, int v)
+{
+    e[cnt] = Edge(v, head[u]);
+    head[u] = cnt++;
+}
+ll pre_dfs(int u, int fa = -1, ll dep = 1)
+{
+    sz[u] = 1;
+    ll sum = dep;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        sum += pre_dfs(v, u, dep + 1);
+        sz[u] += sz[v];
+    }
+    return sum;
+}
+void dp_dfs(int u, int fa = -1)
+{
+    if(dp[u] > dp[ans]) ans = u;//取最大深度和的结点
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        dp[v] = dp[u] + n - (sz[v] << 1LL);
+        dp_dfs(v, u);
+    }
+}
+int main()
+{
+    untie();
+    cin >> n;
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v;
+        cin >> u >> v;
+        addedge(u, v);
+        addedge(v, u);
+    }
+    //取结点1为入口
+    pre_dfs(1);
+    dp[1] = sz[1];//初始化自定义的dfs首结点
+    dp_dfs(1);
+    cout << ans << '\n';
+    return 0;
+}
+```
+
+其他例题：
+
+```c++
+1.P2986 Great Cow Gathering G
+//定义 sz[u] 为以 u 为根的子树下奶牛的总数量, len[u] 为以 u 为根的子树下总路径长度
+//根节点 u -> v 时有 dp[u] -> dp[v]，则所有在 v 的子树上的子节点总距离减少 num[v] * w，不在则增加 (n - sz[v]) * w
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 100;
+struct Edge{
+    int to, next, w;
+    Edge(int a = 0, int b = 0, int c = 0) { to = a, next = b, w = c;}
+}e[N << 1];
+int n, a[N], head[N], cnt = 1;
+ll sz[N], num[N], dp[N], cow = 0;//cow 为总奶牛数
+ll ans = 1e9;
+void addedge(int u, int v, int w)
+{
+    e[cnt] = Edge(v, head[u], w);
+    head[u] = cnt++;
+}
+ll pre_dfs(int u, int fa = -1)
+{
+    ll res = 0;
+    num[u] = a[u];//必须在这初始化，不能写在下面，因为是自底向上更新，至少叶子结点需要先初始化
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w;
+        if(v == fa) continue;
+        res += pre_dfs(v, u) + num[v] * w;
+        num[u] += num[v];
+    }
+    return res;
+}
+void dp_dfs(int u, int fa = -1)
+{
+    // if(dp[u] < ans) ans = dp[u];//当点 1 不存在导致 ans 被错误地初始化为 0，故不能这么写
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w;
+        if(v == fa) continue;
+        ll d = (cow - 2 * num[v]) * w;
+        dp[v] = dp[u] + d;
+        ans = min(ans, dp[v]);
+        dp_dfs(v, u);
+    }
+}
+int main()
+{
+    untie();
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> a[i], cow += a[i];
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v, w;
+        cin >> u >> v >> w;
+        addedge(u, v, w);
+        addedge(v, u, w);
+    }
+    dp[1] = pre_dfs(1);
+    ans = dp[1];
+    dp_dfs(1);
+    cout << ans << '\n';
+    return 0;
+}
+```
 
 
 
