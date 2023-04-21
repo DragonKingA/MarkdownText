@@ -5820,11 +5820,714 @@ int main()
 
 ## 背包dp
 
+> 给定一组物品，每种物品都有自己的**重量**和**价值**，在限定的**总重量**内，我们如何选择，才能使得物品的**总价值最高**。
+
+一般情况下，dp状态定义为 `dp[i][j]`表示:遍历到第 `i` 个物品，且体积不超过 `j` 时可以获得的最大价值。
+
+初始化问题：
+
+* 没有要求必须把背包装满：`dp[0 ... V]` 均初始化为 0，因为此时对于任意容量的背包都有一个合法解“什么都不装”，且该解的价值为 0。
+* 背包必须要装满：`dp[0] = 0`，而 `dp[1 ... V] = -∞`。因为此时只有容量为 0 的背包在“什么都不装”的条件下相当于被“恰好装满”，其他容量的背包仍为未定义状态，暂时不具有合法解。
+
+一般方法：
+
+```c++
+for 物品
+    for 体积
+        for 决策
+```
+
+---
+
+### 01背包问题
+
+> 01背包，顾名思义每件物品只有 0 和 1 即不选和选一次的状态，即**每件物品最多只能用一次**。
+
+`dp[i][j]`：遍历到第 `i` 个物品，且体积不超过 `j` 时可以获得的最大价值。
+
+<img src="D:\MarkdownText\image\动态规划\背包1.png" alt="背包1" style="zoom:67%;" />
+
+dp转移方程：`f[i][j] = max(f[i - 1][j - v[i]] + w[i],f[i - 1][j])` -- 选当前物品 和 不选当前物品
+
+优化：由于方程中第一维只涉及 `i - 1`，故可以将数组该层滚动掉，直接定义 `dp[j]`。
+
+注意：由于方程中第二维涉及上一层 `i - 1` 的 `j - v[i]`，则第二层循环需要**逆向遍历**，防止更新本层时在**利用前**覆盖掉上层的状态，因为现在都被压到同一层，低位的代表上一层状态，我们从高位开始更新该层状态就能将上一层状态转移到该层。
+
+```c++
+1.Bone Collector
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int M = 1100;
+int T, n, v, N[M], V[M], dp[M];
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        memset(dp, 0, sizeof dp);
+        cin >> n >> v;
+        for(int i = 1; i <= n; i++) cin >> N[i];
+        for(int i = 1; i <= n; i++) cin >> V[i];
+        for(int i = 1; i <= n; i++)
+            for(int j = v; j >= V[i]; j--)
+                dp[j] = max(dp[j], dp[j - V[i]] + N[i]);
+        cout << dp[v] << '\n';
+    }
+    return 0;
+}
+```
+
+
+
+---
+
+### 完全背包问题
+
+> 不同于 01 背包的是，**每件物品可以有无限次选择**。
+
+形式上，我们只需要将 01 背包问题的「一维空间优化」解法中的「容量维度」遍历方向从「从大到小 改为 **从小到大**」就可以解决完全背包问题。但本质是因为两者进行状态转移时依赖了不同的格子：
+
+* 01背包 依赖的是**「正上方上一行的格子」**和**「上一行左边的格子」**。
+* 完全背包 依赖的是**「正上方上一行的格子」**和**「本行左边的格子」**。
+
+dp状态定义不变，转移方程变为：`f[i, j] = max(f[i - 1][j], f[i][j - v] + w)`
+
+不同之处在于决定选本件物品时`f[i][j - v] + w`是在利用本层状态
+
+```c++
+1.疯狂的采药
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 1e4 + 5;
+typedef long long ll;
+int t, m, T[N], val[N];
+int main()
+{
+    untie();
+    cin >> t >> m;
+    vector<ll> dp(t + 1, 0);
+    for(int i = 1; i <= m; i++) cin >> T[i] >> val[i];
+    for(int i = 1; i <= m; i++)
+        for(int j = T[i]; j <= t; j++)//正序遍历：刚装入背包的马上变成旧状态被利用，即前面的件数可以叠加到新状态，小背包可以装入大背包里
+            dp[j] = max(dp[j], dp[j - T[i]] + val[i]);
+    cout << dp[t];
+    return 0;
+}
+```
+
+
+
+---
+
+### 多重背包问题
+
+> 一样物品可以选多件，且不同物品有**不同的选择上限**。
+
+转移方程：`f[i][j] = max(f[i - 1][j], f[i - 1][j - v] + w, f[i - 1][j - 2 * v] + 2 * w ,..., f[i - 1][j - s_i * v] + s_i * w`
+
+以 [洛谷 P1776 宝物筛选](https://vjudge.csgrandeur.cn/problem/洛谷-P1776/origin) 为例：
+
+法一：转化为 01背包 -- 枚举 k 件物品，把问题看成仅有一件的占用空间为 `k * Vi` ，价值为 `k * Wi` 的物品该不该拿
+
+```c++
+1.无优化(单例最高耗时922ms)
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;，。
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+int n, W;
+int main()
+{
+    untie();
+    cin >> n >> W;
+    vector<int> dp(W + 5, 0);
+    for(int i = 1; i <= n; i++)
+    {
+        int v, w, sum;
+        cin >> v >> w >> sum;
+        for(int j = W; j >= 0; j--)
+            for(int k = 1; k <= sum && k * w <= j; k++)
+                dp[j] = max(dp[j], dp[j - k * w] + k * v);
+    }
+    int res = 0;
+    for(int i = 1; i <= W; i++) res = max(res, dp[i]);
+    cout << res;
+    return 0;
+}
+
+
+
+2.二进制优化(最好用) -- 一种有一定数量 sum 的物品，拆分成 x 个基元，由这 x 个基元组成 1 ~ sum 所有的取件数情况 (单例最高耗时141ms) -- 优化效果显著
+先按 2 的倍数升序拆分为 x - 1 个数，最后剩下一个余数，共 x 个基数，如 sum = 25，分成 1, 2, 4, 8, 10(10 < 2^4 = 16) 五个基元，并且由 5 个数任意自由组合得到 1 ~ 25 的所有数字。
+多重背包问题 就转化成对 每种物品 的 每个基元数 的 选与不选，即 01背包问题。
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int MAXN = 1e6 + 5;//数组一定要够大
+int n, m, dp[MAXN];
+struct nd{
+    int v, w;
+}goods[MAXN];//存储一种物品分成的若干个01背包，规定在[1, cnt]
+int main()
+{
+    untie();
+    cin >> n >> m;
+    for(int i = 1; i <= n; i++)//遍历每种物品
+    {
+        int v, w, sum, cnt = 0;
+        cin >> v >> w >> sum;
+        //二进制倍数枚举拆分
+        for(int j = 1; j <= sum; j <<= 1)
+        {
+            goods[++cnt] = nd{v * j, w * j};
+            sum -= j;//减去已拆分
+        }
+        //最后一个余数 处理
+        if(sum) goods[++cnt] = nd{v * sum, w * sum};
+        //01背包 -- 每种物品分成若干个 01背包
+        for(int k = 1; k <= cnt; k++)
+            for(int j = m; j >= goods[k].w; j--)//逆序
+                dp[j] = max(dp[j], dp[j - goods[k].w] + goods[k].v);
+    }
+    cout << dp[m];
+    return 0;
+}
+
+
+
+3.单调队列优化(最优耗时)
+
+```
+
+二法：转化为 01背包 + 完全背包 (3.8s，微小优化，仅供加深两种背包的理解)
+
+```c++
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+int n, W;
+int main()
+{
+    untie();
+    cin >> n >> W;
+    vector<int> dp(W + 5, 0);
+    for(int i = 1; i <= n; i++)
+    {
+        int v, w, sum;
+        cin >> v >> w >> sum;
+        if(sum * w >= W)//完全背包,对于总体积为 W 的背包来说，此时 v 物体相当于可以无限选取，即不用担心超额
+        {
+            for(int j = w; j <= W; j++)
+                dp[j] = max(dp[j], dp[j - w] + v);
+        }
+        else
+        {
+            for(int j = W; j >= w; j--)//01背包，必须逆序遍历
+                for(int k = 1; k <= sum && k * w <= j; k++)//该层遍历顺序不影响结果
+                    dp[j] = max(dp[j], dp[j - k * w] + k * v);
+        }
+    }
+    cout << dp[W];
+    return 0;
+}
+```
+
+```c++
+1.投资的最大效益
+经典技巧降低时空复杂度：由于 a 是 1000 的倍数，那就全程用 a /= 1000 计算
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <cstring>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+typedef long long ll;
+const int N = 2e5 + 5;
+int n, d, val[50], cost[50];
+ll s, sum, dp[N];
+int main()
+{
+    untie();
+    cin >> s >> n >> d;
+    sum = s;
+    for(int i = 1; i <= d; i++) cin >> cost[i] >> val[i], cost[i] /= 1000;
+    for(int i = 1; i <= n; i++)
+    {
+        ll tp = 0;
+        memset(dp, 0, sizeof dp);
+        for(int k = 1; k <= d; k++)
+        {
+            for(int j = 1; j <= sum / 1000; j++)
+            {
+                if(j >= cost[k]) dp[j] = max(dp[j], dp[j - cost[k]] + val[k]);
+                tp = max(tp, dp[j]);
+            }
+        }
+        sum += tp;
+    }
+    cout << sum;
+    return 0;
+}
+```
+
+
+
+---
+
+### 混合背包问题
+
+
+
+```c++
+1.樱花
+老实分算三个背包，并且二进制优化多重背包 (55ms)
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <cstring>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+int n, T;
+struct nd{
+    int t, c;
+}arr[10005];
+string st, se;
+int transform(string t)
+{
+    int h = 0, m = 0, pos = t.find(':');
+    for(int i = 0; i < pos; i++) h = h * 10 + (t[i] - '0');
+    for(int i = pos + 1; i < t.size(); i++) m = m * 10 + (t[i] - '0');
+    return h * 60 + m;
+}
+int main()
+{
+    untie();
+    cin >> st >> se >> n;
+    T = transform(se) - transform(st);
+    vector<int> dp(T + 1, 0);
+    for(int i = 0; i < n; i++)
+    {
+        int t, c, p;
+        cin >> t >> c >> p;
+        if(p == 0 || t * p >= T)//完全背包
+        {
+            for(int j = t; j <= T; j++)
+                dp[j] = max(dp[j], dp[j - t] + c);
+        }
+        else if(p == 1)//01背包
+        {
+            for(int j = T; j >= t; j--)
+                dp[j] = max(dp[j], dp[j - t] + c);
+        }
+        else//多重背包
+        {
+            int cnt = 0;
+            for(int j = 1; j <= p; j <<= 1)
+            {
+                arr[++cnt] = nd{t * j, c * j};
+                p -= j;
+            }
+            if(p) arr[++cnt] = nd{t * p, c * p};
+            for(int k = 1; k <= cnt; k++)//转为01背包
+                for(int j = T; j >= arr[k].t; j--)
+                    dp[j] = max(dp[j], dp[j - arr[k].t] + arr[k].c);
+        }
+    }
+    cout << dp[T];
+    return 0;
+}
+
+
+
+全部转化为01背包，用二进制优化(77ms)
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+int n, T, h1, h2, m1, m2;
+struct nd{
+    int t, c;
+}arr[10005];
+int main()
+{
+    scanf("%d:%d %d:%d %d", &h1, &m1, &h2, &m2, &n);
+    T = (h2 - h1) * 60 + m2 - m1;
+    vector<int> dp(T + 1, 0);
+    for(int i = 0; i < n; i++)
+    {
+        int t, c, p, cnt = 0;
+        scanf("%d%d%d", &t, &c, &p);
+        if(!p) p = T / t;//完全背包的无限次转为有效次数即可
+        for(int j = 1; j <= p; j <<= 1)
+        {
+            arr[++cnt] = nd{t * j, c * j};
+            p -= j;
+        }
+        if(p) arr[++cnt] = nd{t * p, c * p};
+        for(int k = 1; k <= cnt; k++)
+            for(int j = T; j >= arr[k].t; j--)
+                dp[j] = max(dp[j], dp[j - arr[k].t] + arr[k].c);
+    }
+    printf("%d\n", dp[T]);
+    return 0;
+}
+
+
+
+亦可单调队列优化
+
+```
 
 
 
 
 
+
+
+---
+
+### 二维费用的背包问题
+
+> 指对于每件物品，具有**两种不同的代价**，选择这件物品必须**同时付出**这两种代价。对于每种代价都有**对应**一个可承受的最大值 （相当于背包容量），问怎样选择物品可以得到最大的价值。由于每个物品**只能选一次**，所以这实际也是个 **二维01背包问题**。
+
+有时，"二维费用" 的条件是以这样一种隐含的方式给出的：**最多只能取 U 件物品**。这事实上相等于每件物品多了一种 "件数" 的费用，每个物品的件数费用均为 1，可以付出的最大件数费用为 U。
+
+```c++
+1.NASA的食物计划
+定义 dp[i][j][k] 为遍历到第 i 个物品时体积不超过 j，质量不超过 k 的最大卡路里值
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+int H, T, n, dp[500][500];
+int main()
+{
+    untie();
+    cin >> H >> T >> n;
+    for(int i = 0; i < n; i++)
+    {
+        int h, t, K;
+        cin >> h >> t >> K;
+        for(int j = H; j >= h; j--)
+            for(int k = T; k >= t; k--)
+                dp[j][k] = max(dp[j][k], dp[j - h][k - t] + K);
+    }
+    cout << dp[H][T];
+    return 0;
+}
+```
+
+
+
+---
+
+### 分组背包问题
+
+> 有 n 件物品和一个容量为 V 的背包。第 i 件物品的费用是 Ci ，价值是 Wi 。这些物品被**划分为 k 组**，每组中的物品互相冲突，**最多选一件**。本质上，对于**每个物品组**就是 **01背包**问题，又可以称为 多组01背包问题。
+
+一般是遍历组数，然后在每个物品组中求解01背包即可。
+
+```c++
+1.通天之分组背包
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 1e3 + 5;
+struct nd{
+    int w, v;
+};
+int n, m, ind = 0, dp[N];
+int main()
+{
+    untie();
+    cin >> m >> n;
+    vector<vector<nd> > goods(n + 1); 
+    while(n--)
+    {
+        int w, v, grp;
+        cin >> w >> v >> grp;
+        goods[grp].push_back(nd{w, v});
+        ind = max(ind, grp);
+    }
+    for(int i = 1; i <= ind; i++)//组数
+        for(int j = m; j >= 0; j--)//01背包问题，逆序遍历体积（代价）
+            for(auto x : goods[i])//方案数（物品数）
+                if(j >= x.w)
+                    dp[j] = max(dp[j], dp[j - x.w] + x.v);
+    cout << dp[m];
+    return 0;
+}
+
+
+
+2.ACboy needs your help
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+int n, m, a[105][105];
+int main()
+{
+    untie();
+    while(cin >> n >> m, n || m)
+    {
+        vector<int> dp(m + 1, 0);
+        for(int i = 1; i <= n; i++)
+            for(int j = 1; j <= m; j++)
+                cin >> a[i][j];
+        for(int i = 1; i <= n; i++)
+            for(int j = m; j >= 0; j--)
+                for(int k = 1; k <= m; k++)
+                    if(j >= k)
+                        dp[j] = max(dp[j], dp[j - k] + a[i][k]);
+        cout << dp[m] << '\n';
+    }
+    return 0;
+}
+```
+
+---
+
+### 有依赖的背包问题
+
+> **一个主件**及其**若干附件**将称为分组背包中的一个物品组，依赖性表现在附件选择的前提是**先选主件**。
+
+我们可以将**每个附件**看成一个01背包问题，这样当我们给一个主件分配多少价钱的时候，就可以知道此时这个主件及其附件在对应的价钱可以获得的最大价值。
+
+更一般的问题是:
+
+依赖关系以图论中的 "森林" 形式给出，也就是说主件的**附件**依旧可以有自己的**附件集合**（如图）。
+
+<img src="D:\MarkdownText\image\动态规划\背包3.png" alt="背包3" style="zoom:80%;" />
+
+```c++
+1.先处理附件价值状态，再往主件中加入附件 (230 ms)
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+struct nd{
+    int v, p, pos;
+};
+int n, m;
+int main()
+{
+    untie();
+    cin >> n >> m;
+    n /= 10;//降低复杂度
+    vector<nd> goods[m + 1];//goods[0]为主件组，1 ~ m 为附件组
+    vector<vector<int> > dp(m + 1, vector<int>(n + 1, 0));
+    for(int i = 1; i <= m; i++)
+    {
+        int v, p, q;
+        cin >> v >> p >> q;
+        goods[q].push_back(nd{v / 10, p, i}); 
+    }
+    //dp[i][j]表示给第 i 个背包分配 j 钱数的最大价值
+    for(int i = 1; i <= m; i++)//*遍历背包
+        for(auto x : goods[i])//遍历物品(附件)
+            for(int j = n; j >= x.v; j--)//遍历代价
+                dp[i][j] = max(dp[i][j], dp[i][j - x.v] + x.v * x.p * 10);
+    //遍历主件，给附件分配空间，据最大价值判断是否并入主件
+    for(int i = 0; i < goods[0].size(); i++)
+    {
+        nd base = goods[0][i];
+        for(int j = n; j >= base.v; j--)//遍历主件的代价
+            for(int k = j - base.v; k >= 0; k--)//遍历加入附件的代价
+                dp[0][j] = max(dp[0][j], dp[0][j - base.v - k] + base.p * base.v * 10 + dp[base.pos][k]);
+    }
+    cout << dp[0][n];
+    return 0;
+}
+
+
+
+2.实际上也可以当成有 5 种操作的 01背包来写 (38 ms)
+| 1.不变 | 2.只拿主件 | 3.主件 + 附件1 | 4.主件 + 附件2 | 5.主件 + 附件1 + 附件2 |
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+int n, m, v[65][3], p[65][3];//v[i][j] 第 i 个物品，若 j = 0，为主件；而 j = 1, 2 为附件 1，2
+//物品价值定义为 v * p，直接将原值存入p数组中
+int main()
+{
+    untie();
+    cin >> n >> m;
+    n /= 10;//降低复杂度
+    vector<int> dp(n + 1, 0);
+    for(int i = 1; i <= m; i++)
+    {
+        int a, b, grp;
+        cin >> a >> b >> grp;
+        if(grp) v[grp][2 - !v[grp][1]] = a / 10, p[grp][2 - !p[grp][1]] = a * b;//附件1位置未占用就存入位置1，已占用就会存入位置2
+        else v[i][0] = a / 10, p[i][0] = a * b;
+    }
+    for(int i = 1; i <= m; i++)
+        for(int j = n; j >= v[i][0]; j--)
+        {
+            dp[j] = max(dp[j], dp[j - v[i][0]] + p[i][0]);//情况1, 2
+            if(j >= v[i][0] + v[i][1]) dp[j] = max(dp[j], dp[j - v[i][0] - v[i][1]] + p[i][0] + p[i][1]);//3
+            if(j >= v[i][0] + v[i][2]) dp[j] = max(dp[j], dp[j - v[i][0] - v[i][2]] + p[i][0] + p[i][2]);//4
+            if(j >= v[i][0] + v[i][1] + v[i][2]) dp[j] = max(dp[j], dp[j - v[i][0] - v[i][1] - v[i][2]] + p[i][0] + p[i][1] + p[i][2]);//5
+        }
+    cout << dp[n];
+    return 0;
+}
+
+
+3.当作一种深度仅为 2 的特殊树形背包来解
+#include <stdio.h>
+#include <algorithm>
+#include <vector>
+using namespace std;
+const int N = 4e3 + 5, M = 65;
+vector<int> ve[M];
+int wei[M], imp[M];
+int n, m;
+int f[M][N];
+void dfs(int u)
+{
+    //枚举物品
+    for (int i = 0; i < ve[u].size(); i++)
+    {
+        int to = ve[u][i];
+        dfs(to);
+        for (int j = m; j >= 0; j--)
+        {
+            //枚举分给当前物品的体积(不包括当前物品的体积)
+            for (int k = j; k >= 0; k--)
+            {
+                if (k - wei[to] >= 0)
+                    f[u][j] = max(f[u][j], f[u][j - k] + f[to][k - wei[to]] + imp[to] * wei[to] * 10);
+                else
+                    break;
+            }
+        }
+    }
+}
+
+int main()
+{
+    scanf("%d%d", &m, &n);
+    m /= 10;
+    for (int i = 1; i <= n; i++)
+    {
+        int c;
+        scanf("%d%d%d", &wei[i], &imp[i], &c);
+        wei[i] /= 10;
+        ve[c].push_back(i);
+    }
+    dfs(0);
+    int res = 0;
+    res = f[0][m];
+    printf("%d\n", res);
+    return 0;
+}
+
+```
+
+
+
+---
+
+### 求第k优解
+
+在原来 01背包 的基础上在加一维记录即可，即 `dp[i][j][k]` - 遍历到第 i 个物品，且体积不超过 j 时可得的第 k 大价值
+
+当然可以滚动掉第一维，剩余 `dp[j][k]`。
+
+* a 数组记录 不选第 i 个物品 的 k 个最大价值
+* b 数组记录 选第 i 个物品 的 k 个最大价值
+
+```c++
+1.Bone Collector II
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int MAXN = 1e2 + 5;
+int T, val[MAXN], vol[MAXN];
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        int n, v, k;
+        cin >> n >> v >> k;
+        vector<vector<int> > dp(v + 1, vector<int>(k + 1, 0));
+        for(int i = 1; i <= n; i++) cin >> val[i];
+        for(int i = 1; i <= n; i++) cin >> vol[i];
+        for(int i = 1; i <= n; i++)
+        {
+            for(int j = v; j >= vol[i]; j--)
+            {
+                int ai = 1, bi = 1;
+                vector<int> a(k + 2, 0), b(a);
+                a[k + 1] = b[k + 1] = -1;
+                //填充a, b
+                for(int m = 1; m <= k; m++)
+                {
+                    a[m] = dp[j][m];
+                    b[m] = dp[j - vol[i]][m] + val[i];
+                }
+                //合并a, b 取较大者存入 dp
+                for(int m = 1; m <= k && (a[ai] != -1 || b[bi] != -1); )//相当于从 2*k 个数排序后取前 k 个数
+                {
+                    dp[j][m] = a[ai] > b[bi] ? a[ai++] : b[bi++];
+                    if(dp[j][m] != dp[j][m - 1])//题意：两种不同方法得到相同价值是算作同一个种，即去除重复。若无该条件，则去掉该句即可
+                        m++;//不重复说明该解占用有效
+                }
+            }
+        }
+        cout << dp[v][k] << "\n";
+    }
+    return 0;
+}
+
+```
+
+
+
+---
+
+### 背包问题求具体方案
+
+一般而言，背包问题是要求一个最优值，如果要求输出这个最优值的方案，可以参照一般动态规划问题输出方案的方法: 记录下每个状态的最优质是由状态转移方程的哪一项推出来的。然后就可以根据这个状态继续往前推导。
+
+```c++
+1.Acwing 12	背包问题求具体方案
+01背包问题，但是要求输出 字典序最小的方案数 。
+
+
+
+```
+
+
+
+---
 
 
 
@@ -6546,6 +7249,14 @@ int main()
 - 树的遍历，用 **dfs** 从**根节点**开始进行记忆化搜索
 - 从树**最深处**开始往回进行**dp**，用**子节点**dp值来更新**父节点**dp值
 
+
+
+
+
+
+
+
+
 ### 最大独立集问题
 
 > 独立集是指图 G 中**两两互不相邻**的顶点构成的集合。最大独立集是该类顶点数量最多的独立集。
@@ -6799,6 +7510,107 @@ int main()
 
 ### 树上背包问题
 
+> 将线性背包问题映射到**树结构**上求解，结点自身和结点之间的性质决定背包的种类。
+>
+
+普通背包dp定义：`dp[i][j]` 表示前 i 个物品占用 j 的空间所得最大价值。
+
+树形背包dp定义：`dp[u][i][j]` 表示以结点 u 为**根节点**的子树下的前 i 个子树（以 u 的子节点为根）中选中 j 个结点所得最大价值。
+
+
+
+```c++
+1.二叉苹果树（树上01背包）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 1e3 + 10, inf = 0x3f3f3f3f;
+struct Edge{
+    int to, next, w;
+    Edge(int a = 0, int b = 0, int c = 0) { to = a, next = b, w = c;}
+}e[N << 1];
+int n, m, root = 1, cnt = 1;
+int head[N], dp[N][N], ans = 0;
+void addedge(int u, int v, int w)
+{
+    e[cnt] = Edge(v, head[u], w);
+    head[u] = cnt ++;
+}
+void dfs(int u, int fa = -1)
+{
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w;
+        if(v == fa) continue;
+        dfs(v, u);//自底向上更新dp
+        for(int j = m; j >= 1; --j)//枚举容量 j
+        {
+            for(int k = 0; k < j; ++k)//枚举留给子结点的容量（u 自己用 1 个单位容量，故 v 最大剩余容量 j - 1）
+            {
+                dp[u][j] = max(dp[u][j], dp[v][k] + dp[u][j - k - 1] + w);
+                //注意结点 u 容量为 j 时，消耗容量 k 给子节点的同时，u -> v 也有一条边需要消耗，故转移的状态为 dp[u][j - k - 1]
+            }
+        }
+    }
+}
+int main()
+{   
+    untie();
+    cin >> n >> m;
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v, w;
+        cin >> u >> v >> w;
+        addedge(u, v, w);
+        addedge(v, u, w);
+    }
+    dfs(root);
+    cout << dp[root][m];
+    return 0;
+}
+
+
+
+2.P2014 选课（树上有依赖的背包问题 -- 必须先选主件才能选附件）
+题意：有 n 门课，第 i 门课的学分是 Si。每门课有一门或没有先修课，有则需要上了先修课才能上这门课。现要选 m 门课，使得学分总和最大。
+思路：题目相当于给一个可能有多个入度为0的根节点即有多个不连通的树构成森林，故添加超级源点 0 连通那些没有先修课的课，连接起孤立的树。定义 dp[u][j] 为选中结点 u 的 j 个子节点的最大价值（即不包括 u）。
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 400, inf = 0x3f3f3f3f;
+int n, m, dp[N][N];
+vector<int> G[N];
+void dfs(int u)
+{
+    for(int v : G[u])
+    {
+        dfs(v);//自底向上
+        for(int j = m; j >= 1; --j)//至少选一门 v
+        {
+            for(int k = 0; k < j; ++k)//分配给子节点
+            {
+                dp[u][j] = max(dp[u][j], dp[v][k] + dp[u][j - k]);//dp[u][j] 不包括结点 u 本身，即相当于只选了 v 的子树 k，只用 j - k 即可
+            }
+        }
+    }
+}
+int main()
+{
+    cin >> n >> m;
+    ++m;//由于加入了源点 0，至少需要选点 0
+    for(int v = 1, u; v <= n; ++v)
+    {
+        cin >> u >> dp[v][1];//直接初始化选 v 时的价值
+        G[u].push_back(v);
+    }
+    dfs(0);
+    cout << dp[0][m] << '\n';
+    return 0;
+}
+
+
+
+```
+
 
 
 
@@ -6931,7 +7743,7 @@ ll pre_dfs(int u, int fa = -1)
 }
 void dp_dfs(int u, int fa = -1)
 {
-    // if(dp[u] < ans) ans = dp[u];//当点 1 不存在导致 ans 被错误地初始化为 0，故不能这么写
+    // if(dp[u] < ans) ans = dp[u];//当点 1 不存在时，该句导致 ans 被错误地初始化为 0，故不能这么写
     for(int i = head[u]; i; i = e[i].next)
     {
         int v = e[i].to, w = e[i].w;
@@ -7524,6 +8336,468 @@ int main()
     }
     return 0;
 }
+
+
+
+6.Equation(类与对象+构造)
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Equation{
+    public:
+        Equation(){ a = 1.0, b = 1.0, c = 0;}
+        void set(double aa, double bb, double cc)
+        {
+            a = aa, b = bb, c = cc;
+        }
+        void getRoot()
+        {
+            double del = b * b - 4 * a * c;
+            if(del > 0)
+            {
+                double x1 = (-b + sqrt(del)) / (2 * a), x2 = (-b - sqrt(del)) / (2 * a);
+                cout <<fixed<<setprecision(2)<< "x1=" << x1 << " x2=" << x2 <<'\n';
+            }
+            else if(del == 0)
+            {
+                double x = (-b + sqrt(del)) / (2 * a);
+                cout <<fixed<<setprecision(2)<< "x1=x2=" << x << '\n';
+            }
+            else
+            {
+                double x = -b / (2 * a), y1 = sqrt(-del) / (2 * a), y2 = -sqrt(-del) / (2 * a);
+                cout <<fixed<<setprecision(2)<< "x1=" << x << "+" << y1 << "i " << "x2=" << x << y2 << "i\n";
+            }
+        }
+    private:
+        double a, b, c;
+};
+
+int t;
+int main()
+{
+    untie();
+    cin >> t;
+    for(int i = 1; i <= t; ++i)
+    {
+        double a, b, c;
+        cin >> a >> b >> c;
+        Equation e;
+        e.set(a, b, c);
+        e.getRoot();
+    }
+    return 0;
+}
+
+
+
+7.对象是怎样构造的(拷贝构造函数)
+
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class X{
+    public:
+        X(){val = 0;}
+        X(int x)
+        {
+		    cout << "Constructed using one argument constructor, value = " << x << '\n';
+            val = x;
+        }
+    private:
+        int val;
+};
+
+int t;
+int main()
+{
+    untie();
+    cin >> t;
+    for(int i = 1; i <= t; ++i)
+    {
+        int op;
+        cin >> op;
+        if(op == 0)
+        {
+            X a();
+			cout << "Constructed by default, value = 0\n";
+        }
+        else if(op == 1)
+        {
+            int x;
+            cin >> x;
+            X a(x);
+        }
+        else
+        {
+            int x;
+            cin >> x;
+            X a(x);
+            X b = a;
+			cout << "Constructed using copy constructor, value = " << x << '\n';
+        }
+    }
+    return 0;
+}
+
+
+
+8.电话号码升位(拷贝构造函数)
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CTelNumber{
+    public:
+       CTelNumber()
+       {
+            num = new char[15];
+       }
+       CTelNumber(char *ne)
+       {
+            num = new char[15];
+            strcpy(num, ne);
+       }
+       CTelNumber(CTelNumber &ne)
+       {
+            num = new char[15];
+            if(ne.num[0] >= '2' && ne.num[0] <= '4') num[0] = '8';
+            else num[0] = '2';
+            for(int i = 0; i < 7; ++i) num[i + 1] = ne.num[i];
+       }
+       ~CTelNumber()
+       {
+            free(num);
+       }
+       void Print()
+       {
+            for(int i = 0; i < 8; ++i)
+            {
+                cout << num[i];
+            }
+            cout << '\n';
+       }
+    private:
+        char *num;
+};
+bool check(char *s)
+{
+    int len = strlen(s);
+    if(len != 7) return 0;
+    if(s[0] <= '1' || s[0] >= '9') return 0;
+    for(int i = 0; i < len; ++i)
+        if(!(s[i] >= '0' && s[i] <= '9'))
+            return 0;
+    return 1;
+}
+int t;
+int main()
+{
+    untie();
+    cin >> t;
+    for(int i = 1; i <= t; ++i)
+    {
+        char s[15];
+        cin >> s;
+        if(!check(s))
+        {
+            cout << "Illegal phone number\n";
+            continue;
+        }
+        CTelNumber m(s);
+        CTelNumber n(m);
+        n.Print();
+    }
+    return 0;
+}
+
+
+
+9.软件备份(拷贝构造函数)
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class software{
+    public:
+        software(char *nm, char tp, char med)
+        {
+            name = new char[strlen(nm) + 1];
+            type = tp;
+            media = med;
+            strcpy(name, nm);
+        }
+        software(const software &s)
+        {
+            name = new char[strlen(s.name) + 1];
+            strcpy(name, s.name);
+            type = 'B';
+            media = 'H';
+        }
+        ~software()
+        {
+            free(name);
+        }
+        void Print()
+        {
+            cout << "name:" << name << '\n';
+            if (type == 'O') { cout << "type:original" << '\n'; }
+            if (type == 'B') { cout << "type:backup" << '\n'; }
+            if (type == 'T') { cout << "type:trial" << '\n'; }
+            if (media == 'D') { cout << "media:optical disk" << '\n'; }
+            if (media == 'H') { cout << "media:hard disk" << '\n'; }
+            if (media == 'U') { cout << "media:USB disk" << '\n'; }
+        }
+    private:
+        char *name;
+        char type;//O B T
+        char media;//D H U
+};
+
+class CDate
+{
+    public:
+        CDate(){}
+        CDate(int y, int m, int d);
+        bool isLeapYear();
+        int getYear();
+        int getMonth();
+        int getDay();
+        int getDayofYear();
+    private:
+        int year, month, day;
+};
+CDate::CDate(int y, int m, int d)
+{ 
+    year = y, month = m,day = d;
+}
+bool CDate::isLeapYear()
+{ 
+    return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0; 
+}
+int CDate::getYear()
+{ 
+    return year;
+}
+int CDate::getMonth() 
+{ 
+    return month;
+}
+int CDate::getDay() 
+{ 
+    return day;
+}
+int CDate::getDayofYear()
+{
+    int i, sum = day;
+    int a[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (isLeapYear())
+    {
+        a[2]++;
+    }
+    // 求日期的天数
+    for (i = 0; i < month; i++)
+    {
+        sum += a[i];
+    }
+    return sum;
+}
+
+void check(int y, int m, int d)
+{
+    int tot, x;
+    if(!y && !m && !d) cout << "this software has unlimited use\n";
+    else if(y < 2015 || (y == 2015 && m < 4) || (y == 2015 && m == 4 && d < 8)) cout << "this software has expired\n";
+    else
+    {
+        CDate now(y, m, d);
+        x = now.getDayofYear();
+        tot = x - 90 - 8;
+        if(y > 2015) tot = x + 365 - 90 - 8;
+        for(int i = 2016; i < y; ++i)
+        {
+            CDate tp(i, 12, 31);
+            tot += tp.getDayofYear();
+            break;
+        }
+        cout << "this software is going to be expired in " << tot << " days\n";
+    }
+    cout << '\n';
+}
+
+int t;
+char name[50], type, media;
+int main()
+{
+    untie();
+    cin >> t;
+    for(int i = 1; i <= t; ++i)
+    {
+        int year, month, day;
+        cin >> name >> type >> media >> year >> month >> day;
+        software now(name, type, media);
+        now.Print();
+        check(year, month, day);
+        software ne(now);
+        ne.Print();
+        check(year, month, day);
+    }
+    return 0;
+}
+
+
+
+10.手机服务（构造+拷贝构造+堆）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+class Date{
+    public:
+        Date(){}
+        void set(int a, int b, int c) { year = a, month = b, day = c;}
+        void Print()
+        {
+            cout << year << "." << month << "." << day << '\n';
+        }
+    private:
+        int year, month, day;
+};
+class phone{
+    public:
+        phone(){ date = NULL;}
+        phone(char tp, char *s, int sta)
+        {
+            strcpy(num, s);
+            type = tp;
+            status = sta;
+            cout << "Construct a new phone " << num << '\n';
+        }
+        phone(const phone & ph)
+        {
+            strcpy(num, ph.num);
+            num[11] = 'X', num[12] = '\0';
+            type = 'D';
+            status = ph.status;
+            date = ph.date;
+            cout << "Construct a copy of phone " << ph.num << '\n';
+        }
+        void Print()
+        {
+            cout << "类型=";
+            if (type == 'A') cout << "机构";
+            else if (type == 'B') cout << "企业";
+            else if (type == 'C') cout << "个人";
+            else if (type == 'D') cout << "备份";
+            cout << "||号码=" << num << "||State=";
+            if (status == 1) cout << "在用";
+            else if (status == 2) cout << "未用";
+            else if (status == 3) cout << "停用";
+        }
+        void stop(int y, int m, int d)
+        {
+            cout << "Stop the phone " << num << '\n';
+            status = 3;
+            date = new Date;
+            date -> set(y, m, d);
+            this -> Print();
+            cout << "||停机日期=";
+            date -> Print();
+            delete date;
+        }
+    private:
+        char type;//A B C D
+        char num[15];
+        int status;//1 2 3
+        Date* date;
+};
+
+int t;
+char type, num[15];
+int sta;
+int main()
+{
+    untie();
+    cin >> t;
+    for(int i = 1; i <= t; ++i)
+    {
+        int y, m, d;
+        cin >> type >> num >> sta >> y >> m >> d;
+        phone p1(type, num, sta);
+        p1.Print();
+        cout << '\n';
+        phone p2(p1);
+        p2.Print();
+        cout << '\n';
+        p1.stop(y, m, d);
+        cout << "----\n";
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
 
 ```
 
