@@ -3821,13 +3821,562 @@ int main()
 
 ## 树上基础问题
 
+### 树基础
+
+#### 引入
+
+图论中的树和现实生活中的树长得一样，只不过我们习惯于处理问题的时候把树根放到上方来考虑。这种数据结构看起来像是一个倒挂的树，因此得名。树是非线性数据结构，它能很好的描述数据的层次关系，树这种结构的现实场景很常见，如文件目录、书本目录就是典型的树形结构，特别适合编码，而常常将一般的树转换为二叉树来处理。
+
+#### 定义
+
+一个没有固定根结点的树称为 **无根树**（unrooted tree）。无根树有几种等价的形式化定义：
+
+- 有 $n$ 个结点，$n - 1$ 条边的连通无向图
+- 无向无环的连通图
+- 任意两个结点之间有且仅有一条简单路径的无向图
+- 任何边均为桥的连通图
+- 没有圈，且在任意不同两点间添加一条边之后所得图含唯一的一个圈的图
+
+1. 简单来说，树就是“**没有圈的连通图**”。在无根树的基础上，指定一个结点称为 **根**，则形成一棵 **有根树**（rooted tree）。有根树在很多时候仍以无向图表示，只是规定了结点之间的上下级关系 ( 一棵树只有一个根, 且根到其他任何一个点有且仅有一条路径 ). 而无根树每个节点都可以作为树根。
+
+2. 除了树根，每个节点都必须有且只有一个父结点，从根开始遍历时，必须从父节点到达子节点
+3. 从根出发能遍历整棵树
+4. 一棵有 $n$ 个节点的树，有 $n-1$ 条边
+5. 去掉一条边，树被分成不连通的两棵树，去掉一个节点，树被分成不连通的两棵树或更多树
+6. 在树中添加一条边后，出现一个圈
+7. 从根出发到一个节点，有且仅有一条路径
+
+注意：有根树和常见的概念“有向无环图”不同。在图论中，如果一个有向图不能从某一个顶点出发经过若干点和边回到该点，称这个图是一个有向无环图（Directed Acyclic Graph, DAG）。有根树都是DAG，但是DAG不一定是有根树，例如DAG中一个点 $u$ 可能经过两条路线到达另一个点 $v$ , $v$ 就有了两个父亲，不符合树的概念。 
+
+#### 有关树的定义
+
+**适用于无根树和有根树**
+
+- **森林（forest）**：每个连通分量（连通块）都是树的图。按照定义，一棵树也是森林。
+- **生成树（spanning tree）**：一个连通无向图的生成子图，同时要求是树。也即在图的边集中选择 $n - 1$ 条，将所有顶点连通。
+- **无根树的叶结点（leaf node）**：度数不超过 $1$ 的结点。
+
+<details class="question" open="" style="box-sizing: inherit; background-color: var(--md-admonition-bg-color); border: 0.05rem solid rgb(100, 221, 23); border-radius: 0.2rem; box-shadow: var(--md-shadow-z1); color: rgba(0, 0, 0, 0.87); display: flow-root; font-size: 0.64rem; margin: 1.5625em 0px; padding: 0px 0.6rem; break-inside: avoid; overflow: visible; font-family: &quot;Fira Sans&quot;, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><summary style="box-sizing: border-box; background-color: rgba(100, 221, 23, 0.1); border-top: none; border-right: none; border-bottom: none; border-left: 0.2rem none; border-image: initial; font-weight: 700; margin: 0px -0.6rem; padding: 0.4rem 1.8rem 0.4rem 2rem; position: relative; cursor: pointer; display: block; min-height: 1rem; border-top-left-radius: 0.1rem; border-top-right-radius: 0.1rem; -webkit-tap-highlight-color: transparent; outline: none;">为什么不是度数恰为 1<span>&nbsp;</span><mjx-container class="MathJax" jax="CHTML" style="box-sizing: inherit; line-height: 0;"><mjx-math class="MJX-TEX" style="box-sizing: inherit; display: inline-block; text-align: left; line-height: 0; text-indent: 0px; font-style: normal; font-weight: normal; font-size: 14.08px; letter-spacing: normal; border-collapse: collapse; overflow-wrap: normal; word-spacing: normal; white-space: nowrap; direction: ltr; padding: 1px 0px; font-family: MJXZERO, MJXTEX;"><mjx-mn class="mjx-n" style="box-sizing: inherit; display: inline-block; text-align: left;"><mjx-c class="mjx-c31" style="box-sizing: inherit; display: inline-block;"></mjx-c></mjx-mn></mjx-math><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" title="1" style="box-sizing: inherit; border-style: none; width: 0px; height: auto; max-width: 100%;"></mjx-container>？</summary><p style="box-sizing: border-box; margin-bottom: 0.6rem;">考虑 n = 1 <span>&nbsp;</span><mjx-container class="MathJax" jax="CHTML" style="box-sizing: inherit; line-height: 0;"><mjx-math class="MJX-TEX" style="box-sizing: inherit; display: inline-block; text-align: left; line-height: 0; text-indent: 0px; font-style: normal; font-weight: normal; font-size: 14.08px; letter-spacing: normal; border-collapse: collapse; overflow-wrap: normal; word-spacing: normal; white-space: nowrap; direction: ltr; padding: 1px 0px; font-family: MJXZERO, MJXTEX;"><mjx-mi class="mjx-i" style="box-sizing: inherit; display: inline-block; text-align: left;"><mjx-c class="mjx-c1D45B TEX-I" style="box-sizing: inherit; display: inline-block; font-family: MJXZERO, MJXTEX-I;"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4" style="box-sizing: inherit; display: inline-block; text-align: left; margin-left: 0.278em;"><mjx-c class="mjx-c3D" style="box-sizing: inherit; display: inline-block;"></mjx-c></mjx-mo><mjx-mn class="mjx-n" space="4" style="box-sizing: inherit; display: inline-block; text-align: left; margin-left: 0.278em;"><mjx-c class="mjx-c31" style="box-sizing: inherit; display: inline-block;"></mjx-c></mjx-mn></mjx-math><img title="n = 1" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="box-sizing: inherit; border-style: none; width: 0px; height: auto; max-width: 100%;"></mjx-container>。</p></details>
+
+- **有根树的叶结点（leaf node）**：没有子结点的结点
+
+**只适用于有根树**
+
+- **父亲（parent node）**：对于除根以外的每个结点，定义为从该结点到根路径上的第二个结点。 根结点没有父结点。
+- **祖先（ancestor）**：一个结点到根结点的路径上，除了它本身外的结点。 根结点的祖先集合为空。
+- **子结点（child node）**：如果 `u `是 `v` 的父亲，那么 `v` 是 `u` 的子结点。
+  子结点的顺序一般不加以区分，二叉树是一个例外。
+- **结点的深度（depth）**：到根结点的路径上的边数。
+- **高度 ( height) **: 对于任意结点`n`, `n`  的高度是为从`n` 到叶子节点的最长路径长, 所有叶子的高度为 $0$ 
+- **树的深度或高度（depth or height）**：所有结点的深度的最大值。
+- **兄弟（sibling）**：同一个父亲的多个子结点互为兄弟。
+- **后代（descendant）**：子结点和子结点的后代。
+  或者理解成：如果 `u` 是 `v` 的祖先，那么 `v `是 `u` 的后代
+
+![tree-definition.svg](https://oi-wiki.org/graph/images/tree-definition.svg)
+
+- **子树（subtree）**：删掉与父亲相连的边后，该结点所在的子图。
+
+![tree-definition-subtree.svg](https://oi-wiki.org/graph/images/tree-definition-subtree.svg)
 
 
 
+#### 特殊的树
+
+- **链（chain/path graph）**：满足与任一结点相连的边不超过 $2$ 条的树称为链。
+- **菊花/星星（star）**：满足存在 `u` 使得所有除 `u` 以外结点均与 `u` 相连的树称为菊花。
+- **有根二叉树（rooted binary tree）**：每个结点最多只有两个儿子（子结点）的有根树称为二叉树。常常对两个子结点的顺序加以区分，分别称之为左子结点和右子结点。
+  大多数情况下，**二叉树** 一词均指有根二叉树。
+- **完整二叉树（full/proper binary tree）**：每个结点的子结点数量均为 0 或者 2 的二叉树。换言之，每个结点或者是树叶，或者左右子树均非空。
+
+![img](https://oi-wiki.org/graph/images/tree-binary-proper.svg)
+
+- **完全二叉树（complete binary tree）**：只有最下面两层结点的度数可以小于 $2$，且最下面一层的结点都集中在该层最左边的连续位置上, 而且每个节点都与同高度的满二叉树中编号为`1 ~ n` 的节点一一对应. 
+
+![img](https://oi-wiki.org/graph/images/tree-binary-complete.svg)
+
+- **完美二叉树（perfect binary tree）**：树中的每层都含有最多的结点，树的叶子结点都集中在二叉树的最下一层，并且除叶子结点之外的每个结点度数均为2, 所有叶结点的深度均相同的二叉树称为完美二叉树, 一般完美二叉树也称为**满二叉树**
+
+![img](https://oi-wiki.org/graph/images/tree-binary-perfect.svg)
+
+<details class="warning" open="" style="box-sizing: inherit; background-color: var(--md-admonition-bg-color); border: 0.05rem solid rgb(255, 145, 0); border-radius: 0.2rem; box-shadow: var(--md-shadow-z1); color: rgba(0, 0, 0, 0.87); display: flow-root; font-size: 0.64rem; margin: 1.5625em 0px; padding: 0px 0.6rem; break-inside: avoid; overflow: visible; font-family: &quot;Fira Sans&quot;, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><summary style="box-sizing: border-box; background-color: rgba(255, 145, 0, 0.1); border-top: none; border-right: none; border-bottom: none; border-left: 0.2rem none; border-image: initial; font-weight: 700; margin: 0px -0.6rem; padding: 0.4rem 1.8rem 0.4rem 2rem; position: relative; cursor: pointer; display: block; min-height: 1rem; border-top-left-radius: 0.1rem; border-top-right-radius: 0.1rem; -webkit-tap-highlight-color: transparent; outline: none;">Warning</summary><slot id="details-content"><p style="box-sizing: border-box; margin-bottom: 0.6rem;">Proper binary tree 的汉译名称不固定，且完全二叉树和满二叉树的定义在不同教材中定义不同，遇到的时候需根据上下文加以判断。</p></slot></details>
+
+- **二叉排序树 ( Binary sort tree) :** 又称**二叉搜索树**, 二叉查找树, BST; 若任意节点的左子树不空, 则左子树上所有节点的值均小于它的根节点的值; 若任意节点的右子树不空, 则右子树上所有节点的值均大于它的根节点的值; 任意节点的左, 右子树也分别为二叉查找树; 没有键值相等的节点.
+
+<img src="https://img-blog.csdnimg.cn/bd6b8feacb664716899f77ed87ae8d6b.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA56iL5bqPbGVl,size_20,color_FFFFFF,t_70,g_se,x_16" alt="img" style="zoom: 25%;" />
+
+- **平衡二叉搜索树 ( Self-balancing binary search tree ) :** 又称 **AVL树** , 是**特殊的二叉排序树**, 它是一棵空树或它的左右两个子树的高度差的绝对值不超过1, 并且左右两个子树都是一棵平衡二叉树. 平衡二叉树的常用实现方法有红黑树, AVL, 替罪羊树, Treap, 伸展树等
+
+<img src="https://img-blog.csdnimg.cn/032e5e76e2e342b193983342103ef99d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA56iL5bqPbGVl,size_20,color_FFFFFF,t_70,g_se,x_16" alt="img" style="zoom: 50%;" />
+
+**二叉树的性质**
+
+注意: 二叉树和度为2的树，绝不可以混为一谈。度为2的树至少有3个结点，而二叉树可以为空树。此外，度为2的有序树的孩子结点的左右次序是相对于另一孩子结点而言的，如果某个结点只有一个孩子结点，这个孩子结点就无须区分其左右次序，而**二叉树无论其孩子数是否为2均需明确地确定其左右次序**，也就是说二叉树的结点次序不是相对于另一结点而言，而是确定的
+
+
+**二叉树**: 
+
+1. 非空二叉树上的叶子结点数等于度为`2`的结点数加`1`
+2. 非空二叉树中**第 n 层的结点数**不超过 $2^{n - 1}$ 
+3. 深度为h的非空二叉树的**总结点数**最多不超过 $2^{h - 1}$ 
+
+**满二叉树**: 
+
+1. 对于编号为`i`的结点, 若存在父结点, 则父节点的编号是 `2 / n`, 若存在左孩子, 则左孩子为 `n << 1`, 若存在右结点, 则右结点的编号为 `n << 1 | 1`
+2. 每行总结点数为 $2^{n - 1}$ 
+
+**完全二叉树**: 
+
+1. 具有`n` 个结点的完全二叉树的高度满足 $2^{h - 1}-1 \lt n\leq 2^{h} - 1$ , 因此`n`个结点的完全二叉树高度 $h=\lceil\log_2(n+1)\rceil$ 或者 $h=\lfloor log_2(n) \rfloor + 1$ , 第`i`个结点所在层次或者高度也符合该公式
+2. 叶子结点只可能在层次最大的两层的上出现。对于最大层次中的叶子结点，都依次排列在该层最左边的位置上。于是倒数第二层，若有叶子节点，一定都在右部连续位置
+3. 按层序编号后，一旦出现某结点（其编号为i）为叶子结点或只有左孩子，则编号大于i的结点均为叶子结点
+4. 当`(i << 1) <= n` 时, 结点`i`的左孩子编号为`i << 1`, 否则无左孩子; 当 `(i << 1 | 1) <= n`, 结点`i`的右孩子编号为 `i << 1 | 1`, 否则无右孩子
+5. 同样结点数的二叉树, 完全二叉树的深度最小
+
+#### 存储
+
+**只记录父结点**
+
+用一个数组 `parent[N]` 记录每个结点的父亲结点。
+
+这种方式可以获得的信息较少，不便于进行自顶向下的遍历。常用于自底向上的递推问题中。
+
+**邻接表**
+
+- 对于无根树：为每个结点开辟一个线性列表，记录所有与之相连的结点。
+
+  ```c++
+  std::vector<int> adj[N]; 
+  ```
+
+
+- 对于有根树：
+
+  - 方法一：若给定的是无向图，则仍可以上述形式存储。下文将介绍如何区分结点的上下关系。
+
+  - 方法二：若输入数据能够确保结点的上下关系，则可以利用这个信息。为每个结点开辟一个线性列表，记录其所有子结点；若有需要，还可在另一个数组中记录其父结点。
+
+    ```c++
+    std::vector<int> children[N]; int parent[N];
+    ```
+
+    当然也可以用其他方式（如链表）替代`std::vector`
+
+
+**左孩子右兄弟表示法**
+
+**过程**
+
+对于有根树，存在一种简单的表示方法。
+
+首先，给每个结点的所有子结点任意确定一个顺序。
+
+此后为每个结点记录两个值：其 **第一个子结点** `child[u]` 和其 **下一个兄弟结点** `sib[u]`。若没有子结点，则 `child[u]` 为空；若该结点是其父结点的最后一个子结点，则 `sib[u]` 为空。
+
+**实现**
+
+遍历一个结点的所有子结点可由如下方式实现
+
+```c++
+int v = child[u];  // 从第一个子节点开始
+while (v != EMPTY_NODE)
+{
+    // ...
+    // 处理子节点 v
+    // ...
+	v = sib[v];  // 转至下一个子节点, 即 v 的下一个兄弟
+}
+```
+
+也可简写为以下形式
+
+```C++
+for (int v = child[u]; v != EMPTY_NODE; v = sib[v])
+{
+    // ...
+    // 处理子节点
+    // ...
+}
+```
+
+**二叉树**
+
+二叉树的一个节点的储存，包括节点的值、左右子节点，有静态和动态两种存储方法
+
+（1） 动态二叉树，数据结构中一般这样定义二叉树，新建一个`Node`，用new运算符动态申请一个节点，使用完毕后应该使用`delete`命令释放它，否则会内存泄露，动态二叉树的优点是不浪费空间，缺点是需要管理，不小心会出错
+
+```C++
+struct Node
+{
+	int value;          //节点的值，可以定义多个值
+	node *lson, *rson;  //指向左右子节点
+};
+```
+
+（2）静态二叉树，竞赛中为了编码简单、加快速度，一般用静态数组实现二叉树
+
+```c++
+//定义一个大小为N的结构体数组
+struct Node
+{
+	char value;      
+	int lson, rson;    //左右孩子
+}tree[N];
+```
 
 
 
+#### 树的遍历
 
+**树上 DFS**
+
+在树上 DFS 是这样的一个过程：先访问根节点，然后分别访问根节点每个儿子的子树。
+
+可以用来求出每个节点的深度、父亲等信息。
+
+**二叉树上 DFS**
+
+**先序遍历**
+
+![preorder](https://oi-wiki.org/graph/images/tree-basic-Preorder.png)
+
+按照 **根，左，右** 的顺序遍历二叉树。
+
+```c++
+void preTrav(BitTree* root)
+{
+	if (root)
+    {
+        cout << root -> key << " ";
+        preTrav(root -> left);
+        preTrav(root -> right);
+    }
+}
+```
+
+**中序遍历**
+
+![inorder](https://oi-wiki.org/graph/images/tree-basic-inorder.png)
+
+按照 **左，根，右** 的顺序遍历二叉树，再二叉搜索树中中序遍历实现了排序功能
+
+```C++
+void midTrav(BiTree* root)
+{
+    if (root)
+    {
+        midTrav(root -> left);
+        cout << root -> key << " ";
+        midTrav(root -> right);
+	}
+}
+```
+
+**后序遍历**
+
+![Postorder](https://oi-wiki.org/graph/images/tree-basic-Postorder.png)
+
+按照 **左，右，根** 的顺序遍历二叉树。
+
+```C++
+void lastTree(BiTree* root)
+{
+	if (root)
+	{
+		lastTrav(root -> left);
+		lastTrav(root -> right);
+		cout << root -> key << " ";
+	}
+}
+```
+
+**反推**
+
+已知**中序遍历序列和另外一个序列**可以求第三个序列。
+
+![reverse](https://oi-wiki.org/graph/images/tree-basic-reverse.png)
+
+1. 先序的第一个节点是 `root`，后序遍历的最后一个节点是 `root`。
+2. 先确定根节点，然后根据中序遍历，在根左边的为左子树，根右边的为右子树。
+3. 对于每一个子树可以看成一个全新的树，仍然遵循上面的规律。
+
+**树上 BFS**
+
+从树根开始，严格按照层次来访问节点，BFS 过程中也可以顺便求出各个节点的深度和父亲节点。
+
+**无根树**
+
+**过程**
+
+树的遍历一般为深度优先遍历，这个过程中最需要注意的是避免重复访问结点。
+
+由于树是无环图，因此只需记录当前结点是由哪个结点访问而来，此后进入除该结点外的所有相邻结点，即可避免重复访问。
+
+**实现**
+
+```c++
+void dfs(int u, int from)
+{
+    // 递归进入除了 from 之外的所有子结点
+    // 对于出发结点，from 为 -1，故会访问所有相邻结点，这与期望一致
+    for (int v : adj[u])
+    	if (v != from) dfs(v, u);
+}
+
+int EMPTY_NODE = -1;    // 一个不存在的编号
+int root = 0;           // 任取一个结点作为出发点
+dfs(root, EMPTY_NODE);
+```
+
+**有根树**
+
+对于有根树，需要区分结点的上下关系。
+
+考察上面的遍历过程，若从根开始遍历，则访问到一个结点时 `from` 的值，就是其父结点的编号。
+
+通过这个方式，可以对于无向的输入求出所有结点的父结点，以及子结点列表。
+
+#### 基本问题
+
+关于树，有以下常见基本问题
+
+1. 树的判断，判断一个图是否为树的基本方法是用DFS遍历
+2. 树的存储，和图的存储一样
+3. 距离问题，求树上点与点之间的路径长度，由于两点之间只有一条路径，无需使用图论中`Dijkstra` 等复杂寻路算法
+   1. 求某个节点`u` 到所有其他点的距离，用DFS或BFS对整棵树搜索一遍，复杂度为 $O(n)$ 
+   2. 求所有点对之间的距离，对每个点进行一次DFS或BFS，复杂度为 $O(n^2)$ ，用点分治法更快。
+   3. 求两个节点之间的距离，可以利用最近公共祖先（LCA），有复杂度为 $O(log_2n)$ 的高级算法
+4. 公共祖先和最近公共祖先（LCA）
+5. 树的直径，树的重心
+6. 多叉树和二叉树
+7. 树上前缀和、树上差分，树上前缀和是指从根出发到某点的路径上的点（或者边）的权值之和，用DFS从根开始搜索到某点，逐个累加点或边的权值即可。
+
+
+
+### 树的直径
+
+#### 定义
+
+**树上任意两节点之间最长的简单路径即为树的「直径」（diameter）**
+
+显然，一棵树可以有多条长度相等直径。可以用两次 `DFS` 或者树形 `DP` 的方法在 $O(n)$ 时间求出树的直径。
+
+
+
+**直径性质**
+若树上所有边边权均为正，则树的所有直径中点重合
+证明：使用反证法。设两条中点不重合的直径分别为 $\delta(s,t) 与 \delta(s',t')$，中点分别为 $x$ 与 $x'$。显然，$\delta(s,x) = \delta(x,t) = \delta(s',x') = \delta(x',t')$。
+
+![无负权边的树所有直径的中点重合](https://oi-wiki.org/graph/images/tree-diameter4.svg)
+
+有 $\delta(s,t') = \delta(s,x) + \delta(x,x') + \delta(x',t') > \delta(s,x) + \delta(x,t) = \delta(s,t)$，与 $\delta(s,t)$ 为树上任意两节点之间最长的简单路径矛盾，故性质得证。
+
+
+
+#### 两种实现方法
+
+现给定一棵 $n$ 个节点的树，求其直径的长度。$1 \leq n\leq 10^4$
+
+##### **两次DFS**
+
+首先从任意节点 $y$ 开始进行第一次 `DFS`，到达距离其最远的节点，记为 $z$，然后再从 $z$ 开始做第二次 `DFS`，到达距离 $z$ 最远的节点，记为$z^{'}$，则 $\delta(z,z^{'})$ 即为树的直径。
+
+显然，如果第一次 `DFS` 到达的节点 $z$ 是直径的一端，那么第二次 DFS 到达的节点 $z^{'}$ 一定是直径的一端。我们只需证明在任意情况下 $z$  必为直径的一端。
+
+**定理**：在一棵树上，从任意节点 $y$ 开始进行一次 `DFS`，到达的距离其最远的节点 $z$ 必为直径的一端。
+
+注意：上述结论建立在所有路径均不为负的前提下。**如果树上存在负权边，则上述结论不成立**。故若存在负权边，则无法使用两次 DFS 的方式求解直径。
+
+代码实现：
+
+```c++
+const int N = 10010;
+
+int n, c, d[N];
+vector<int> E[N];
+
+void dfs(int u, int fa)
+{
+    for (int v : E[u])
+    {
+        if (v == fa) continue;
+        d[v] = d[u] + 1;
+        if (d[v] > d[c]) c = v;
+        dfs(v, u);
+    }
+}
+int main()
+{
+    cin >> n;
+    for (int i = 1; i < n; i++)
+    {
+        int u, v; cin >> u >> v;
+        E[u].push_back(v);
+        E[v].push_back(u);
+    }
+    dfs(1, 0);
+    d[c] = 0;
+    dfs(c, 0);
+    cout << d[c] << endl;
+    return 0;
+}
+```
+
+如果需要求出一条直径上所有的节点，则可以在第二次 DFS 的过程中，记录每个点的前序节点，即可从直径的一端一路向前，遍历直径上所有的节点。
+
+##### **树形DP**
+
+**过程**
+
+我们记录当 $1$ 为树的根时，每个节点作为子树的根向下，所能延伸的最长路径长度与 $d_1$ 次长路径（**与最长路径无公共边**）长度$d_2$，那么直径就是对于每一个点，该点能 $d_1+d_2$ 取到的值中的最大值。
+
+树形 DP 可以在**存在负权边**的情况下求解出树的直径。
+
+<img src="D:\MarkdownText\image\图论\1.png" alt="1" style="zoom:50%;" />
+
+如图，对于点 1 来说，遍历其儿子结点 2、3、4，取最大的两条路径即 `d1[2]` 和 `d1[3]`，加上与父亲 1 的边权（这里设为 1），得到目前最大的直径 `d = (d1[2] + 1) + (d1[3] + 1)`。
+
+代码实现：
+
+```c++
+const int N = 10010;
+
+int n, d = 0;
+int d1[N], d2[N];
+vector<int> E[N];
+
+void dfs(int u, int fa)
+{
+    d1[u] = d2[u] = 0;//初始化为 0，若与儿子有负权边则不选择该儿子，至少可以保证权值为 0。故至少 d >= 0
+    for (int v : E[u])
+    {
+        if (v == fa) continue;
+        dfs(v, u);
+        int t = d1[v] + 1;
+        if (t > d1[u])
+            d2[u] = d1[u], d1[u] = t;
+        else if (t > d2[u])
+            d2[u] = t;
+    }
+    d = max(d, d1[u] + d2[u]);
+}
+int main()
+{
+    cin >> n;
+    for (int i = 1; i < n; i++)
+    {
+        int u, v; cin >> u >> v;
+        E[u].push_back(v);
+        E[v].push_back(u);
+    }
+    dfs(1, 0);
+    cout << d << endl;
+    return 0;
+}
+```
+
+**直径路径输出：**
+
+如果需要求出一条直径上所有的节点，则可以在 DP 的过程中，记录下每个节点能向下延伸的最长路径与次长路径（定义同上）所对应的子节点，在求 $d$ 的同时记下对应的节点 $u$，使得 $d = d_1[u] + d_2[u]$，即可分别沿着从 $u$开始的最长路径的次长路径对应的子节点一路向某个方向（对于无根树，虽然这里指定了 $1$ 为树的根，但仍需记录每点跳转的方向；对于有根树，一路向上跳即可），遍历直径上所有的节点。
+
+
+
+### 树的重心
+
+#### 定义
+
+树的重心（barycenter）也称为树的质心，它是无根树（不含回路的无向图）上的一个应用。树的重心 $u$ 是这样一个节点：把树变成以节点 $u$ 为根的有根树时，**最大子树**（最大连通块）的**节点数最少**，那么 $u$ 就是树的重心。换句话说，删除节点 $u$ 后得到两棵树或者更多棵互不连通的子树，其中最大子树的节点数最少。$u$ 是树上**最平衡**的点。
+
+<img src="D:\MarkdownText\image\图论\2.png" alt="2" style="zoom:33%;" />
+
+如图，
+
+```vue
+当去掉点 1 后，树将分成两个连通块（子树）：
+（2,4,5）
+（3,6,7）
+则最大的连通块包含节点个数为 3。
+
+
+当去掉点 2 后，树将分成三个连通块（子树）：
+（4）
+（5）
+（1,3,6,7）
+则最大的连通块包含节点个数为 4。
+
+以此类推，最后得到，点 1 为根下的子树最大节点数为 3 是最小的，故点 1 是该树的重心
+```
+
+<img src="D:\MarkdownText\image\图论\3.png" alt="3" style="zoom:50%;" />
+
+我们删除节点2，可以得到3个连通分量：① ② ③
+
+① ② 是节点2的子树，其节点数可以通过递归求得；
+
+③是该节点上方的子树，该子树的节点数为 `n - f[i]`。
+
+我们所求的节点 i 的最大连通分量的节点数为：
+
+```erlang
+dp(i) = max(f[j], n - f[i]) （j 是 i 的子树）
+```
+
+**应用**
+
+删去重心后，生成的多棵树已尽可能平衡，在**树的点分治**中有重要的作用, 可以避免`O(n^2)`的极端复杂度（从退化链的一端出发），保证`O(nlogn)`的复杂度
+
+#### **代码实现**
+
+给定一棵 `n` 个节点的树, 求该树的重心. 
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 5e4 + 10;        //最大节点数
+int n, cnt, maxn, bc;
+struct Edge
+{
+    int to, next;
+    Edge() {};
+    Edge(int _to, int _next) {to = _to; next = _next;}
+}e[N << 1];                    //无向边，开两倍
+int head[N];
+int f[N];                      //f[u]是以u为根的子树节点数量
+void add_edge(int u, int v)
+{
+    e[++cnt] = Edge(v, head[u]);
+    head[u] = cnt;
+}
+void dfs(int u, int fa)
+{
+    int tmp = 0;
+    f[u] = 1;                   //递归到最底层时，节点数初始化为 1
+    for (int i = head[u]; i; i = e[i].next)   //遍历u的子节点
+    {
+        int v = e[i].to;         
+        if (v == fa) continue;   //不递归父亲
+        dfs(v, u);               //递归子节点，计算v这个子树节点数量
+        tmp = max(tmp, f[v]);    //计算以u为根的节点数量
+        f[u] += f[v];            //记录u的最大子树的节点数量
+    }
+    tmp = max(tmp, n - f[u]);    //tmp = u的最大连通块的节点数
+    if (tmp < maxn) bc = u, maxn = tmp;  //维护重心
+}
+int main()
+{
+    maxn = 0x3f3f3f3f;
+    cin >> n;
+    for (int i = 1; i < n; i++)
+    {
+        int u, v; cin >> u >> v;
+        add_edge(u, v);
+        add_edge(v, u);
+    }
+    dfs(1, 0);
+    cout << bc << endl;
+    return 0;
+}
+```
 
 
 
@@ -8819,8 +9368,352 @@ int main()
 
 
 
+11.距离计算（友元函数）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Point
+{
+    private:
+        double x, y;
+    public:
+        Point(double xx, double yy)
+        {
+            x = xx, y = yy;
+        }
+        friend double Distance(Point &a, Point &b)
+        {
+            double xx = a.x - b.x, yy = a.y - b.y;
+            return sqrt(xx * xx + yy * yy);
+        }
+};
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        double x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        Point p1(x1, y1), p2(x2, y2);
+        cout << (int)Distance(p1, p2) << '\n';
+    }
+    return 0;
+}
 
 
+
+12.银行账户（静态成员与友元函数）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Account
+{
+    private:
+        static float count; // 账户总余额
+        static float interestRate;
+        string accno, accname;
+        float balance;
+    public:
+        Account(string ac = "", string na = "", float ba = 0.0)
+        {
+            accno = ac, accname = na, balance = ba;
+            count += ba;
+        }
+        ~Account(){}
+        void deposit(float amount)
+        {
+            balance += amount;
+            count += amount;
+        }
+        void withdraw(float amount)
+        {
+            balance -= amount;
+            count -= amount;
+        }
+        float getBalance()
+        {
+            return balance;
+        }
+        void show()
+        {
+            cout << accno << " " << accname << " " << balance;
+        }
+        static float getCount()
+        {
+            return count;
+        }
+        static void setInterestRate(float rate)
+        {
+            interestRate = rate;
+        }
+        static float getInterestRate()
+        {
+            return interestRate;
+        }
+        friend void update(Account& a)
+        {
+            float tp = a.balance;
+            a.balance += a.balance * Account::interestRate;
+            count += a.balance - tp;
+        }
+};
+
+float Account::count = 0;
+float Account::interestRate = 0;
+
+int main()
+{
+    untie();
+    float rate, ans = 0;
+    int n;
+    cin >> rate >> n;
+    Account **p = new Account*[n];
+    Account::setInterestRate(rate);
+    for(int i = 0 ; i < n ; ++i)
+    {
+        string acc, name;
+        float bal, dep, witd;
+        cin >> acc >> name >> bal >> dep >> witd;
+        p[i] = new Account(acc, name, bal);
+        p[i]->deposit(dep);
+        p[i]->show();
+        update(*p[i]);
+        cout << " " << p[i]->getBalance();
+        p[i]->withdraw(witd);
+        cout << " " << p[i]->getBalance();
+        cout << '\n';
+        ans = p[i]->getCount();
+        delete p[i];
+    }
+    cout << ans << '\n';
+    delete[] p;
+    return 0;
+}
+
+
+
+13.复数运算（友元函数）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Complex
+{
+private:
+	double real; // 实部
+	double imag; // 虚部
+public:
+	Complex(){}
+	Complex(double r, double i)
+    {
+        real = r, imag = i;
+    }
+	friend Complex addCom(const Complex& c1, const Complex& c2)
+    {
+        Complex t(c1.real + c2.real, c1.imag + c2.imag);
+        return t;
+    }
+    friend Complex minusCom(const Complex& c1, const Complex& c2)
+    {
+        Complex t(c1.real - c2.real, c1.imag - c2.imag);
+        return t;
+    }
+	// 友元函数，输出类对象c的有关数据(c为参数对象)
+	friend void outCom(const Complex& c)
+    {
+        cout << "(" << c.real <<"," << c.imag << ")\n";
+    }
+    
+};
+
+int main()
+{
+    untie();
+    double rl, ig;
+    cin >> rl >> ig;
+    Complex c(rl, ig);
+    int n;
+    cin >> n;
+    while(n--)
+    {
+        char op[5];
+        cin >> op >> rl >> ig;
+        Complex ct(rl, ig);
+        if(op[0] == '+') c = addCom(c, ct);
+        else c = minusCom(c, ct);
+        outCom(c);
+    }
+    return 0;
+}
+
+  
+  
+14.旅馆顾客统计（静态成员）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Hotel
+{
+    private:
+        static int totalCustNum; // 顾客总人数
+        static float totalEarning; // 旅店总收入
+        static float rent; // 每个顾客的房租
+        char *customerName; // 顾客姓名
+        int customerId; // 顾客编号
+    public:
+        Hotel(){}
+        Hotel(char* customer)
+        {
+            Hotel::totalCustNum++;
+            Hotel::totalEarning += rent;
+            customerName = new char[strlen(customer) + 5];
+            strcpy(customerName, customer);
+        }
+        ~Hotel()
+        {
+            delete customerName;
+        }
+        void Display()
+        {
+            printf("%s %04d %d %d\n", customerName, 20150000 + Hotel::totalCustNum, Hotel::totalCustNum, (int)totalEarning);
+        }
+        static void setRent(float rt)
+        {
+            Hotel::rent = rt;
+        }
+};
+
+int Hotel::totalCustNum = 0;
+float Hotel::totalEarning = 0;
+float Hotel::rent = 0;
+
+int main()
+{
+    untie();
+    float rt;
+    cin >> rt;
+    Hotel::setRent(rt);
+    char s[50];
+    while(cin >> s)
+    {
+        if(s[0] == '0') break;
+        Hotel h(s);
+        h.Display();
+    }
+    return 0;
+}
+
+
+
+15.日期时间合并输出（友元函数）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CDate;
+class CTime
+{
+	private:
+		int hour, min, sec;
+	public:
+		friend void Display(CDate &, CTime &);
+		void input()
+		{
+			cin >> hour >> min >> sec;
+		}
+};
+class CDate
+{
+	private:
+		int year,month,day;
+	public:
+		friend void Display(CDate &,CTime &);
+		void input()
+		{
+			cin >> year >> month >> day;
+		}
+};
+void Display(CDate & date,CTime & time)
+{
+	cout << date.year << '-' << setfill('0') << setw(2) << date.month << '-' << setw(2) << date.day << ' ' << setw(2) << time.hour << ':' << setw(2) << time.min << ':' << setw(2) << time.sec << '\n';
+}
+int main()
+{
+    untie();
+	int t;
+	CDate date;
+	CTime time;
+	cin >> t;
+	while(t--)
+	{
+		date.input();
+		time.input();
+		Display(date, time);
+	}
+    return 0;
+}
 
 
 
