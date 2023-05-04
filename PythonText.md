@@ -754,7 +754,9 @@ c2.Intro()
 
 ## 继承
 
-> 继承是一种创建新类的方式，新建的类可称为**子类**或派生类，**父类**可称为基类或超类。python支持**多继承**，即新建的类可以支持一个或多个父类。
+> 继承是一种创建新类的方式，新建的类可称为**子类**或派生类，**父类**可称为基类或超类。python支持**多继承**，即新建的类可以支持一个或多个父类。`object`默认是所有类的父类（超类）。
+
+作用：父类拥有的成员和方法子类都会继承并拥有，而子类拥有的成员和方法父类则不一定有。多个子类的相同属性和行为都将从同一个父类中继承，大大提高编码效率，并且便于统一管理和修改。
 
 **单继承与多继承**
 
@@ -763,6 +765,7 @@ class Parent1:
     pass
 class Parent2:
     pass
+
 class Sub1(Parent1): #单继承
     pass
 print(Sub1.__bases__)  # 查看自己的父类---->(<class '__main__.Parent1'>,)
@@ -770,6 +773,42 @@ print(Sub1.__bases__)  # 查看自己的父类---->(<class '__main__.Parent1'>,)
 class Sub2(Parent1,Parent2): # 多继承
     pass
 print(Sub2.__bases__)    # 查看自己的父类---->(<class '__main__.Parent1'>, <class '__main__.Parent2'>)
+
+
+
+#单继承
+class Animal:
+
+    def walk(self):
+        print("A {} is walking now".format(type(self)))
+    pass
+
+class Cat(Animal):
+    def meow(self):
+        print("Cat Meow")
+    pass
+
+class Dog(Animal):
+    def bark(self):
+        print("Dog Bark")
+    pass
+
+c = Cat()
+d = Dog()
+c.meow()
+d.bark()
+c.walk()
+d.walk()
+'''
+Cat Meow
+Dog Bark
+A <class '__main__.Cat'> is walking now
+A <class '__main__.Dog'> is walking now
+'''
+
+
+#多继承
+
 ```
 
 
