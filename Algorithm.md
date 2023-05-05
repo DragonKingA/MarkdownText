@@ -9717,6 +9717,478 @@ int main()
 
 
 
+16.向量1（类和对象）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CVector{
+    private:
+        int *data;
+        int n;
+    public:
+        CVector()
+        {
+            n = 5;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) data[i] = i;
+        }
+        CVector(int n1, int *a)
+        {
+            n = n1;
+            data = new int[n1];
+            for(int i = 0; i < n1; ++i) data[i] = a[i];
+        }
+        ~CVector()
+        {
+            delete []data;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i)
+            {
+                cout << data[i] << " \n"[i == n - 1];
+            }
+        }
+};
+
+int main()
+{
+    untie();
+    int n, *a;
+    cin >> n;
+    a = new int[n];
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    CVector c1 = CVector();
+    CVector c2(n, a);
+    c1.Print();
+    c2.Print();
+  	delete []a;
+    return 0;
+}
+
+
+
+17.向量2（友元及拷贝构造）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CVector{
+    private:
+        int *data;
+        int n;
+    public:
+        CVector()
+        {
+            n = 5;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) data[i] = i;
+        }
+        CVector(int n1, int *a)
+        {
+            n = n1;
+            data = new int[n1];
+            for(int i = 0; i < n1; ++i) data[i] = a[i];
+        }
+        CVector(const CVector &cv)
+        {
+            n = cv.n;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) data[i] = cv.data[i];
+        }
+        ~CVector()
+        {
+            delete []data;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i)
+            {
+                cout << data[i] << " \n"[i == n - 1];
+            }
+        }
+        friend CVector add(const CVector v1, const CVector v2)
+        {
+            CVector res(v1);
+            for(int i = 0; i < v2.n; ++i) res.data[i] += v2.data[i];
+            return res;
+        }
+};
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n, *a, *b;
+        cin >> n;
+        a = new int[n];
+        b = new int[n];
+        for(int i = 0; i < n; ++i) cin >> a[i];
+        for(int i = 0; i < n; ++i) cin >> b[i];
+        CVector c1(n, a);
+        CVector c2(n, b);
+        c1.Print();
+        c2.Print();
+        add(c1, c2).Print();
+        delete []a;
+        delete []b;
+    }
+    return 0;
+}
+
+
+
+18.向量3（静态成员）
+
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CVector{
+    private:
+        int *data;
+        int n;
+        static int sum;
+    public:
+        CVector()
+        {
+            n = 5;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) 
+            {
+                data[i] = i;
+                sum += i;
+            }
+        }
+        CVector(int n1, int *a)
+        {
+            n = n1;
+            data = new int[n1];
+            for(int i = 0; i < n1; ++i) 
+            {
+                data[i] = a[i];
+                sum += a[i];
+            }
+        }
+        ~CVector()
+        {
+            delete []data;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i)
+            {
+                cout << data[i] << " \n"[i == n - 1];
+            }
+        }
+        static void Print_sum()
+        {
+            cout << sum << '\n';
+            sum = 0;
+        }
+};
+
+int CVector::sum = 0;
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int cnt;
+        cin >> cnt;
+        while(cnt--)
+        {
+            int n, *a;
+            cin >> n;
+            a = new int[n];
+            for(int i = 0; i < n; ++i) cin >> a[i];
+            CVector c1(n, a);
+            c1.Print();
+            delete []a;
+        }
+        CVector::Print_sum();
+    }
+    return 0;
+}
+
+
+
+*19.向量4（类复合）
+
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CVector{
+    private:
+        int *data;
+        int n, sum;
+    public:
+        CVector()
+        {
+            n = 5;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) 
+            {
+                data[i] = i;
+                sum += i;
+            }
+        }
+        CVector(int n1, int *a)
+        {
+            n = n1;
+            data = new int[n1];
+            sum = 0;
+            for(int i = 0; i < n1; ++i) 
+            {
+                data[i] = a[i];
+                sum += a[i];
+            }
+        }
+        CVector(const CVector &cv)//拷贝构造函数
+        {
+            n = cv.n;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) data[i] = cv.data[i];
+        }
+        ~CVector()
+        {
+            delete []data;
+            data = NULL;
+        }
+        float Average()
+        {
+            return 1.0 * sum / n;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i) cout << data[i] << " ";
+        }
+};
+
+class CStudent{
+    private:
+        string name;
+        CVector score;
+    public:
+        CStudent(){}
+        CStudent(string name1, int n1, int *a1):score(n1, a1)//重点：这样写是深拷贝，防止浅拷贝造成指针Delete时报错
+        {
+            name = name1;
+        }
+        void Print()
+        {
+            cout << name << " ";
+            score.Print();
+            cout << fixed << setprecision(2)  << score.Average() << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    string s;
+    while(cin >> s)
+    {
+        int n, *a;
+        cin >> n;
+        a = new int[n];
+        for(int i = 0; i < n; ++i) cin >> a[i];
+        CStudent stu(s, n, a);
+        stu.Print();
+        delete []a;
+    }
+    return 0;
+}
+
+
+
+20.向量5（友元类）
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue>
+#include <iomanip>
+
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CVector{
+    private:
+        int *data;
+        int n;
+    public:
+        friend class CMatrix;
+        CVector()
+        {
+            n = 5;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) 
+            {
+                data[i] = i;
+            }
+        }
+        CVector(int n1, int *a = NULL)
+        {
+            n = n1;
+            data = new int[n1];
+            for(int i = 0; i < n1; ++i) 
+            {
+                data[i] = (a == NULL ? 0 : a[i]);
+            }
+        }
+        CVector(const CVector &cv)
+        {
+            n = cv.n;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) data[i] = cv.data[i];
+        }
+        ~CVector()
+        {
+            delete []data;
+            data = NULL;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i) cout << data[i] << " \n"[i == n - 1];
+        }
+};
+
+class CMatrix{
+    private:
+        int n, **data;
+    public:
+        CMatrix(){}
+        CMatrix(int nn, int **_data)
+        {
+            n = nn;
+            data = new int* [nn];
+            for(int i = 0; i < n; ++i) data[i] = new int[n];
+            if(_data == NULL) return;
+            for(int i = 0; i < n; ++i)
+                for(int j = 0; j < n; ++j)
+                    data[i][j] = _data[i][j];
+        }
+        ~CMatrix()
+        {
+            for(int i = 0; i < n; ++i) delete []data[i];
+        }
+        CVector multi(const CVector &v1)
+        {
+            CVector res(v1.n);
+            for(int i = 0; i < v1.n; ++i)
+                for(int j = 0; j < v1.n; ++j)
+                    res.data[i] += v1.data[j] * data[i][j];
+            return res;
+        }
+};
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n, m, **data, *a;
+        cin >> n;
+        data = new int*[n];
+        for(int i = 0; i < n; ++i) data[i] = new int[n];
+        for(int i = 0; i < n; ++i)
+            for(int j = 0; j < n; ++j)
+                cin >> data[i][j];
+        cin >> m;
+        a = new int[m];
+        for(int i = 0; i < m; ++i) cin >> a[i];
+        if(n != m)
+        {
+            cout << "error\n";
+        }
+        else
+        {
+            CVector v1(m, a);
+            CMatrix mat(n, data);
+            mat.multi(v1).Print();//不创建临时变量而是直接使用，防止浅拷贝赋值写法带来Delete时的报错
+        }
+        for(int i = 0; i < n; ++i) delete []data[i];
+        delete []a;
+        a = NULL;
+        data = NULL;
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 

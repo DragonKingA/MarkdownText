@@ -754,11 +754,101 @@ c2.Intro()
 
 ## 继承
 
-> 继承是一种创建新类的方式，新建的类可称为**子类**或派生类，**父类**可称为基类或超类。python支持**多继承**，即新建的类可以支持一个或多个父类。`object`默认是所有类的父类（超类）。
+> 继承是一种创建新类的方式，新建的类可称为**子类**或派生类，**父类**可称为基类或超类。python支持**多继承**，即新建的类可以支持**一个或多个父类**。`object`默认是所有类的父类（超类）。继承具有**传递性**，子类可继承到其父类的所有父类（一般最多传递三级，否则代码可读性大打折扣）。
 
 作用：父类拥有的成员和方法子类都会继承并拥有，而子类拥有的成员和方法父类则不一定有。多个子类的相同属性和行为都将从同一个父类中继承，大大提高编码效率，并且便于统一管理和修改。
 
-**单继承与多继承**
+注意：若子类拥有**与父类同名的方法**，则子类的该方法会**覆盖**掉父类的，因为最先搜索到的自然是子类本身的方法，即调用该方法名时仅会调用到子类的方法内容。
+
+### 经典类与新式类区别
+
+在对于同名方法的搜寻顺序上：
+
+```python
+class G:
+    def test(self):
+        print('from G')
+class E(G):
+    def test(self):
+        print('from E')
+class F(G):
+    def test(self):
+        print('from F')
+class B(E):
+    def test(self):
+        print('from B')
+class C(F):
+    def test(self):
+        print('from C')
+class D(G):
+    def test(self):
+        print('from D')
+
+class A(B, C, D):
+    pass
+
+
+obj = A()
+obj.test()
+# 经典类 
+# 查找顺序为 : obj -> A -> B -> E -> G -> C -> F -> D -> object
+# 输出 from B
+
+# 新式类
+# 查找顺序为 : obj -> A -> B -> E -> C -> F -> D -> G -> object
+# 输出 from D
+```
+
+* 经典类：按深度优先顺序查找（在 python 2 中，没有继承 `object` 的类及其子类都是经典类）
+
+  <img src="D:\MarkdownText\image_python\9.png" alt="9" style="zoom: 67%;" />
+
+* 新式类：按广度优先顺序查找（在 python 3 中，均默认为新式类）
+
+  <img src="D:\MarkdownText\image_python\10.png" alt="10" style="zoom: 67%;" />
+
+### super() 方法
+
+super() 方法的存在就是为了解决多重继承的问题，可以在**一个父类中**使用 super() 方法用于调用**下一个父类**的方法，也可以在**子类**中使用 super() 方法用于按新式类顺序寻找**首个同名的父类方法**并执行（若参数列表不匹配则会报错）。好处就是可以避免直接使用父类的名字。
+
+使用：
+
+* python 2：`super(子类，self).父类方法名`
+* python 3：`super().父类方法名` 省略了括号中的参数，且后续父类方法的参数列表将**省略 `self` 参数**
+
+
+
+```python
+class A:
+    def test(self):
+        print('from A')
+        super().test() # 省略参数 self
+'''用于调用C的下一个父类的方法B.test()'''
+
+class B:
+    def test(self):
+        print('from B')
+
+
+class C(A, B):
+    pass
+
+
+c = C()
+c.test()
+print(C.mro())
+# 查找顺序如下
+#[<class '__main__.C'>, <class '__main__.A'>, <class '__main__.B'>, <class 'object'>]
+#即 C 的第一个父类为 A，则下一个父类为 B
+
+# 结果
+# from A
+# from B
+```
+
+
+
+### **单继承与多继承**
 
 ```python
 class Parent1:
@@ -808,7 +898,74 @@ A <class '__main__.Dog'> is walking now
 
 
 #多继承
+class Creature:
+    name = ""
+    exist = True
+    def __init__(self, name):
+        self.name = name;
+        pass
+    def isExist(self):
+        print("{} is existed".format(self.name))
+    def setName(self, nm):
+        self.name = nm
+    pass
 
+class Animal:
+    # 若这里有同名方法
+    # def __init__(self):
+    # 	 pass
+    # 但是下面 super()引用的 __init__ 方法具有参数 name，则程序会报错（不会重新往后面再寻找同名方法了）
+    def walk(self):
+        print("A {} is walking now".format(type(self)))
+    pass
+
+class Cat(Animal, Creature):
+    def __init__(self, name):
+        # Creature.__init__(self, name) # 与下句等效
+        super().__init__(name) # 从父类中自动寻找可执行方法 __init__(self, name) 的父类，这里就找到了父类 Creature
+        # 这里的寻找机制是首个对应参数列表
+        pass
+    def meow(self):
+        print("Cat Meow")
+    pass
+
+class Dog(Animal, Creature):
+    def bark(self):
+        print("Dog Bark")
+    pass
+
+
+c = Cat("Cat1")
+d = Dog("Dog1")
+c.isExist()
+d.isExist()
+# Cat1 is existed
+# Dog1 is existed
+
+
+
+#类方法调用的先后顺序
+#从子类开始找一层一层往父类找，同层次类找完才会开始往上一层父类找。
+class A:
+    def isCalled(self):
+        print("A is called")
+    pass
+class B(A):
+    pass
+class C(A):
+    def isCalled(self):
+        print("C is called")
+    pass
+class D(B, C):
+    pass
+
+d = D()
+d.isCalled()
+# 输出 C is called
+# 故系统查找 isCalled 方法的顺序为 D -> B -> C -> A
+
+print(D.__mro__) # 输出类的依次继承关系（从子类到父类最终到默认超类 object），也展示了同名方法的搜索顺序，仅执行最先找到的。
+# (<class '__main__.D'>, <class '__main__.B'>, <class '__main__.C'>, <class '__main__.A'>, <class 'object'>)
 ```
 
 
