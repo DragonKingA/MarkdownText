@@ -740,6 +740,153 @@ int main()
 
 # Div 4
 
+
+
+## Round 817
+
+### A ~ D
+
+```c++
+//A
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        string s;
+        int n;
+        cin >> n >> s;
+        sort(s.begin(), s.end());
+        if(s == "Timru") cout << "YES\n";
+        else cout << "NO\n";
+    }
+    return 0;
+}
+
+
+
+//B
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n, ok = 1;
+        string s1, s2;
+        cin >> n >> s1 >> s2;
+        for(int i = 0; i < n; ++i)
+        {
+            if(s1[i] == 'R' || s2[i] == 'R')
+            {
+                if(s1[i] != s2[i])
+                {
+                    ok = 0;
+                    break;
+                }
+            }
+        }
+        if(ok) cout << "YES\n";
+        else cout << "NO\n";
+    }
+    return 0;
+}
+
+
+
+//C
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n = 3, m;
+        string s;
+        cin >> m;
+        map<string, bool> mp[3];
+        map<string, int> cnt;
+        for(int i = 0; i < n; ++i)
+        {
+            for(int j = 0; j < m; ++j)
+            {
+                cin >> s;
+                mp[i][s] = 1;
+                cnt[s]++;
+            }
+        }
+        ll ans[3] = {0, 0, 0};
+        for(int i = 0; i < n; ++i)
+        {
+            for(auto [str, exist] : mp[i])
+            {
+                if(cnt[str] == 1) ans[i] += 3;
+                else if(cnt[str] == 2) ans[i] += 1;
+            }
+        }
+        for(int i = 0; i < n; ++i) cout << ans[i] << " \n"[i == n - 1];
+    }
+    return 0;
+}
+
+
+
+//D
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<ll> c(n + 1, 0);//便于获得另一种结果
+        ll sum = 0;
+        for(int i = 0; i < n; ++i)
+        {
+            if(s[i] == 'L') sum += i, c[i] = n - i - 1 - i;//sum[i] + c[i] == n - i + 1
+            else sum += n - i - 1, c[i] = i - (n - i - 1);//sum[i] + c[i] == i
+        }
+        sort(c.begin(), c.end());
+        for(int i = n - 1; i >= 0; --i)
+        {
+            sum = max(sum, sum + c[i]);
+            cout << sum << " \n"[i == 0];
+        }
+    }
+    return 0;
+}
+
+```
+
+
+
 ## Round 849
 
 ### A ~ D 、G1
@@ -1329,7 +1476,354 @@ int main()
 
 
 
+## [Round 871](https://codeforces.com/contest/1829)
+
+### A ~ C
+
+```c++
+//均为签到题
+//A
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+string b = "codeforces";
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        string s;
+        cin >> s;
+        int cnt = 0;
+        for(int i = 0; i < 10; ++i)
+        {
+            cnt += (s[i] != b[i]);
+        }
+        cout << cnt << '\n';
+    }
 
 
 
+
+    return 0;
+}
+
+
+
+//B
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+int a[10000];
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n;
+        cin >> n;
+        bool ok = 0;
+        int cnt = 0, tp = 0;
+        for(int i = 0; i < n; ++i) 
+        {
+            cin >> a[i];
+            if(a[i] == 0)
+            {
+                ++tp;
+            }
+            else 
+            {
+                tp = 0;
+            }
+            cnt = max(cnt, tp);
+        }
+        cout << cnt << '\n';
+    }
+    return 0;
+}
+
+
+
+//C
+
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 100;
+ll a[N];
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int n;
+        cin >> n;
+        string op;
+        int sum = 2e9, a1 = 2e9, a2 = 2e9, ok = 0, tp1 = a1, tp2 = a2;
+        for(int i = 0; i < n; ++i)
+        {
+            int x;
+            cin >> x >> op;
+            if(op[1] != '1' && op[0] == '1' && x < a1) 
+            {
+                tp1 = a1;
+                a1 = x;
+            }
+            if(op[0] != '1' && op[1] == '1' && x < a2) 
+            {
+                tp2 = a2;
+                a2 = x;
+            }
+            if(op[0] == '1' && op[1] == '1') sum = min(sum, x);
+        }
+        if(sum == 2e9 && (a1 == 2e9 || a2 == 2e9)) cout << "-1\n";
+        else cout << min(1LL * sum, 1LL * a1 + a2) << '\n';
+    }
+    return 0;
+}
+```
+
+### D、E
+
+```c++
+//均用 搜索 解
+//D
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 100;
+map<int, bool> mp;
+
+void dfs(int n)
+{
+    if(mp[n]) return;
+    mp[n] = 1;
+    if(n < 3 || n % 3 != 0) return;
+    dfs(n / 3);
+    dfs(n - n / 3);
+}
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        mp.clear();
+        int n, m, ok = 0;
+        cin >> n >> m;
+        if(n == m)
+        {
+            cout << "YES\n";
+            continue;
+        }
+        if(n % 3 != 0 || n < m) 
+        {
+            cout << "NO\n";
+            continue;
+        }
+
+        dfs(n);
+        ok = mp[m];
+
+        if(ok) cout << "YES\n";
+        else cout << "NO\n";
+    }
+    return 0;
+}
+
+
+
+//E（最大权值和连通块简单问题）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 1e3 + 100;
+struct nd{
+    int x, y;
+    nd(int xx = 0, int yy = 0) { x = xx, y = yy;}
+};
+int n, m;
+int a[N][N];
+ll ans = 0;
+bool vis[N][N];
+int dir[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+void bfs(int sx, int sy)
+{
+    queue<nd> q;
+    q.push(nd(sx, sy));
+    ll res = 1LL * a[sx][sy];
+    while(!q.empty())
+    {
+        nd now = q.front();
+        q.pop();
+        int x = now.x, y = now.y;
+        for(int i = 0; i < 4; ++i)
+        {
+            int nx = x + dir[i][0], ny = y + dir[i][1];
+            if(nx >= 1 && nx <= n && ny >= 1 && ny <= m && a[nx][ny] && !vis[nx][ny])
+            {
+                vis[nx][ny] = 1;
+                res += 1LL * a[nx][ny];
+                q.push(nd(nx, ny));
+            }
+        }
+    }
+    ans = max(ans, res);
+}
+
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        ans = 0;
+        memset(vis, 0, sizeof(vis));
+        cin >> n >> m;
+        for(int i = 1; i <= n; ++i)
+            for(int j = 1; j <= m; ++j)
+                cin >> a[i][j];
+        for(int i = 1; i <= n; ++i)
+            for(int j = 1; j <= m; ++j)
+                if(a[i][j] && !vis[i][j])
+                {
+                    vis[i][j] = 1;
+                    bfs(i, j);
+                }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+
+
+```
+
+### F
+
+```c++
+//模拟
+//思路：统计顶点的度数，度数有两种或三种。顶点共有三层（中间顶点为第一层）。
+//可知，最外层顶点度数必为 1，第二层顶点和中心顶点的度数均必大于 1 且有可能相等
+//首先根据唯一的中心顶点的度数即为 x，然后从计数器中提取出
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 300;
+int deg[N];
+int main()
+{
+    untie();
+    int t; cin >> t;
+    while(t--)
+    {
+        memset(deg, 0, sizeof(deg));
+        int n, m, x = 2, y = 2;
+        cin >> n >> m;
+        map<int, int> mp;
+        while(m--)
+        {
+            int u, v; cin >> u >> v;
+            deg[u]++, deg[v]++;
+        }
+        for(int i = 1; i <= n; ++i) mp[deg[i]]++;       //计算度数对应的顶点数
+        if(mp.size() == 2)                             //说明中心顶点与第二层顶点度数相同
+        {
+            x = (*mp.rbegin()).first;                   //x = 中心顶点度数
+            y = mp[1] / (mp[x] - 1);                    //y = 最外层顶点数 / 第二层顶点数
+        }
+        else
+        {
+            for(auto [p, num] : mp)                     
+                if(num == 1) x = p;
+            y = mp[1] / x;
+        }
+        cout << x << " " << y << '\n';
+    }
+    return 0;
+}
+
+
+
+//原AC代码，写的很臭，且最后AC的码没交上去
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e2 + 100;
+int deg[N];
+int main()
+{
+    untie();
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        memset(deg, 0, sizeof(deg));
+        int n, m, x = 2, y = 2, ok = 0;
+        cin >> n >> m;
+        vector<int> cnt, ans;
+        for(int i = 0; i < m; ++i)
+        {
+            int u, v;
+            cin >> u >> v;
+            deg[u]++;
+            deg[v]++;
+        }
+        set<int> st;
+        map<int, int> mp;
+        for(int i = 1; i <= n; ++i)
+        {
+            st.insert(deg[i]);
+        }
+        for(auto now : st) ans.push_back(now);
+        if(ans.size() == 2) ok = 1;
+        for(auto now : ans)
+        {
+            // cout << now << '\n';
+            int tp = 0;
+            for(int i = 1; i <= n; ++i)
+                if(deg[i] == now)
+                    ++tp;
+            if(tp != 1 && tp) cnt.push_back(tp);
+            mp[now] = tp;
+        }
+        for(auto now : ans)
+        {
+            if(ok) x = max(x, now);
+            if(mp[now] == 1)
+            {
+                x = now;
+                break;
+            }
+        }
+        for(auto now : cnt)
+        {
+            if(now != x)
+            {
+                y = now / x;
+                break;
+            }
+        }
+    
+        cout << x << " " << y << '\n';
+    }
+    return 0;
+}
+```
 
