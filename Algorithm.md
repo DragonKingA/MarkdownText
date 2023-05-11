@@ -10179,11 +10179,273 @@ int main()
 
 
 
+21.机器人变身（类与对象）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Robot{
+    private:
+        char name[30], pat;
+        int hp, attack, defense, level;
+    public:
+        Robot(){}
+        Robot(char *nm, char tp, int lel) {  strcpy(name, nm), level = lel, pat = tp, hp = attack = defense = 5 * level;}
+        void setPro(char ch)
+        {
+            pat = ch;
+            switch(ch)
+            {
+                case 'A': attack = 10 * level; break;
+                case 'D': defense = 10 * level; break;
+                case 'H': hp = 50 * level; break;
+            }
+        }
+        int getHp() { return hp;}
+        int getAt() { return attack;}
+        int getDf() { return defense;}
+        char getPat() { return pat;}
+        void Print()
+        {
+            cout << name << "--" << pat << "--" << level << "--" << hp << "--" << attack << "--" << defense << '\n';
+        }
+};
+
+bool change(Robot *bot, char dest)
+{
+    bool res = true;
+    if(bot->getPat() == dest) res = false;
+    bot->setPro(dest);
+    return res;
+}
+
+int main()
+{
+    untie();
+    int T, cnt = 0;
+    cin >> T;
+    while(T--)
+    {
+        char nm[30], tp, dest;
+        int lel;
+        cin >> nm >> tp >> lel >> dest;
+        Robot bot(nm, tp, lel);
+        if(change(&bot, dest)) ++cnt;
+        bot.Print();
+    }
+    cout << "The number of robot transform is " << cnt << '\n';
+    return 0;
+}
 
 
 
+22.虚拟电话（构造与析构）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class PhoneNumber{
+    private:
+        int num;
+        char pat;
+    public:
+        PhoneNumber(){}
+        PhoneNumber(int n, char tp)
+        {
+            num = n, pat = tp;
+            cout << num << " constructed.\n";
+        }
+        ~PhoneNumber()
+        {
+            cout << num << " destructed.\n";
+        }
+        int getNum(){ return num;}
+        char getPat(){ return pat;}
+};
+
+class VirtualPhone{
+    private:
+        char name[30];
+        int status;
+        PhoneNumber pNum;
+    public:
+        VirtualPhone(){}
+        VirtualPhone(int n, char tp, char *nm, int sta) : pNum(n, tp)
+        {
+            strcpy(name, nm);
+            status = sta;
+        }
+        void Print()
+        {
+            cout << "Phone=" << pNum.getNum() << "--Type=" << pNum.getPat() << "--State=" << (status ? "use":"unuse") << "--Owner=" << name << '\n';
+        }
+        bool search(int _num)
+        {
+            if(pNum.getNum() == _num) return true;
+            return false;
+        }
+};
 
 
+int main()
+{
+    untie();
+    int n, sta;
+    char tp, nm[30];
+    cin >> n >> tp >> sta >> nm;
+    VirtualPhone p1(n, tp, nm, sta);
+    cin >> n >> tp >> sta >> nm;
+    VirtualPhone p2(n, tp, nm, sta);
+    cin >> n >> tp >> sta >> nm;
+    VirtualPhone p3(n, tp, nm, sta);
+    int T;
+    cin >> T;
+    while(T--)
+    {   
+        int num, ok = 0;
+        cin >> num;
+        if(p1.search(num)) p1.Print(), ok = 1;
+        if(p2.search(num)) p2.Print(), ok = 1;
+        if(p3.search(num)) p3.Print(), ok = 1;
+        if(!ok) cout << "wrong number.\n";
+    }
+    return 0;
+}
+
+
+
+23.银行账户（拷贝构造）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Account{
+    private:
+        int num;
+        char pat;
+        double count, rate;
+    public:
+        Account(){}
+        Account(int n, char tp, double ct)
+        {
+            num = n, pat = tp, count = ct;
+            rate = 0.005;
+        }
+        Account(const Account &a)
+        {
+            num = a.num + 50000000;
+            pat = a.pat;
+            count = a.count;
+            rate = 0.015;
+        }
+        void Print1()
+        {
+            count *= 1.0 + rate;
+            cout << "Account=" << num << "--sum=" << count << '\n';
+        }
+        void Print2()
+        {
+            cout << "Account=" << num << "--" << (pat == 'P' ? "Person" : "Enterprise") << "--sum=" << count << "--rate=" << rate << '\n';
+        }
+        void Print(char op)
+        {
+            if(op == 'C') Print1();
+            else Print2();
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {   
+        int num;
+        char tp, op1, op2;
+        double cnt;
+        cin >> num >> tp >> cnt >> op1 >> op2;
+        Account a1(num, tp, cnt);
+        Account a2(a1);
+        a1.Print(op1);
+        a2.Print(op2);
+    }
+    return 0;
+}
+
+
+
+24.电视遥控（静态+友元）【期中模拟】
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Television{
+    private:
+        int sound, pat, num;
+        static int numTV, numDVD;
+    public:
+        Television(){}
+        Television(int p, int n, int ds)
+        {
+            pat = p;
+            num = n;
+            sound -= ds;
+        }
+        void setPro(int p, int n, int s)
+        {
+            pat = p;
+            num = n;
+            sound = s;
+        }
+        void Print()
+        {
+            cout << (pat == 1 ? "TV模式" : "DVD模式") << "--频道" << num << "--音量" << sound << '\n';
+        }
+        static void addTV(int val) { numTV += val;}
+        static void addDVD(int val) { numDVD += val;}
+        static int getNumTV() { return numTV;}
+        static int getNumDVD() { return numDVD;}
+        friend void Remote(Television &tv, int pat, int sound, int num)
+        {
+            if(tv.pat == 1 && pat == 2) Television::addDVD(1), Television::addTV(-1);
+            if(tv.pat == 2 && pat == 1) Television::addDVD(-1), Television::addTV(1);
+            tv.pat = pat;
+            tv.num = num;
+            tv.sound += sound;
+            if(tv.sound < 0) tv.sound = 0;
+            if(tv.sound > 100) tv.sound = 100;
+        }
+};
+
+int Television::numTV = 0;
+int Television::numDVD = 0;
+
+int main()
+{
+    untie();
+    int n, T;
+    cin >> n >> T;
+    Television *tvs = new Television[n + 1];
+    for(int i = 1; i <= n; ++i) tvs[i].setPro(1, 0, 50);
+    Television::addTV(n);
+    while(T--)
+    {   
+        int id, k, num, d;
+        cin >> id >> k >> num >> d;
+        Remote(tvs[id], k, d, num);
+        cout << "第" << id << "号电视机--";
+        tvs[id].Print();
+    }
+    cout << "播放电视的电视机数量为" << Television::getNumTV() << '\n';
+    cout << "播放DVD的电视机数量为" << Television::getNumDVD() << '\n';
+    delete []tvs;
+    return 0;
+}
 
 
 
