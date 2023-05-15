@@ -10449,8 +10449,506 @@ int main()
 
 
 
+25. 圆和圆柱体计算（继承）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define M_PI 3.14
+
+class CPoint{
+    private:
+        double x, y;
+    public:
+        CPoint(){}
+        CPoint(double xx, double yy)
+        {
+            x = xx, y = yy;
+        }
+        void Print_Point()
+        {
+            cout << "(" << x << "," << y << ")";
+        }
+};
+
+class CCircle : public CPoint{
+    public:
+        double r;
+        CCircle(){}
+        CCircle(double xx, double yy, double rr) : CPoint(xx, yy)
+        {
+            r = rr;
+        }
+        double getArea()
+        {
+            return M_PI * r * r;
+        }
+        void Print1()
+        {
+            cout << "Circle:";
+            Print_Point();
+            cout << "," << r << '\n';
+        }
+};
+
+class CCylinder : public CCircle{
+    private:
+        double h;
+    public:
+        CCylinder(){}
+        CCylinder(double xx, double yy, double rr, double hh) : CCircle(xx, yy, rr)
+        {
+            h = hh;
+        }
+        double getVol()
+        {
+            return getArea() * h;
+        }
+        void Print2()
+        {
+            cout << "Cylinder:";
+            Print_Point();
+            cout << "," << r << "," << h << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    double x1, y1, r1;
+    cin >> x1 >> y1 >> r1;
+    CCircle cir(x1, y1, r1);
+    cir.Print1();
+    cout << "Area:" << cir.getArea() << '\n';
+    double x2, y2, r2, h;
+    cin >> x2 >> y2 >> r2 >> h;
+    CCylinder cyl(x2, y2, r2, h);
+    cyl.Print2();
+    cout << "Volume:" << cyl.getVol() << '\n';
+    return 0;
+}
 
 
+
+26. 三维空间的点（继承）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define M_PI 3.14
+
+class C2D{
+    public:
+        double x, y;
+        C2D(){}
+        C2D(double xx, double yy)
+        {
+            x = xx, y = yy;
+        }
+        double getDistance()
+        {
+            return sqrt(x * x + y * y);
+        }
+};
+
+class C3D : public C2D{
+    private:
+        double z;
+    public:
+        C3D(){}
+        C3D(double xx, double yy, double zz) : C2D(xx, yy)
+        {
+            z = zz;
+        }
+        double getDistance()
+        {
+            return sqrt(x * x + y * y + z * z);
+        }
+};
+
+int main()
+{
+    untie();
+    double x, y, z;
+    cin >> x >> y;
+    C2D p1(x, y);
+    cout << p1.getDistance() << '\n';
+    cin >> x >> y >> z;
+    C3D p2(x, y, z);
+    cout << p2.getDistance() << '\n';
+    cin >> x >> y >> z;
+    C3D p3(x, y, z);
+    cout << p3.getDistance() << '\n';
+    C2D p4(x, y);
+    cout << p4.getDistance() << '\n';
+    return 0;
+}
+
+
+
+27.时钟模拟(继承）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define M_PI 3.14
+
+class Counter{
+    protected:
+        int value;
+    public:
+        Counter(){ value = 0;}
+        Counter(int v)
+        {
+            value = v;
+        }
+        void increment()
+        {
+            ++value;
+        }
+};
+
+class cyclicCounter : public Counter{
+    private:
+        int minValue, maxValue;
+    public:
+        cyclicCounter(){}
+        void set(int val, int minVal, int maxVal)
+        {
+            this->value = val;
+            minValue = minVal;
+            maxValue = maxVal;
+        }
+        void increment()
+        {
+            if(++this->value > maxValue) this->value = minValue;
+        }
+        int getMinVal(){ return minValue;}
+        int getMaxVal(){ return maxValue;}
+        int getVal(){ return this->value;}
+        void setVal(int x) { this->value = x;}
+};
+
+class Clock{
+    private:
+        cyclicCounter hour, minute, second;
+    public:
+        Clock(){}
+        Clock(int h, int m, int s)
+        {
+            hour.set(h, 0, 24);
+            minute.set(m, 0, 60);
+            second.set(s, 0, 60);
+        }
+        void getTime(int ds)
+        {
+            for(int i = 0; i < ds; ++i)
+            {
+                second.increment();
+                if(second.getVal() == second.getMaxVal())
+                {
+                    second.setVal(second.getMinVal());
+                    minute.increment();
+                    if(minute.getVal() == minute.getMaxVal())
+                    {
+                        minute.setVal(minute.getMinVal());
+                        hour.increment();
+                        if(hour.getVal() == hour.getMaxVal())
+                        {
+                            hour.setVal(hour.getMinVal());
+                        }
+                    }
+                }
+            }
+            cout << hour.getVal() << ":" << minute.getVal() << ":" << second.getVal() << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int n;
+    cin >> n;
+    while(n--)
+    {
+        int h, m, s, ds;
+        cin >> h >> m >> s >> ds;
+        Clock c(h, m, s);
+        c.getTime(ds);
+    }
+    
+    return 0;
+}
+
+
+
+28. 新旧身份证(继承)
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define M_PI 3.14
+int mon1[15] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+int idcheck[17] = {7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2};
+char code[11] = {'1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'};
+char s[10];
+class CDate{
+    private:
+        int year, month, day;
+    public:
+        CDate(){}
+        CDate(int y, int m, int d) : year(y), month(m), day(d){}
+        CDate(const CDate &cd)
+        {
+            year = cd.year, month = cd.month, day = cd.day;
+        }
+        bool check()//检验日期是否合法
+        {
+            if (year > 2021 || year == 2021 && month > 11 || year == 2021 && month == 11 && day > 9) return false;
+            if(isLeap() && month == 2 && day > 28) return false;
+            else if(day > mon1[month]) return false;
+            return true;
+        }
+        bool isLeap()
+        {
+            if (year % 4 == 0 && year % 100 != 0 || year % 400 == 0) return true;
+			return false;
+        }
+        void print()
+        {
+			cout << year << "年" << month << "月" << day << "日 ";
+        }
+        char* DatetoString()
+        {
+            for(int i = 3, y = year; i >= 0; --i, y /= 10) s[i] = '0' + y % 10;
+            for(int i = 5, m = month; i >= 4; --i, m /= 10) s[i] = '0' + m % 10;
+            for(int i = 7, d = day; i >= 6; --i, d /= 10) s[i] = '0' + d % 10;
+            return s;
+        }
+        int getyear() { return year;}
+		int getmonth() { return month;}
+		int getday() { return day;}
+};
+
+class COldId{
+    protected:
+        char *pId15, *pName; //15位身份证号码，姓名
+        CDate birthday; //出生日期
+    public:
+        COldId(){}
+        COldId(char* pIdVal, char* pNameVal, CDate& day) : birthday(day)
+        {
+            pId15 = new char[strlen(pIdVal) + 1];
+            pName = new char[strlen(pNameVal) + 1];
+            strcpy(pId15, pIdVal);
+            strcpy(pName, pNameVal);
+        }
+        bool check() //验证15位身份证是否合法
+        {
+            if(!birthday.check()) return false;
+            if(strlen(pId15) != 15) return false;
+            for(int i = 0; i < 15; ++i)
+                if(!isdigit(pId15[i]))
+                    return false;
+            return true;
+        }
+        void print(){}
+        ~COldId()
+        {
+            delete []pId15, pName;
+        }
+};
+
+class CNewId : public COldId{
+    private:
+        char *pId18;
+        CDate issueDay;
+        int validYear;
+    public:
+        CNewId(){}
+        CNewId(char *id18, CDate& issDay, int validy, char* pIdVal, char* pNameVal, CDate& day) : COldId(pIdVal, pNameVal, day), issueDay(issDay)
+        {
+            validYear = validy;       
+            pId18 = new char[strlen(id18) + 1];
+            strcpy(pId18, id18);
+        }
+        ~CNewId()
+        {
+            delete []pId18;
+        }
+        bool check()
+        {
+            if(!COldId::check()) return false;
+            if(!issueDay.check()) return false;
+            if(strlen(pId18) != 18) return false;
+            if(strstr(pId18, this->birthday.DatetoString()) == NULL) return false;
+            if(strncmp(pId15, pId18, 5) != 0 || strncmp(pId15 + 6, pId18 + 8, 8) != 0) return false;
+            int temp = 0;
+			for (int i = 0; i < 17; i++) temp += (pId18[i] - '0') * idcheck[i];
+			temp %= 11;
+			if (code[temp] != pId18[17])
+				return false;
+			if (issueDay.getyear() + validYear < 2021 || issueDay.getyear() + validYear == 2021 && issueDay.getmonth() > 11 || issueDay.getyear() + validYear == 2021 && issueDay.getmonth() == 11 && issueDay.getday() > 9)
+				return false;
+			return true;
+        }
+        void print()
+        {
+            cout << pId18 << " ";
+            issueDay.print();
+            if(validYear == 100) cout << "长期";
+            else cout << validYear << "年";
+            cout << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    char name[50], id15[25], id18[25];
+    int y, m, d, yy, mm, dd, time;
+    while(T--)
+    {
+        cin >> name >> y >> m >> d >> id15 >> id18 >> yy >> mm >> dd >> time;
+        CDate c1(y, m, d), c2(yy, mm, dd);
+        CNewId now(id18, c2, time, id15, name, c1);
+        cout << name << '\n';
+        if(now.check()) now.print();
+        else cout << "illegal id\n";
+    }
+    return 0;
+}
+
+
+
+29.学生成绩计算（继承）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define M_PI 3.14
+class Person
+{
+	public:
+		Person(string nm, int y)
+		{
+			name = nm;
+			year = y;
+		}
+		void display()
+		{
+			cout << name << " " << year << " ";
+		}
+	private:
+		string name;
+		int year;
+		
+};
+
+class Student1 : public Person
+{
+	public:	
+		Student1(string nm, int y, int score1, int score2) : Person(nm, y)
+		{
+			scoreA = score2;
+			scoreB = score1;
+		}
+		void display()
+		{
+			Person :: display();
+			double m;
+			m = scoreA * 0.4 + scoreB * 0.6;
+			if(m >= 85) cout << "A";
+			else if(m >= 75 && m < 85) cout << "B";
+			else if(m >= 65 && m < 75) cout << "C";
+			else if(m >= 60 && m < 65) cout << "D";
+			else cout << "F";
+            cout << '\n';
+		}
+	private:
+		int scoreA;
+		int scoreB;
+};
+
+class Student2 : public Person
+{
+	public:
+		Student2(string name1,int year1,int score1):Person(name1,year1)
+		{
+			scoreB=score1;
+		}
+		void display()
+		{
+			Person::display();
+			double m;
+			m = scoreB;
+			if(m >= 85) cout << "A";
+			else if(m >= 75 && m < 85) cout << "B";
+			else if(m >= 65 && m < 75) cout << "C";
+			else if(m >= 60 && m < 65) cout << "D";
+			else cout << "F";
+            cout << '\n';			
+		}
+	private:
+		int scoreB;
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    char op;
+    string name;
+    int year, score1, score2;
+    while(T--)
+    {
+        cin >> op;
+        if(op == 'R')
+		{
+			cin >> name >> year >> score2 >> score1;
+			Student1 Student3(name, year, score2, score1);
+			Student3.display();
+		}
+		else if(op == 'S')
+		{
+			cin >> name >> year >> score1;
+			Student2 Student4(name, year, score1);
+			Student4.display();
+	    }
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
 ```
 
