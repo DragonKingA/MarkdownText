@@ -469,35 +469,6 @@ Pri3(1, 3, 45, 100, name = "sb", age = 18)
 
 ---
 
-## 匿名函数 lambda
-
-> 匿名函数(lambda) 相当于一个**返回值为后面表达式 f(x) 结果**的函数，即自带 return f(x) 语句
-
-用法:  `f = lambda 参数列表:表达式`，然后通过 `f(参数列表)` 来调用
-
-优点：用于简化函数，便于封装
-
-```python
-f = lambda x, y : x + y
-print(f(1, 3))
-
-# 结合简化的条件语句，可用于简化二元运算
-# 简化的条件语句解释：
-a = 1
-print("你是？" if a == 10 else "我是？")
-# 上句相当于
-# if a == 10:
-#     print("你是？")
-# else:
-#     print("我是？")
-
-#结合简化条件语句：
-f = lambda x, y : x if x > y else y
-print(f(1, 3))
-```
-
----
-
 ## Python内置函数
 
 <img src="D:\MarkdownText\image_python\5.png" alt="5" style="zoom: 50%;" />
@@ -639,6 +610,407 @@ for index, val in enumerate(lis):
   ```
 
   需要注意的是，只有**支持可变参数**的函数才能接受**解包后的可迭代对象**作为参数。
+
+
+
+## 偏函数
+
+定义：偏函数 (Partial function) 指由 `functools`模块 提供的 `partial` 方法，该方法把一个函数的某些参数给固定住（也就是**设置默认值**），**返回一个新的函数 newfunc**，调用 `newfunc`时将忽略已经被固定的参数（不接受传递）。
+
+用法：`newfunc = functools.partial(函数名func, 参数arg1 = 固定值x1, ... , 参数argN = 固定值xN)`，随后调用 `newfunc` 时 `arg` 不再存在于参数列表中，`newfunc(arg1, arg2, ... )` 相当于 `func(arg1, arg2, ... , x)`。
+
+优缺点：在多次调用多参数函数，且多次调用都对某些参数传递相同的参数值时，可以使用偏函数简化调用过程。缺点就是只能**从后面的参数开始连续固定**，而不能单单固定前面或中间的参数（这遵循*参数列表的有序性*）。
+
+```python
+import functools
+
+def func(a, b, c, d):
+    print(a + b + c + d)
+    pass
+
+func(1, 2, 3, 4)
+newfunc1 = functools.partial(func, d = 100)
+newfunc2 = functools.partial(func, c = 100, d = 10000)
+# newfunc1() 固定传递给 func 的 d 参数值为 100
+newfunc1(1, 2, 3)
+# newfunc2() 固定传递给 func 的 c 参数值为 100，d 参数值为 10000
+newfunc2(100, 200, 300)
+
+for i in range(2, 36):
+    my_int = functools.partial(int, base = i)
+    # 固定以 i 进制表示数 10000
+    print(my_int('10000'))
+    pass
+```
+
+
+
+## 高阶函数
+
+定义：高阶函数的参数列表中含有**函数参数**。自定义高阶函数时只需给定一个接收函数的参数即可。
+
+python中内置四大高阶函数：
+
+* `map()`: 接受一个函数和一个可迭代对象作为参数，将函数**应用于每个元素**，并返回一个所含元素与各个原元素一一对应新的可迭代对象。
+
+```python
+# 例如，将列表中的每个元素平方并返回新的列表可以使用如下代码：
+lst = [1, 2, 3, 4, 5]
+squared = list(map(lambda x: x**2, lst))
+print(squared)  # Output: [1, 4, 9, 16, 25]
+```
+
+* `filter()`: 接受一个函数和一个可迭代对象作为参数，将函数**应用于每个元素**，并返回一个**仅包含满足条件的元素**的新的可迭代对象。
+
+```python
+# 例如，从列表中筛选出所有偶数可以使用如下代码：
+lst = [1, 2, 3, 4, 5]
+even_nums = list(filter(lambda x: x % 2 == 0, lst))
+print(even_nums)  # Output: [2, 4]
+```
+
+* `reduce()`: 在 Python3 中，reduce 函数已经被移动到 functools 模块中。它接受一个函数和一个可迭代对象作为参数，对可迭代对象中的元素进行**累积操作**，并返回最终结果。
+
+```python
+# 例如，计算列表中所有元素的乘积可以使用如下代码：
+from functools import reduce
+lst = [1, 2, 3, 4, 5]
+product = reduce(lambda x, y : x * y, lst)
+print(product)  # Output: 120
+```
+
+* `sorted()`: 接受一个可迭代对象作为参数，并返回一个新的已排序的列表。如果需要**按照某个键或函数的返回值**进行排序，可以使用 `key` 参数传递一个函数。
+
+```python
+# 使用 sorted() 按不同函数参数 key 来对可迭代对象排序
+lis = [{"name" : "abc", "age" : 18}, {"name" : "cde", "age" : 68}, {"name" : "def", "age" : 39}, {"name" : "fgh", "age" : 11}]
+
+def getKey1(x):
+    return x["name"]
+
+def getKey2(x):
+    return x["age"]
+
+print(sorted(lis, key = getKey1))
+# Output: [{'name': 'abc', 'age': 18}, {'name': 'cde', 'age': 68}, {'name': 'def', 'age': 39}, {'name': 'fgh', 'age': 11}]
+
+print(sorted(lis, key = getKey2))
+# Output: [{'name': 'fgh', 'age': 11}, {'name': 'abc', 'age': 18}, {'name': 'def', 'age': 39}, {'name': 'cde', 'age': 68}]
+```
+
+自定义高阶函数
+
+```python
+def cal(a, b, FunctionKey):
+    print(FunctionKey(a, b))
+    pass
+
+def plus(a, b):
+    return a + b
+
+def minus(a, b):
+    return a - b
+
+def multiply(a, b):
+    return a * b
+
+def mypow(a, b):
+    return a ** b
+
+lis = [plus, minus, multiply, mypow]
+a, b = 2, 10
+
+for func in lis:
+    cal(a, b, func)
+    pass
+
+# Output: 
+# 12
+# -8
+# 20
+# 1024
+```
+
+
+
+## 返回函数
+
+定义：函数的返回值是一个函数，那么称该函数为返回函数。
+
+用法：常结合函数闭包，即函数内部定义若干个函数，然后根据需求返回需要的函数。
+
+```python
+def cal(op):
+    # 函数内部定义若干个函数（闭包），根据需求返回需要的函数
+    # op == 0 -> sum 操作
+    # op == 1 -> minus 操作
+    # op == 2 -> multiply 操作
+    
+    def sum(*arg):
+        res = 0
+        for i in arg:
+            res += i
+        return res
+
+    def minus(*arg):
+        res = arg[0]
+        for i in arg[1 : ]:
+            res -= i
+        return res
+
+    def multiply(*arg):
+        res = 1
+        for i in arg:
+            res *= i
+        return res
+    
+    lis = [sum, minus, multiply]
+    
+    return lis[op]
+    
+
+a, b, c = 2, 5, 10
+
+for i in range(0, 3):
+    func = cal(i)
+    print(func(a, b, c))
+    pass
+
+# Output:
+# 17
+# -13
+# 100
+```
+
+
+
+
+
+## 匿名函数
+
+> 匿名函数(lambda) 相当于一个**返回值为后面表达式 f(x) 结果**的函数，即自带 return f(x) 语句。匿名函数返回一个函数对象，可用一个变量接收并用该变量名调用。
+
+用法:  `f = lambda 参数列表:表达式`，然后通过 `f(参数列表)` 来调用
+
+优点：用于简化函数，便于封装
+
+```python
+f = lambda x, y : x + y
+print(f(1, 3))
+
+# 结合简化的条件语句，可用于简化二元运算
+# 简化的条件语句解释：
+a = 1
+print("你是？" if a == 10 else "我是？")
+# 上句相当于
+# if a == 10:
+#     print("你是？")
+# else:
+#     print("我是？")
+
+# 结合简化条件语句：
+f = lambda x, y : x if x > y else y
+print(f(1, 3))
+
+# 传递 lambda表达式 作为高阶函数的参数
+lis = [{"name" : "abc", "age" : 18}, {"name" : "cde", "age" : 68}, {"name" : "def", "age" : 39}, {"name" : "fgh", "age" : 11}]
+
+print(sorted(lis, key = lambda x : x["name"])) # 按键"name"的值排序
+# Output: [{'name': 'abc', 'age': 18}, {'name': 'cde', 'age': 68}, {'name': 'def', 'age': 39}, {'name': 'fgh', 'age': 11}]
+
+print(sorted(lis, key = lambda x : x["age"])) # 按键"age"的值排序
+# Output: [{'name': 'fgh', 'age': 11}, {'name': 'abc', 'age': 18}, {'name': 'def', 'age': 39}, {'name': 'cde', 'age': 68}]
+```
+
+
+
+## 闭包
+
+定义：如果在一个**内部函数**里对外部函数（不是在全局作用域）的**自由变量**（即外部函数接受的参数）进行引用，内部函数就被认为是闭包。
+
+理解：外部函数接收的参数及其作用下定义的自由变量将作为内部函数的**环境**，而内部函数本身就是个**函数块**，那么认为 **函数块 + 环境 = 闭包**。由闭包产生的函数对象仅在**环境**上有所区别，并且由同一闭包产生的不同函数对象都有自己**独立的作用域**。同时，同一函数对象的调用都将**共同影响该作用域**，并且每次调用都将受到*可能被影响过的作用域*影响，故调用同一函数对象时产生的函数结果将受其*之前的调用*影响。
+
+形成闭包的条件：
+
+- 必须包含一个嵌套函数（内部函数）
+- 嵌套函数必须引用封闭函数（外部函数）中定义的自由变量
+- 封闭函数必须返回嵌套函数
+
+注意事项：
+
+1. 被返回的函数不会立刻执行，而是直到被独立调用时才执行。
+2. 闭包环境由外部函数接收的参数变量所决定，每次通过闭包获得的函数对象，即使传递的参数变量相同，它们的闭包环境仍不相同，因为所处作用域不同，它们各自的作用域之间互不影响（除了全局变量等）。
+3. 时刻注意各变量的作用域，以免在不经意的情况下创建新的临时变量。
+
+常见错误：
+
+1. 闭包的函数块中引用了循环变量（或者说函数块在某个循环结构中）或者后续会变化的变量。
+
+   ```python
+   # 修正前
+   def count():
+       funcs = []
+       for i in range(1, 4):
+           def f():
+               return i * i
+           funcs.append(f)
+       return funcs
+   
+   # 修正后
+   def __count():
+       funcs = []
+       for i in range(1, 4):
+           def f(x = i): 
+               return x * x
+           funcs.append(f)
+       return funcs
+   
+   
+   func_lis = count()
+   f1, f2, f3 = func_lis[0], func_lis[1], func_lis[2]
+   
+   
+   __func_lis = __count()
+   __f1, __f2, __f3 = __func_lis
+   
+   
+   print(f1())
+   print(f2())
+   print(f3())
+   # Output:
+   # 9
+   # 9
+   # 9
+   
+   # 因为在把 3 个函数加入到 funcs 函数列表中前，发生了
+   # 现象1：Python中，当循环结束以后，循环体中的临时变量 i 不会销毁，而是继续存在于执行环境中
+   # 现象2：Python中的函数只有在被调用时才会将函数体内的变量值确定下来
+   # 所以，对于 f1、f2、f3 来说，它们调用的 i 都是循环结束后 i 的值 3，即当前作用域的环境所决定的。
+   
+   
+   
+   print(__f1())
+   print(__f2())
+   print(__f3())
+   # Output:
+   # 1
+   # 4
+   # 9
+   
+   # 通过修改内部函数定义，保留住当时循环的每个 i 值
+   # 此时对于 __f1 来说它的环境为 x = 1
+   # def f(x = 1): 
+   #     return x * x
+   # 同理对于 __f2 来说它的环境为 x = 2
+   # def f(x = 2): 
+   #     return x * x
+   ```
+
+2. 在闭包函数块中修改了外部函数作用域中的变量
+
+   ```python
+   def func():
+       a = 1
+       def count():
+           a = a + 1
+           return a
+       return count
+   
+   f = func()
+   print(f())
+   # 报错，无法输出
+   # 原因：内部函数实质上定义了一个名为 a 的临时变量，当查找等号右式的 a 时发现未曾定义过（没有初值）导致报错，即内部函数的整个运作过程中都与外部函数的 a = 1 无关，任意形式的变量操作都将视为对内部函数的临时变量进行操作。
+   
+   
+   # 修改方法1：使用关键字 nonlocal
+   # nonlocal 作用：将最近层的外部函数中的变量 x 标记为内部函数的非局部变量，实质上就是使得该变量引用与 x 相同的内存地址，则内部函数内对 x 的修改将被应用到外部函数的作用域。
+   def func():
+       a = 1
+       def count():
+           nonlocal a
+           a = a + 1
+           return a
+       return count
+   
+   f = func()
+   print(f())
+   # Output: 2
+   
+   
+   
+   # 修改方法2：使用容器
+   # 原理：容器的调用不会产生歧义，除非该内存空间真的不存在才会报错
+   def func():
+       a = [1] # 以列表为例
+       def count():
+           a[0] = a[0] + 1
+           return a[0]
+       return count
+   
+   f = func()
+   print(f())
+   # Output: 2
+   ```
+
+   
+
+应用：
+
+```python
+# 1.返回函数的简单闭包，这里闭包的自由变量即 exp
+def myPower(exp = 1):
+    def cal(x):
+        return x ** exp
+    return cal
+
+pow2, pow3, pow4 = myPower(2), myPower(3), myPower(4)
+
+num = 4
+print("{a}^2 = {}, {a}^3 = {}, {a}^4 = {}".format(pow2(num), pow3(num), pow4(num), a = num))
+# Output: 4^2 = 16, 4^3 = 64, 4^4 = 256
+
+
+
+# 2.利用闭包特性：当闭包执行完后，仍然能够保持住当前的运行环境（即闭包作用域的持续性）。
+
+# 坐标原点
+ori = [0, 0]
+# xOy平面坐标系上的四种方向
+dir_x_positive = [1, 0]
+dir_y_positive = [0, 1]
+dir_x_negative = [-1, 0]
+dir_y_negative = [0, -1]
+
+def Point_create(setpos):
+    pos = setpos.copy() # 复制一个内容与 setpos 列表相同的新列表（存在于新开辟的内存空间中）
+    # 若直接 pos = setpos，则会导致创建的所有点共用同一个坐标点 pos
+
+    # direction 表示运动方向（即某方向上的单位坐标）
+    # step 表示在该方向上的运动距离
+    def Point_move(direction, step):
+        nx = pos[0] + direction[0] * step
+        ny = pos[1] + direction[1] * step
+        # 不能写成 pos = [nx, ny]，会被当成创建新的临时变量
+        pos[0] = nx
+        pos[1] = ny
+        return pos
+    
+    return Point_move
+
+pt1 = Point_create(ori)
+print(pt1(dir_x_positive, 10))  # 点1 在 x 轴正方向走 10 步   -- [10, 0]
+print(pt1(dir_y_negative, 20))  # 点1 在 y 轴负方向走 20 步   -- [10, -20]
+
+pt2 = Point_create(ori)
+print(pt2(dir_x_negative, 100)) # 点2 在 x 轴负方向走 100 步  -- [-100, 0]
+print(pt2(dir_y_positive, 50))  # 点2 在 y 轴正方向走 50 步   -- [-100, 50]
+
+
+
+
+```
+
+
 
 ---
 
@@ -974,8 +1346,24 @@ print(D.__mro__) # 输出类的依次继承关系（从子类到父类最终到�
 
 * 类属性：是在**类中**定义的属性，它是和这个类所绑定的，这个类中的**所有对象**都可以访问。访问时可以通过**类名**来访问，也可以通过**实例名**来访问。
 * 实例属性：是与**类的实例**相关联的数据值，是这个实例**私有**的，**只有这个对象自己可以访问**。当一个实例被释放后，它的属性同时也被清除了。
+* 所以，实例属性只能通过实例对象访问，而类属性可通过类名或者实例对象访问。
 
 ```python
+class Student:
+    # 类属性
+    name = "abc"
 
+    def __init__(self, age):
+        self.age = age #实例属性
+        pass
+    pass
+
+stu = Student(18)
+
+print(stu.name)
+print(stu.age)
+
+print(Student.name)
+# print(Student.age) 报错
 ```
 
