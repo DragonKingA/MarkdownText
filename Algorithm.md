@@ -8484,7 +8484,7 @@ int main()
 类的学习
 
 ```c++
-//Point(类与构造)
+1.Point(类与构造)
 #include <iostream>
 #include <cstdio>
 #include <algorithm>
@@ -10924,19 +10924,514 @@ int main()
 
 
 
+30.图形面积（虚函数与多态）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Shape
+{
+    public:
+        virtual void area(){}
+};
+
+class Circle : public Shape
+{
+    private:
+        double r;
+    public:
+        Circle(){}
+        Circle(double rr){ r = rr;}
+        void area()
+        {
+            cout << 3.14 * r * r << '\n';
+        }
+};
+
+class Square : public Shape
+{
+    private:
+        double l;
+    public:
+        Square(){}
+        Square(double _l){ l = _l;}
+        void area()
+        {
+            cout << l * l << '\n';
+        }
+};
+
+class Rectangle : public Shape
+{
+    private:
+        double len, wid;
+    public:
+        Rectangle(){}
+        Rectangle(double l, double w){ len = l, wid = w;}
+        void area()
+        {
+            cout << len * wid << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    Shape *p[3];
+    while(T--)
+    {
+        double r, l, len, wid;
+        cin >> r >> l >> len >> wid;
+        Circle cir(r);
+        Square sq(l);
+        Rectangle rec(len, wid);
+        p[0] = &cir;
+        p[1] = &sq;
+        p[2] = &rec;
+        cout << fixed << setprecision(2);
+        for(int i = 0; i < 3; ++i) p[i]->area();
+    }
+  	for(int i = 0; i < 3; ++i) p[i] = NULL;
+    return 0;
+}
 
 
 
+31.汽车收费（虚函数和多态）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Vehicle
+{
+    protected:
+        string no;
+    public:
+        Vehicle(){}
+        Vehicle(string id) : no(id){}
+        virtual void display() = 0;
+};
+
+class Car : public Vehicle
+{ 
+    private:
+        int cnt, w;
+    public:
+        Car(){}
+        Car(string s, int c, int ww) : Vehicle(s){ cnt = c, w = ww;}
+        void display()
+        {
+            cout << no << " " << (8 * cnt + 2 * w) << '\n';
+        }
+};
+
+class Truck : public Vehicle
+{ 
+    private:
+        int w;
+    public:
+        Truck(){}
+        Truck(string s, int ww) : Vehicle(s){ w = ww;}
+        void display()
+        {
+            cout << no << " " << (5 * w) << '\n';
+        }
+};
+
+class Bus : public Vehicle
+{ 
+    private:
+        int cnt;
+    public:
+        Bus(){}
+        Bus(string s, int c) : Vehicle(s){ cnt = c;}
+        void display()
+        {
+            cout << no << " " << (30 * cnt) << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    string id;
+    while(T--)
+    {
+        int op, cnt, w;
+        Vehicle *pv = NULL;
+        cin >> op >> id;
+        if(op == 1)
+        {
+            cin >> cnt >> w;
+            Car c(id, cnt, w);
+            pv = &c;
+            pv -> display();
+        }
+        else if(op == 2)
+        {
+            cin >> w;
+            Truck tru(id, w);
+            pv = &tru;
+            pv -> display();
+        }
+        else
+        {
+            cin >> cnt;
+            Bus bus(id, cnt);
+            pv = &bus;
+            pv -> display();
+        }
+    }
+    return 0;
+}
+
+
+         
+32.支票账户（虚函数与多态）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class BaseAccount
+{
+    protected:
+        string name, account;
+        int balance;
+    public:
+        BaseAccount(){}
+        BaseAccount(string s1, string s2, int b) : name(s1), account(s2), balance(b){}
+        void deposit(int x)
+        {
+            balance += x;
+        }
+        virtual void withdraw(int x)
+        {
+            if(balance - x < 0) cout << "insufficient\n";
+            else balance -= x;
+        }
+        virtual void display()
+        {
+            cout << name << " " << account << " Balance:" << balance << '\n';
+        }
+};
+
+class BasePlus : public BaseAccount
+{
+    private:
+        int limit, limitSum;
+    public:
+        BasePlus(){}
+        BasePlus(string s1, string s2, int b) : BaseAccount(s1, s2, b){ limit = 5000, limitSum = 5000;}
+        void withdraw(int x)
+        {
+            if(x > balance + limitSum) cout << "insufficient\n";
+            else
+            {
+                if(x <= balance) balance -= x;
+                else
+                {
+                    limitSum -= x - balance;
+                    balance = 0;
+                }
+            }
+        }
+        void display()
+        {
+            cout << name << " " << account << " Balance:";
+            if(balance < 0) cout << "0";
+            else cout << balance << " limit:" << limitSum << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    string s1, s2;
+    BaseAccount *p = NULL;
+    int dep1, wit1, dep2, wit2, bal;
+    while(T--)
+    {
+        cin >> s1 >> s2 >> bal;
+        cin >> dep1 >> wit1 >> dep2 >> wit2;
+        if(s2[1] == 'A')
+        {
+            BaseAccount now(s1, s2, bal);
+            p = &now;
+            p -> deposit(dep1);
+            p -> withdraw(wit1);
+            p -> deposit(dep2);
+            p -> withdraw(wit2);
+            p -> display();
+        }
+        else
+        {
+            BasePlus now(s1, s2, bal);
+            p = &now;
+            p -> deposit(dep1);
+            p -> withdraw(wit1);
+            p -> deposit(dep2);
+            p -> withdraw(wit2);
+            p -> display();
+        }
+    }
+  	p = NULL;
+    return 0;
+}
 
 
 
+33.进位与借位（虚函数和多态）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Group
+{
+    public:
+        Group(){}
+        virtual int add(int x, int y) = 0;
+	    virtual int sub(int x, int y) = 0;
+};
+
+class GroupA : public Group
+{
+    public:
+        int add(int x, int y)
+        {
+            return x + y;
+        }
+        int sub(int x, int y)
+        {
+            return x - y;
+        }
+};
+
+class GroupB : public Group
+{
+    public:
+        GroupB(){}
+        int add(int x, int y)
+        {
+            return x + y;
+        }
+        int sub(int x, int y)
+        {
+            int res = 0, base = 1;
+            while(x || y)
+            {
+                int now = x % 10 - y % 10;
+                if(x % 10 < y % 10) now += 10;
+                x /= 10;
+                y /= 10;
+                res += now * base;
+                base *= 10;
+            }
+            return res;
+        }
+};
+
+class GroupC : public Group
+{
+    public:
+        GroupC(){}
+        int add(int x, int y)
+        {
+            int res = 0, base = 1;
+            while(x || y)
+            {
+                int now = x % 10 + y % 10;
+                if(x % 10 + y % 10 > 9) now -= 10;
+                x /= 10;
+                y /= 10;
+                res += now * base;
+                base *= 10;
+            }
+            return res;
+        }
+        int sub(int x, int y)
+        {
+            int res = 0, base = 1;
+            while(x || y)
+            {
+                int now = x % 10 - y % 10;
+                if(x % 10 < y % 10) now += 10;
+                x /= 10;
+                y /= 10;
+                res += now * base;
+                base *= 10;
+            }
+            return res;
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    string oper;
+    Group *p = NULL;
+    while(T--)
+    {
+        int type, ind = 0;
+        char op;
+        cin >> type >> oper;
+        for(int i = 0; i < oper.size(); ++i)
+        {
+            if(!isdigit(oper[i]))
+            {
+                ind = i;
+                op = oper[i];
+            }
+        }
+        int x = stoi(oper.substr(0, ind)), y = stoi(oper.substr(ind + 1));
+        if(type == 1)
+        {
+            GroupA now;
+            p = &now;
+            if(op == '+') cout << p -> add(x, y) << '\n';
+            else cout << p -> sub(x, y) << '\n';
+        }
+        else if(type == 2)
+        {
+            GroupB now;
+            p = &now;
+            if(op == '+') cout << p -> add(x, y) << '\n';
+            else cout << p -> sub(x, y) << '\n';
+        }
+        else
+        {
+            GroupC now;
+            p = &now;
+            if(op == '+') cout << p -> add(x, y) << '\n';
+            else cout << p -> sub(x, y) << '\n';
+        }
+    }
+    p = NULL;
+    return 0;
+}
+
+        
+
+34.动物园（虚函数与多态）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Animal
+{
+    protected:
+        string name;
+        int age;
+    public:
+        Animal(){}
+        Animal(string s, int a) : name(s), age(a){}
+        virtual void Speak() = 0;
+};
+
+class Tiger : public Animal
+{
+    public:
+        Tiger(){}
+        Tiger(string s, int a) : Animal(s, a){}
+        void Speak()
+        {
+            cout << "Hello,I am " << name << ",";
+            cout << "AOOO.\n";
+        }
+};
+
+class Pig : public Animal
+{
+    public:
+        Pig(){}
+        Pig(string s, int a) : Animal(s, a){}
+        void Speak()
+        {
+            cout << "Hello,I am " << name << ",";
+            cout << "HENGHENG.\n";
+        }
+};
+
+class Dog : public Animal
+{
+    public:
+        Dog(){}
+        Dog(string s, int a) : Animal(s, a){}
+        void Speak()
+        {
+            cout << "Hello,I am " << name << ",";
+            cout << "WangWang.\n";
+        }
+};
+
+class Duck : public Animal
+{
+    public:
+        Duck(){}
+        Duck(string s, int a) : Animal(s, a){}
+        void Speak()
+        {
+            cout << "Hello,I am " << name << ",";
+            cout << "GAGA.\n";
+        }
+};
 
 
-
-
-
-
-
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    Animal *p = NULL;
+    string name, type;
+    int age;
+    while(T--)
+    {
+        cin >> type >> name >> age;
+        if(type == "Tiger")
+        {
+            Tiger now(name, age);
+            p = &now;
+            p -> Speak();
+        }
+        else if(type == "Pig")
+        {
+            Pig now(name, age);
+            p = &now;
+            p -> Speak();
+        }
+        else if(type == "Dog")
+        {
+            Dog now(name, age);
+            p = &now;
+            p -> Speak();
+        }
+        else if(type == "Duck")
+        {
+            Duck now(name, age);
+            p = &now;
+            p -> Speak();
+        }
+        else
+        {
+            cout << "There is no " << type << " in our Zoo.\n";
+        }
+    }
+    p = NULL;
+    return 0;
+}
 
 
 

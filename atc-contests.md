@@ -626,5 +626,250 @@ int main()
 }
 ```
 
+---
+
+## ABC 302(*值得再看)
+
+### B
+
+```c++
+//模拟，容易写臭
+//题型：判断各种方向下的连续串是否为给定串
+//top1写法
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 105;
+int n, m;
+string s[N], dest = "snuke";
+//对应：向右，向下，向左，向上，同理斜向的4个方向
+int dx[8] = {0, 1, 0, -1, 1, 1, -1, -1};
+int dy[8] = {1, 0, -1, 0, 1, -1, 1, -1};
+int main()
+{
+    untie();
+    cin >> n >> m;
+    for(int i = 0; i < n; ++i) cin >> s[i];
+    for(int i = 0; i < n; ++i)
+    {
+        for(int j = 0; j < m; ++j)
+        {
+            for(int k = 0; k < 8; ++k)
+            {
+                bool ok = 1;
+                for(int t = 0; t < 5; ++t)
+                {
+                    int x = i + dx[k] * t, y = j + dy[k] * t;
+                    if(x < 0 || y < 0 || x >= n || y >= m || s[x][y] != dest[t])
+                    {
+                        ok = 0;
+                        break;
+                    }
+                }
+                if(ok)
+                {
+                    for(int t = 0; t < 5; ++t)
+                    {
+                        int x = i + dx[k] * t, y = j + dy[k] * t;
+                        cout << x + 1 << " " << y + 1 << '\n';
+                    }
+                    return 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### C
+
+```c++
+//直接全排列查找是否存在符合条件的一次排列即可，复杂度 8! = 40320
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 10;
+int n, m;
+string s[N];
+int main()
+{
+    untie();
+    cin >> n >> m;
+    for(int i = 0; i < n; ++i) cin >> s[i];
+    sort(s, s + n);
+    do{
+        bool ok = 1;
+        for(int i = 1; i < n; ++i)
+        {
+            int cnt = 0;
+            for(int j = 0; j < m; ++j)
+                if(s[i - 1][j] != s[i][j]) ++cnt;
+            if(cnt != 1)
+            {
+                ok = 0;
+                break;
+            }
+        }
+        if(ok)
+        {
+            cout << "Yes\n";
+            return 0;
+        }
+    }while(next_permutation(s, s + n));
+    cout << "No\n";
+    return 0;
+}
+```
+
+### D
+
+```c++
+//题意：两组序列中找一对数 a, b 使得满足 |a - b| <= d，并求最大的 a + b
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+set<ll> sa, sb;
+inline ll myabs(ll x) { return x > 0 ? x : -x;}
+int main()
+{
+    untie();
+    ll n, m, d;
+    cin >> n >> m >> d;
+    for(int i = 0; i < n; ++i)
+    {
+        ll x; cin >> x;
+        sa.insert(x);
+    }
+    for(int i = 0; i < m; ++i)
+    {
+        ll x; cin >> x;
+        sb.insert(x);
+    }
+    ll ans = -1;
+    for(auto a : sa)
+    {
+        // 找第一个大于 a + d 的数即 *iter > a + d 即 *iter - a > d
+        // 这样就有 *--iter <= a + d 即 *--iter - a <= d
+        auto iter = sb.upper_bound(a + d);
+        if(iter != sb.begin()) // iter == begin() 则不可能存在符合条件的 b
+        {
+            ll b = *--iter;
+            if(abs(a - b) <= d) // 有可能 b 过小，导致 a - b > d 所以还需要判断
+                ans = max(ans, a + b);
+        }
+    }
+    cout << ans << '\n';
+    return 0;
+}
+```
+
+### E
+
+```c++
+//STL模拟
+//set[u] 为与点 u 相连的点集合
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 3e5 + 10;
+int n, q;
+set<int> G[N];
+int main()
+{
+    untie();
+    cin >> n >> q;
+    int now = n;
+    while(q--)
+    {
+        int op, u, v;
+        cin >> op;
+        if(op == 1)
+        {
+            cin >> u >> v;
+            now -= G[u].empty() + G[v].empty();
+            G[u].insert(v);
+            G[v].insert(u);
+        }
+        else
+        {
+            cin >> v;
+            if(!G[v].empty())
+            {
+                ++now;
+                for(int u : G[v])
+                {
+                    G[u].erase(v);
+                    if(G[u].empty()) ++now;
+                }
+                G[v].clear();
+            }
+        }
+        cout << now << '\n';
+    }
+    return 0;
+}
+
+
+
+//刘哥代码，最优复杂度
+#include <iostream>
+#include <string>
+#include <vector>
+#include <array>
+#include <algorithm>
+typedef long long ll;
+
+int main()
+{
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0);
+    std::cout.tie(0);
+    int n, q;
+    std::cin >> n >> q;
+    std::vector<int> del(n, 0), del_time(n, -1);//del[u]为 u 删除边个数，del_time[u] 为 u 操作2时的时间点
+    std::vector<std::vector<std::array<int, 2> > > gra(n);
+    int ans = n;
+    for (int i = 0; i < q; i++)
+    {
+        int k, u, v;
+        std::cin >> k >> u;
+        u--;
+        if (k == 1)
+        {
+            std::cin >> v;
+            v--;
+            gra[u].push_back({ v, i });
+            gra[v].push_back({ u, i });
+            if (gra[v].size() - del[v] == 1) --ans;
+            if (gra[u].size() - del[u] == 1) --ans;
+        }
+        else
+        {
+            if (gra[u].size() - del[u] != 0) ans++;
+            for (auto [nex, t] : gra[u])
+            {
+                if (t < del_time[nex]) continue;
+                del[nex]++;
+                if (gra[nex].size() - del[nex] == 0) ans++;
+            }
+            gra[u].clear();
+            del_time[u] = i;
+            del[u] = 0;
+        }
+        std::cout << ans << "\n";
+    }
+    return 0;
+}
+```
+
+
+
+
+
 
 
