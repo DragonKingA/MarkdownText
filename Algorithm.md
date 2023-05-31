@@ -10923,7 +10923,14 @@ int main()
 }
 
 
-
+/*
+https://blog.csdn.net/qq_42048450/article/details/117282640
+（纯）虚函数概念解读：
+定义一个函数为虚函数，不代表函数为不被实现的函数。
+定义他为虚函数是为了允许用基类的指针来调用子类的这个函数。
+定义一个函数为纯虚函数，才代表函数没有被实现。
+定义纯虚函数是为了实现一个接口，起到一个规范的作用，规范继承这个类的程序员必须实现这个函数。
+*/
 30.图形面积（虚函数与多态）
 #include <bits/stdc++.h>
 using namespace std;
@@ -11435,11 +11442,596 @@ int main()
 
 
 
+35.OOP 学生综合评价（虚函数和多态）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+string code[10] = {"优秀", "良好", "一般", "及格", "不及格"};
+
+class Student{
+    protected:
+        string name;
+        int type; //学生类别:1表示本科生，2表示研究生
+        int courses[3]; //3门课的成绩
+        string courseGrade; //成绩等级
+    public:
+        Student(string n, int t, int a1, int a2, int a3)
+        {
+            name = n, type = t;
+            courses[0] = a1;
+            courses[1] = a2;
+            courses[2] = a3;
+        }
+        virtual void calculateGrade() = 0;//计算成绩等级
+        void Print()
+        {
+            if(type == 1) cout << name << ",本科生,";
+            else cout << name << ",研究生,";
+            cout << courseGrade << '\n';
+        }
+};
+
+class Undergraduate : public Student
+{
+    public:
+        Undergraduate(const string &n, int t, int a1, int a2, int a3) : Student(n, t, a1, a2, a3){}
+        void calculateGrade()
+        {
+            double g = courses[0] + courses[1] + courses[2];
+            g = g / 3;
+            if (g >= 80 && g <= 100)
+                courseGrade = "优秀";
+            else if (g >= 70 && g < 80)
+                courseGrade = "良好";
+            else if (g >= 60 && g < 70)
+                courseGrade = "一般";
+            else if (g >= 50 && g < 60)
+                courseGrade = "及格";
+            else if(g < 50)
+                courseGrade = "不及格";
+        }
+};
+
+class Postgraduate : public Student
+{
+    public:
+        Postgraduate(const string &n, int t, int a1, int a2, int a3) : Student(n, t, a1, a2, a3){}
+        void calculateGrade()
+        {
+            double g = courses[0]+courses[1]+courses[2];
+            g = g / 3;
+            if (g >= 90 && g <= 100)
+                courseGrade = "优秀";
+            else if (g >= 80 && g < 90)
+                courseGrade = "良好";
+            else if (g >= 70 && g < 80)
+                courseGrade = "一般";
+            else if (g >= 60 && g < 70)
+                courseGrade = "及格";
+            else if(g < 60)
+                courseGrade = "不及格";
+        }
+};
+
+int main()
+{
+    untie();
+    int n;
+    cin >> n;
+    Student **p = new Student*[n];
+    string name;
+    int tp, a, b, c;
+    for(int i = 0; i < n; ++i)
+    {
+        cin >> name >> tp >> a >> b >> c;
+        if(tp == 1) p[i] = new Undergraduate(name, tp, a, b, c);
+        else p[i] = new Postgraduate(name, tp, a, b, c);
+    }
+    for(int i = 0; i < n; ++i) 
+    {
+        p[i] -> calculateGrade();
+        p[i] -> Print();
+    }
+    for(int i = 0; i < n; ++i) delete p[i];
+    delete []p;
+    return 0;
+}
 
 
 
+36.在职研究生（多重继承）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CPeople{
+    protected:
+        string name;
+        char sex;
+        int age;
+    public:
+        CPeople(){}
+        CPeople(string nm, char sx, int a) : name(nm), sex(sx), age(a){}
+        void Print()
+        {
+            cout << "People:\n";
+            cout << "Name: " << name << '\n';
+            cout << "Sex: " << sex << '\n';
+            cout << "Age: " << age << '\n';
+            cout << '\n';
+        }
+};
+
+class CStudent : public CPeople
+{
+    protected:
+        int id;
+        double grade;
+    public:
+        CStudent(){}
+        CStudent(string nm, char sx, int a, int ID, double g) : CPeople(nm, sx, a){ id = ID, grade = g;}
+        void Print()
+        {
+            cout << "Student:\n";
+            cout << "Name: " << name << '\n';
+            cout << "Sex: " << sex << '\n';
+            cout << "Age: " << age << '\n';
+            cout << "No.: " << id << '\n';
+            cout << "Score: " << grade << '\n';
+            cout << '\n';
+        }
+};
+
+class CTeacher : public CPeople
+{
+    protected:
+        string pos, department;
+    public:
+        CTeacher(){}
+        CTeacher(string nm, char sx, int a, string p, string depart) : CPeople(nm, sx, a){ pos = p, department = depart;}
+        void Print()
+        {
+            cout << "Teacher:\n";
+            cout << "Name: " << name << '\n';
+            cout << "Sex: " << sex << '\n';
+            cout << "Age: " << age << '\n';
+            cout << "Position: " << pos << '\n';
+            cout << "Department: " << department << '\n';
+            cout << '\n';
+        }
+};
+
+class CGradOnWork : public CStudent, public CTeacher
+{
+    protected:
+        string dir, guider;
+    public:
+        CGradOnWork(){}
+        CGradOnWork(string nm, char sx, int a, int ID, double g, string p, string depart, string d, string gui) : CStudent(nm, sx, a, ID, g), CTeacher(nm, sx, a, p, depart)
+        {
+            dir = d, guider = gui;
+        }
+        void Print()
+        {
+            cout << "GradOnWork:\n";
+            cout << "Name: " << CStudent::name << '\n';
+            cout << "Sex: " << CStudent::sex << '\n';
+            cout << "Age: " << CStudent::age << '\n';
+            cout << "No.: " << id << '\n';
+            cout << "Score: " << grade << '\n';
+            cout << "Position: " << pos << '\n';
+            cout << "Department: " << department << '\n';
+            cout << "Direction: " << dir << '\n';
+            cout << "Tutor: " << guider << '\n';
+            cout << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    string name, pos, depart, dir, guider;
+    char sex;
+    int age, id;
+    double grade;
+    cin >> name >> sex >> age;
+    CPeople p1(name, sex, age);
+    p1.Print();
+    cin >> id >> grade;
+    CStudent p2(name, sex, age, id, grade);
+    p2.Print();
+    cin >> pos >> depart;
+    CTeacher p3(name, sex, age, pos, depart);
+    p3.Print();
+    cin >> dir >> guider;
+    CGradOnWork p4(name, sex, age, id, grade, pos, depart, dir, guider);
+    p4.Print();
+    return 0;
+}
+
+ 
+
+37.交通工具（多重继承）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CVehicle{
+    protected:
+        int max_speed, speed, weight;
+    public:
+        CVehicle(){}
+        CVehicle(int a, int b, int c) : max_speed(a), speed(b), weight(c){}
+        void display()
+        {
+            cout << "Vehicle:\n";
+            cout << "max_speed:" << max_speed << '\n';
+            cout << "speed:" << speed << '\n';
+            cout << "weight:" << weight << '\n';
+            cout << '\n';
+        }
+};
+
+class CBicycle : public CVehicle
+{
+    protected:
+        int height;
+    public:
+        CBicycle(){}
+        CBicycle(int a, int b, int c, int h) : CVehicle(a, b, c){ height = h;}
+        void display()
+        {
+            cout << "Bicycle:\n";
+            cout << "max_speed:" << max_speed << '\n';
+            cout << "speed:" << speed << '\n';
+            cout << "weight:" << weight << '\n';
+            cout << "height:" << height << '\n';
+            cout << '\n';
+        }
+};
+
+class CMotocar : public CVehicle
+{
+    protected:
+        int seat_num;
+    public:
+        CMotocar(){}
+        CMotocar(int a, int b, int c, int n) : CVehicle(a, b, c){ seat_num = n;}
+        void display()
+        {
+            cout << "Motocar:\n";
+            cout << "max_speed:" << max_speed << '\n';
+            cout << "speed:" << speed << '\n';
+            cout << "weight:" << weight << '\n';
+            cout << "seat_num:" << seat_num << '\n';
+            cout << '\n';
+        }
+};
+
+class CMotocycle : public CBicycle, public CMotocar
+{
+    private:
+    
+    public:
+        CMotocycle(){}
+        CMotocycle(int a, int b, int c, int h, int n) : CBicycle(a, b, c, h), CMotocar(a, b, c, n){}
+        void display()
+        {
+            cout << "Motocycle:\n";
+            cout << "max_speed:" << CMotocar::max_speed << '\n';
+            cout << "speed:" << CMotocar::speed << '\n';
+            cout << "weight:" << CMotocar::weight << '\n';
+            cout << "height:" << CBicycle::height << '\n';
+            cout << "seat_num:" << CMotocar::seat_num << '\n';
+            cout << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int maxsp, sp, w, h, num;
+    cin >> maxsp >> sp >> w >> h >> num;
+    CVehicle p1(maxsp, sp, w);
+    p1.display();
+    CBicycle p2(maxsp, sp, w, h);
+    p2.display();
+    CMotocar p3(maxsp, sp, w, num);
+    p3.display();
+    CMotocycle p4(maxsp, sp, w, h, num);
+    p4.display();
+    return 0;
+}
 
 
+ 
+38.商旅信用卡（多重继承）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Tripcard{
+    protected:
+        int id;
+        static int score;
+    public:
+        Tripcard(){}
+        Tripcard(int ID, int s) : id(ID){ score = s;}
+        void addscore(float x)
+        {
+            score += x;
+        }
+};
+
+class Creditcard{
+    protected:
+        int id, limit;
+        float count;
+        string name;
+        static float score;
+    public:
+        Creditcard(){}
+        Creditcard(int ID, int ss, int lim, float ct, string nm)
+        {
+            id = ID, limit = lim, count = ct, name = nm, score = ss;
+        }
+        void consume(float m)
+        {
+            if(count + m <= limit) 
+            {
+                count += m;
+                score += m;
+            }
+        }
+        void getback(float m)
+        {
+            count -= m;
+            score -= m;
+        }
+        void addscore(float x)
+        {
+            score += x;
+        }
+};
+
+class TripCreditcard : public Tripcard, public Creditcard
+{
+    public:
+        TripCreditcard(int ID1, int ID2, string nm, int lim, float ct, int s, int ss) : Tripcard(ID1, s), Creditcard(ID2, ss, lim, ct, nm){}
+        void addscore(float m)
+        {
+            Tripcard::addscore(m);
+            Creditcard::addscore(m);
+            count += m;
+        }
+        void change(float x)
+        {
+            int s1, s2 = x / 2, s3;
+            Tripcard::score += s2;
+            Creditcard::score -= x;
+        }
+        void Print()
+        {
+            cout << Tripcard::id << " " << Tripcard::score << '\n' << Creditcard::id << " " << name << " " << count << " " << (int)Creditcard::score << '\n';
+        }
+};
+
+float Creditcard::score = 0;
+int Tripcard::score = 0;
+
+int main()
+{
+    untie();
+    int n, id1, id2, lim;
+    string name, op;
+    float m;
+    cin >> id1 >> id2 >> name >> lim;
+    TripCreditcard tcc(id1, id2, name, lim, 0, 0, 0);
+    cin >> n;
+    while(n--)
+    {
+        cin >> op >> m;
+        char t = op[0];
+        if(t == 'o')
+			tcc.addscore(m);
+		else if(t =='c')
+			tcc.consume(m);
+		else if(t =='q')
+			tcc.getback(m);
+		else if(t =='t')
+			tcc.change(m);
+    }
+    tcc.Print();
+    return 0;
+}
+
+ 
+
+*39.计算宝宝帐户收益(多重继承 + 虚基类)
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CPeople{
+    protected:
+        char id[20], name[10];
+    public:
+        CPeople(){}
+        CPeople(char *ID, char *nm)
+        {
+            strcpy(id, ID);
+            strcpy(name, nm);
+        }
+};
+
+//这里定义虚基类，使得 CInternetUser::registerUser() 和 CBankCustomer::openAccount() 都是对同一个 CPeople 对象进行修改操作
+class CInternetUser : virtual public CPeople
+{
+    protected:
+        char password[20];
+    public:
+        void registerUser(char *ID, char *nm, char *pw)
+        {
+            strcpy(id, ID);
+            strcpy(name, nm);
+            strcpy(password, pw);
+        }
+        bool login(char *ID, char *pw)
+        {
+            return (!strcmp(ID, id)) && (!strcmp(pw, password));
+        }
+};
+
+class CBankCustomer : virtual public CPeople
+{
+    protected:
+        double balance;
+    public:
+        CBankCustomer(){}
+        void openAccount(char *nm, char *ID)
+        {
+            strcpy(id, ID);
+            strcpy(name, nm);
+            balance = 0;
+        }
+        void deposit(double m)
+        {
+            balance += m;
+        }
+        bool withdraw(double m)
+        {
+            if(balance - m < 0) return 0;
+            balance -= m;
+            return 1;
+        }
+};
+
+class CInternetBankCustomer : public CInternetUser, public CBankCustomer
+{
+    protected:
+        double t_balance, y_balance;
+        double earning;
+        double t_interest, y_interest;
+    public:
+        CInternetBankCustomer()
+        {
+            t_balance = y_balance = earning = t_interest = y_interest = 0;
+        }
+        bool deposit(double m)
+        {
+            if(balance - m < 0) return 0;
+            balance -= m;
+            t_balance += m;
+            return 1;
+        }
+        bool withdraw(double m)
+        {
+            if(balance - m < 0) return 0;
+            balance += m;
+            t_balance -= m;
+            return 1;
+        }
+        void setInterest(double x)
+        {
+            y_interest = t_interest;
+            t_interest = x;
+        }
+        void calculateProfit()
+        {
+            earning = y_balance * 0.0001 * y_interest;
+            t_balance += earning;
+            y_balance = t_balance;  
+        }
+        void print()
+        {
+            cout << "Name: " << CBankCustomer::name << " ID: " << CBankCustomer::id << '\n' << "Bank balance: " << balance << '\n' << "Internet bank balance: " << t_balance << '\n';
+        }
+        bool login(char *ID, char *pw)
+        {
+            return (!strcmp(ID, CInternetUser::id)) && (!strcmp(pw, CInternetUser::password)) && (!strcmp(CInternetUser::id, CBankCustomer::id) && !strcmp(CInternetUser::name, CBankCustomer::name));
+        }
+};
+
+int main()
+{
+    untie();
+    int t, no_of_days, i;
+    char i_xm[20], i_id[20], i_mm[20], b_xm[20], b_id[20], ib_id[20], ib_mm[20];
+    double money, interest;
+    char op_code;
+    //输入测试案例数t
+    cin >> t;
+    while (t--)
+    {
+        //输入互联网用户注册时的用户名,id,登陆密码
+        cin >> i_xm >> i_id >> i_mm;
+        //输入银行开户用户名,id
+        cin >> b_xm >> b_id;
+        //输入互联网用户登陆时的id,登陆密码
+        cin >> ib_id >> ib_mm;
+        CInternetBankCustomer ib_user;
+        ib_user.registerUser(i_xm, i_id, i_mm);
+        ib_user.openAccount(b_xm, b_id);
+        if (ib_user.login(ib_id, ib_mm) == 0) //互联网用户登陆,若id与密码不符;以及银行开户姓名和id与互联网开户姓名和id不同
+        {
+            cout << "Password or ID incorrect" << endl;
+            continue;
+        }
+        //输入天数
+        cin >> no_of_days;
+        for (i = 0; i < no_of_days; i++)
+        {
+            //输入操作代码, 金额, 当日万元收益
+            cin >> op_code >> money >> interest;
+            switch (op_code)
+            {
+                case 'S': //从银行向互联网金融帐户存入
+                case 's':
+                    if (ib_user.deposit(money) == 0)
+                    {
+                        cout << "Bank balance not enough" << endl;
+                        continue;
+                    }
+                    break;
+                case 'T': //从互联网金融转入银行帐户
+                case 't':
+                    if (ib_user.withdraw(money) == 0)
+                    {
+                        cout << "Internet bank balance not enough" << endl;
+                        continue;
+                    }
+                    break;
+                case 'D': //直接向银行帐户存款
+                case 'd':
+                    ib_user.CBankCustomer::deposit(money);
+                    break;
+                case 'W': //直接从银行帐户取款
+                case 'w':
+                    if (ib_user.CBankCustomer::withdraw(money) == 0)
+                    {
+                        cout << "Bank balance not enough" << endl;
+                        continue;
+                    }
+                    break;
+                default:
+                    cout << "Illegal input" << endl;
+                    continue;
+            }
+            ib_user.setInterest(interest);
+            ib_user.calculateProfit();
+            ib_user.print();
+            cout << endl;
+        }
+    }
+    return 0;
+}
+ 
 
 
 
