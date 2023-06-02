@@ -12034,8 +12034,451 @@ int main()
  
 
 
+40.时钟调整（运算符前后增量）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
 
-    
+class CClock
+{
+    private:
+	    int hour, minute, second;
+    public:
+        CClock(int hour, int minute, int second) :hour(hour), minute(minute), second(second) {}
+        CClock& operator++()
+        {
+            second++;
+            if (second > 59)
+            {
+                second = 0;
+                minute++;
+            }
+            if (minute > 59)
+            {
+                minute = 0;
+                hour++;
+            }
+            if (hour > 11)
+                hour = 0;
+            return *this;
+        }
+        CClock operator--(int)
+        {
+            CClock temp(hour, minute, second);
+            second--;
+            if (second < 0)
+            {
+                second = 59;
+                minute--;
+            }
+            if (minute < 0)
+            {
+                minute = 59;
+                hour--;
+            }
+            if (hour < 0)
+                hour = 11;
+            return temp;
+        }
+        void Print()
+        {
+            cout << hour << ':' << minute << ':' << second << endl;
+        }
+};
+int main()
+{
+    untie();
+	int hour, minute, second,t,count;
+	cin >> hour >> minute >> second >> t;
+	CClock test(hour, minute, second);
+	while (t--)
+	{
+		cin >> count;
+		if (count > 0)
+		{
+			while (count--) ++test;
+			test.Print();
+		}
+		else
+		{
+			count = -count;
+			while (count--) test--;
+			test.Print();
+		}
+	}
+    return 0;
+}
+
+
+
+41.矩阵（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CMatrix
+{
+    private:
+        int n, m; // n-行，m-列
+        int** data; // 存储矩阵数据
+    public:
+        CMatrix()
+        {
+            n = 0; 
+            m = 0;
+            data = NULL;
+        }
+        CMatrix(int n1, int m1);
+        ~CMatrix();
+        CMatrix &operator =(const CMatrix &a)
+        {
+            if(data != NULL)
+            {
+                for (int i = 0; i < n; i++) delete []data[i];
+                delete []data;
+            }
+            n = a.n;
+            m = a.m;
+            data = new int*[n];
+            for (int i = 0; i < n; i++)
+            {
+                data[i] = new int[m];
+            }
+            for(int i = 0; i < n; ++i)
+				for(int j = 0; j < m; j++)
+					data[i][j] = a.data[i][j];
+            return *this;
+        }
+        int *const operator [](const int i)
+        {
+            return data[i];
+        }
+        int operator ()(int i, int j)
+        {
+            return data[i][j];
+        }
+};
+
+CMatrix::CMatrix(int n1, int m1)
+{
+    n = n1;
+    m = m1;
+    // 分配n行m列的二维数组空间
+    data = new int* [n];
+    for (int i = 0; i < n; i++)
+    {
+        data[i] = new int[m];
+    }
+}
+
+CMatrix::~CMatrix()
+{
+    // 释放空间
+    for (int i = 0; i < n; i++)
+    {
+        delete[] data[i];
+    }
+    delete[] data;
+}
+
+int main()
+{
+    int t, n, m, i, j;
+    cin >> t;
+    while (t--)
+    {
+        cin >> n >> m;
+        // 定义矩阵对象matrixA
+        CMatrix matrixA(n, m);
+        for (i = 0; i < n; i++)
+        {
+            for (j = 0; j < m; j++)
+            {
+                // 输入第i行第j列的数据
+                cin >> matrixA[i][j];
+            }
+        }
+        // 输出matrixA中的数据
+        cout << "matrixA:" << endl;
+        for (i = 0; i < n; i++)
+        {
+            for (j = 0; j < m; j++)
+            {
+                cout << matrixA(i, j) << " ";
+            }
+            cout << endl;
+        }
+        // 定义矩阵对象matrixB
+        CMatrix matrixB;
+        matrixB = matrixA;
+        // 输出marixB中的数据
+        cout << "matrixB:" << endl;
+        for (i = 0; i < n; i++)
+        {
+            for (j = 0; j < m; j++)
+            {
+                cout << matrixB[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+    return 0;
+}
+
+
+
+42.矩形关系（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CPoint
+{
+    private:
+        int x, y;
+    public:
+        CPoint(){}
+        CPoint(int xx, int yy) : x(xx), y(yy){}
+        int getX() { return x;}
+        int getY() { return y;}
+};
+
+class CRectangle
+{
+    private:
+        CPoint leftPoint, rightPoint;
+    public:
+        CRectangle(){}
+        CRectangle(int x1, int y1, int x2, int y2) : leftPoint(x1, y1), rightPoint(x2, y2){}
+        bool operator >(CPoint &p)
+        {
+            return p.getX() > leftPoint.getX() && p.getX() < rightPoint.getX() && p.getY() < leftPoint.getY() && p.getY() > rightPoint.getY();
+        }
+        bool operator >(CRectangle &c)
+        {
+            bool ok1 = c.leftPoint.getX() >= leftPoint.getX() && c.leftPoint.getX() <= rightPoint.getX() && c.leftPoint.getY() <= leftPoint.getY() && c.leftPoint.getY() >= rightPoint.getY();
+            bool ok2 = c.rightPoint.getX() >= leftPoint.getX() && c.rightPoint.getX() <= rightPoint.getX() && c.rightPoint.getY() <= leftPoint.getY() && c.rightPoint.getY() >= rightPoint.getY();
+            return ok1 && ok2;
+        }
+        bool operator ==(CRectangle &c)
+        {
+            return c.leftPoint.getX() == leftPoint.getX() && c.leftPoint.getY() == leftPoint.getY() && c.rightPoint.getX() == rightPoint.getX() && c.rightPoint.getY() == rightPoint.getY();
+        }
+        bool operator *(CRectangle &c)
+        {
+            if(c.leftPoint.getX() > rightPoint.getX() || c.leftPoint.getY() < rightPoint.getY() || c.rightPoint.getX() < leftPoint.getX() || c.rightPoint.getY() > leftPoint.getY())
+                return false;
+            return true;
+        }
+        operator int()
+        {
+            return (rightPoint.getX() - leftPoint.getX()) * (leftPoint.getY() - rightPoint.getY()); 
+        }
+        friend ostream &operator <<(ostream &cout, CRectangle &c)
+        {
+            cout << c.leftPoint.getX() << " " << c.leftPoint.getY() << " " << c.rightPoint.getX() << " " << c.rightPoint.getY();
+            return cout;
+        }
+};
+
+int main()
+{
+    int t, x1, x2, y1, y2;
+    cin >> t;
+    while (t--)
+    {
+        // 矩形1的左上角、右下角
+        cin >> x1 >> y1 >> x2 >> y2;
+        CRectangle rect1(x1, y1, x2, y2);
+        // 矩形2的左上角、右下角
+        cin >> x1 >> y1 >> x2 >> y2;
+        CRectangle rect2(x1, y1, x2, y2);
+        // 输出矩形1的坐标及面积
+        cout << "矩形1:" << rect1 << " " << (int)rect1 << endl;
+        // 输出矩形2的坐标及面积
+        cout << "矩形2:" << rect2 << " " << (int)rect2 << endl;
+        if (rect1 == rect2)
+        {
+            cout << "矩形1和矩形2相等" << endl;
+        }
+        else if (rect2 > rect1)
+        {
+            cout << "矩形2包含矩形1" << endl;
+        }
+        else if (rect1 > rect2)
+        {
+            cout << "矩形1包含矩形2" << endl;
+        }
+        else if (rect1 * rect2)
+        {
+            cout << "矩形1和矩形2相交" << endl;
+        }
+        else
+        {
+            cout << "矩形1和矩形2不相交" << endl;
+        }
+        cout << endl;
+    }
+    return 0;
+}
+
+
+
+43.货币加减（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CMoney
+{
+    private:
+	    int n1, n2, n3;
+    public:
+        CMoney(){}
+        CMoney(int x1, int x2, int x3) : n1(x1), n2(x2), n3(x3){}
+        friend CMoney operator +(const CMoney &c1, const CMoney &c2)
+        {
+            int s = (c1.n1 + c2.n1) * 100 + (c1.n2 + c2.n2) * 10  + c1.n3 + c2.n3;
+            CMoney tp(s / 100, s % 100 / 10, s % 100 % 10);
+            return tp;
+        }
+        friend CMoney operator -(const CMoney &c1, const CMoney &c2)
+        {
+            int s = (c1.n1 - c2.n1) * 100 + (c1.n2 - c2.n2) * 10  + c1.n3 - c2.n3;
+            CMoney tp(s / 100, s % 100 / 10, s % 100 % 10);
+            return tp;
+        }
+        friend istream& operator >> (istream& cin, CMoney& a)
+        {
+            cin >> a.n1 >> a.n2 >> a.n3;
+            return cin; 
+        }
+        friend ostream& operator << (ostream& cout, CMoney& a)
+        {
+            cout << a.n1 << "元" << a.n2 << "角" << a.n3 << "分" << endl;
+            return cout;
+        }
+};
+int main()
+{
+    untie();
+	int T;
+    cin >> T;
+    while(T--)
+    {
+        int n1, n2, n3;
+        string op;
+        CMoney m, tp;
+        cin >> m;
+        while(cin >> op)
+        {
+            if(op == "stop") break;
+            cin >> tp;
+            if(op == "add") m = m + tp;
+            else m = m - tp;
+        }
+        cout << m;
+    }
+    return 0;
+}
+
+
+
+44.X的放大与缩小（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CXGraph
+{
+    private:
+        int n;
+    public:
+        CXGraph(){}
+        CXGraph(int nn) : n(nn){}
+        CXGraph &operator ++()
+        {
+            if(n < 21) n += 2;
+            return *this;
+        }
+        CXGraph &operator --()
+        {
+            if(n > 1) n -= 2;
+            return *this;
+        }
+        CXGraph operator ++(int)
+        {
+            CXGraph temp(n);
+            if(n < 21) n += 2;
+            return temp;
+        }
+        CXGraph operator --(int)
+        {
+            CXGraph temp(n);
+            if(n > 1) n -= 2;
+            return temp;
+        }
+        friend ostream &operator <<(ostream &cout, const CXGraph &g)
+        {
+            for(int i = g.n, j = 0; i > 1; i -= 2, j++) cout << string(j, ' ') + string(i, 'X') << '\n';
+            for(int i = 1, j = g.n / 2; i <= g.n; i += 2, j--) cout << string(j, ' ') + string(i, 'X') << '\n';
+            return cout;
+        }
+};
+
+int main()
+{
+    untie();
+	int t, n;
+    string command;
+    cin >> n;
+    CXGraph xGraph(n);
+    cin >> t;
+    while (t--)
+    {
+        cin >> command;
+        if (command == "show++")
+        {
+            cout << xGraph++ << endl;
+        }
+        else if(command == "++show")
+        {
+            cout << ++xGraph << endl;
+        }
+        else if (command == "show--")
+        {
+            cout << xGraph-- << endl;
+        }
+        else if (command == "--show")
+        {
+            cout << --xGraph << endl;
+        }
+        else if (command == "show")
+        {
+            cout << xGraph << endl;
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 
