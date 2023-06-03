@@ -869,7 +869,104 @@ int main()
 
 
 
+---
+
+## ABC 304(*)
+
+### D
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+
+int x[N], y[N], a[N], b[N];
+map<pair<int, int>, int> mp;
+
+int main()
+{
+    untie();
+    int w, h, n, A, B;
+    cin >> w >> h >> n;
+    for(int i = 0; i < n; ++i) cin >> x[i] >> y[i];
+    cin >> A;
+    for(int i = 0; i < A; ++i) cin >> a[i];
+    cin >> B;
+    for(int i = 0; i < B; ++i) cin >> b[i];
+    
+    int ans1 = 1e9, ans2 = 0;
+    for(int i = 0; i < n; ++i)
+    {
+        int xx = lower_bound(a, a + A, x[i]) - a;
+        int yy = lower_bound(b, b + B, y[i]) - b;
+        mp[make_pair(xx, yy)]++;
+    }
+    for(auto [p, num] : mp)
+    {
+        ans1 = min(ans1, num);
+        ans2 = max(ans2, num);
+    }
+    if((A + 1) * (B + 1) > mp.size()) ans1 = 0;
+    cout << ans1 << " " << ans2;
+    return 0;
+}
+```
 
 
 
+### E
+
+```c++
+//把操作对象利用并查集变成两个连通块，加上某条边即使得两个连通块互相可达
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int n, m, k, q;
+int sta[N], ds[N];
+vector<int> G[N];
+unordered_set<int> jud[N];
+bool vis[N];
+map<pair<int, int>, bool> mp;// mp[{fu, fv}] 表示两个连通块是否不应该连通
+int find_set(int x)
+{
+    return x == ds[x] ? x : (ds[x] = find_set(ds[x]));
+}
+int main()
+{
+    untie();
+    cin >> n >> m;
+    for(int i = 1; i <= n; ++i) ds[i] = i;
+    for(int i = 0; i < m; ++i)
+    {
+        int u, v;
+        cin >> u >> v;
+        u = find_set(u), v = find_set(v);
+        if(u != v) ds[u] = v;
+    }
+    cin >> k;
+    for(int i = 0; i < k; ++i)
+    {
+        int u, v;
+        cin >> u >> v;
+        u = find_set(u), v = find_set(v);
+        mp[make_pair(u, v)] = mp[make_pair(v, u)] = 1;
+    }
+    cin >> q;
+    while(q--)
+    {
+        int u, v;
+        cin >> u >> v;
+        u = find_set(u), v = find_set(v);
+        if(u != v && mp[make_pair(u, v)]) // 首先判断不在同一个连通块，再判断是否不允许连通
+            cout << "No\n";
+        else
+            cout << "Yes\n";
+    }
+    return 0;
+}
+```
 
