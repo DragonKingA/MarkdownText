@@ -728,9 +728,196 @@ int main()
 
 ## Round 867
 
+### D
+
+```c++
+//理解题目得出特判条件，并从案例里找规律
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+int main()
+{
+    untie();
+    int T; cin >> T;
+    while(T--)
+    {
+        int n; cin >> n;
+        if(n == 1) cout << "1\n";
+        else if(n & 1) cout << "-1\n";
+        else
+        {
+            // i  1 -> n - 1
+            // n == 6
+            // 找规律： n   (n - 1)   2   (n - 3)   4   (n - 5)
+            // -> n
+            // -> if i & 1 -> n - i
+            // -> else     -> i
+            cout << n;
+            for(int i = 1; i < n; ++i)
+            {
+                if(i & 1) cout << " " << n - i;
+                else cout << " " << i;
+            }
+            cout << '\n';
+        }
+    }
+    return 0;
+}
+```
+
+### E
+
+```c++
+//首先，特判两个情况：
+//1. n 为奇数时一定有中间的字符满足 s[i] == s[n - i + 1]，则输出 -1
+//2. 某种字符的个数超过 n / 2 时，则一定有一对相同的该字符对无法通过交换操作去掉，输出 -1
+//然后，获得相同字符对对数 sum，容易知道，一般情况下相同字符对直接两两互换共 (sum + 1) / 2 次即可（这里 sum + 1 是防止 sum 为奇数时直接 sum / 2 会忽略一个相同字符对未处理）
+//但当，某个相同字符对的对数较多时（设最多的为 maxv），如 n = 14, s = "aacmlaaaacxcca"，这里有相同字符对  ：3 个 <a, a> 及 1 个 <c, c>。当 1 个 <a, a> 和 1 个 <c, c> 交换一次抵消后，剩下 2 个 <a, a> 则需要与已有的相异字符对交换，即 2 次，因此此时最终答案应为 maxv
+//答案为 ans = max(maxv, (sum + 1) / 2)
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+string s;
+int main()
+{
+    untie();
+    int T; cin >> T;
+    while(T--) 
+    {
+        int n; cin >> n >> s;
+        map<char, int> mp;
+        bool ok = n & 1;
+        for(auto ch : s) mp[ch]++;
+        for(auto [ch, num] : mp)
+            if(num > n / 2)
+            {
+                ok = 1;
+                break;
+            }
+        if(ok)
+        {
+            cout << "-1\n";
+            continue;
+        }
+        mp.clear();
+        int sum = 0, maxv = 0;
+        for(int i = 0; i < n / 2; ++i)
+        {
+            if(s[i] == s[n - i - 1]) ++sum, mp[s[i]]++;
+            maxv = max(maxv, mp[s[i]]);
+        }
+        if(maxv > (sum + 1) / 2) cout << maxv << '\n';
+        else cout << (sum + 1) / 2 << '\n';
+    }
+    return 0;
+}
+```
 
 
 
+### G1
+
+```c++
+//模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+unordered_map<int, int> mp;
+int main()
+{
+    untie();
+    int T; cin >> T;
+    while(T--)
+    {
+        int n; cin >> n;
+        mp.clear();
+        for(int i = 0; i < n; ++i)
+        {
+            int x; cin >> x;
+            mp[x]++;
+        }
+        ll ans = 0;
+        for(auto [x, cnt] : mp)
+        {
+            int v = 2;
+            if(cnt > 2) ans += 1LL * cnt * (cnt - 1) * (cnt - 2);
+            while(v)
+            {
+                if(x * v * v > 1e6) break;
+                if(mp.count(x * v) && mp.count(x * v * v))
+                    ans += 1LL * cnt * mp[x * v] * mp[x * v * v];
+                ++v;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+```
+
+### G2
+
+```c++
+//还不能理解该做法（分值域用不同的算法处理）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+map<ll, ll> mp; //本题卡 unordered_map 常数
+int main()
+{
+    untie();
+    int T; cin >> T;
+    while(T--)
+    {
+        int n; cin >> n;
+        mp.clear();
+        for(int i = 0; i < n; ++i)
+        {
+            int x; cin >> x;
+            mp[x]++;
+        }
+        ll ans = 0;
+        vector<ll> vec;
+        for(auto [x, cnt] : mp)
+        {
+            ans += cnt * (cnt - 1) * (cnt - 2);
+            if(x >= 1e6)
+            {
+                for(int i = 2; x * i <= 1e9; ++i)
+                    if(x % i == 0 && mp.count(x / i) && mp.count(x * i))
+                        ans += cnt * mp[x / i] * mp[x * i];
+            }
+            else
+            {
+                vec.clear();
+                for(int i = 1; i <= sqrt(x); ++i)
+                    if(x % i == 0) 
+                    {
+                        vec.push_back(i);
+                        if(i * i != x) vec.push_back(x / i);//此处算法不理解
+                    }
+                sort(vec.begin(), vec.end());
+                for(auto v : vec)
+                {
+                    if(v == 1) continue;
+                    if(x * v > 1e9) break;
+                    if(mp.count(x / v) && mp.count(x * v))
+                        ans += 1LL * cnt * mp[x / v] * mp[x * v];
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+```
 
 
 
