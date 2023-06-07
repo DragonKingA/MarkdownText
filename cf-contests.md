@@ -921,6 +921,154 @@ int main()
 
 
 
+## Round 878
+
+### A ~ D
+
+```c++
+A. 简单模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int n, T;
+string s;
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        cin >> n >> s;
+        char ch = s[0];
+        string ans = "";
+        for(int i = 1; i < n; ++i)
+        {
+            if(s[i] == ch) 
+            {
+                ans.push_back(ch);
+                if(i + 1 < n) ch = s[++i];
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+
+
+
+B. 小数论（小于等于 2^n 的二次幂数，能线性组合表示所有小于等于 2^n 的整数）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int n, k, T;
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        cin >> n >> k;
+        if(k >= 31) cout << n + 1 << '\n';
+        else cout << min(n + 1, 1 << k) << '\n';
+    }
+    return 0;
+}
+
+
+
+C. 模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+ll n, k, q, T;
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        cin >> n >> k >> q;
+        vector<ll> v(n + 1);
+        for(int i = 1; i <= n; ++i) cin >> v[i];
+        int ind = 0;
+        ll ans = 0;
+        for(int i = 1; i <= n; ++i)
+        {
+            if(v[i] > q) ind = i;
+            else ans += max(0LL, i - ind - k + 1);
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+
+
+
+D. 二分（求最大 |x - y| 的二分答案）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int n, T;
+vector<int> v;
+bool check(int mid)
+{
+    ll num = -1e9;
+    int cnt = 0;
+    for(auto x : v)
+    {
+        if(abs(x - num) > mid) // 则还需要一个人
+        {
+            num = x + mid;
+            ++cnt;
+        }
+    }
+    return cnt <= 3; // 3个人以内即合法
+}
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        v.clear();
+        cin >> n;
+        for(int i = 0; i < n; ++i) 
+        {
+            int x; cin >> x;
+            v.push_back(x);
+        }
+        sort(v.begin(), v.end());
+        int l = 0, r = *v.rbegin(), ans = 0;
+        while(l <= r)
+        {
+            int mid = l + r >> 1;
+            if(check(mid)) r = mid - 1, ans = mid;
+            else l = mid + 1;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+```
+
 
 
 ---

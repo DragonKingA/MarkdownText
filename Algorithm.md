@@ -3678,7 +3678,7 @@ int main()
   const int N = 1e3 + 5;
   int n, m;//n个点，m条边         
   struct Edge{
-      // int from, to, w;//from 一般不需要，直接去掉即可
+      // int from, to, w; //from 一般不需要，直接去掉即可
       int to, w;
       Edge(){}
       Edge(int a, int b) { to = a, w = b;}
