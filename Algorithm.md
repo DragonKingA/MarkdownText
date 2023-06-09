@@ -12468,6 +12468,464 @@ int main()
 
 
 
+45. 分数的加减乘除（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Fraction
+{
+    private:
+        int fz, fm;
+        int commonDivisor(){}
+        void contracted(){}
+    public:
+        Fraction(int z = 0, int m = 1)
+        {
+            fz = z, fm = m;
+        }
+        Fraction(Fraction& fra)
+        {
+            fz = fra.fz;
+            fm = fra.fm;
+        }
+        Fraction operator+(Fraction fra)
+        {
+            fz = fz * fra.fm + fm * fra.fz;
+            fm *= fra.fm;
+            return *this;
+        }
+        Fraction operator-(Fraction fra)
+        {
+            fz = fz * fra.fm - fm * fra.fz;
+            fm *= fra.fm;
+            return *this;
+        }
+        Fraction operator*(Fraction fra)
+        {
+            fz *= fra.fz;
+            fm *= fra.fm;
+            return *this;
+        }
+        Fraction operator/(Fraction fra)
+        {
+            fz *= fra.fm;
+            fm *= fra.fz;
+            return *this;
+        }
+        void set(int z = 0, int m = 1)
+        {
+            fz = z, fm = m;
+        }
+        void disply()
+        {
+            cout << "fraction=" << fz << "/" << fm << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int fz, fm;
+    cin >> fz >> fm;    
+    Fraction f1(fz, fm);
+    cin >> fz >> fm;
+    Fraction f2(fz, fm);
+    Fraction f3(f1);
+    f1 = f1 + f2;
+    f1.disply();
+    f1 = f3;
+    f1 = f1 - f2;
+    f1.disply();
+    f1 = f3;
+    f1 = f1 * f2;
+    f1.disply();
+    f1 = f3;
+    f1 = f1 / f2;
+    f1.disply();
+    return 0;
+}
+
+
+
+46. 复数的加减乘运算（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Complex
+{
+    private:
+        float real, image;
+    public:
+        Complex(float x = 0, float y = 0)
+        {
+            real = x, image = y;
+        }
+        friend Complex operator+(Complex& c1, Complex& c2)
+        {
+            Complex res;
+            res.real = c1.real + c2.real;
+            res.image = c1.image + c2.image;
+            return res;
+        }
+        friend Complex operator-(Complex& c1, Complex& c2)
+        {
+            Complex res;
+            res.real = c1.real - c2.real;
+            res.image = c1.image - c2.image;
+            return res;
+        }
+        friend Complex operator*(Complex& c1, Complex& c2)
+        {
+            Complex res;
+            res.real = c1.real * c2.real - c1.image * c2.image;
+            res.image = c1.real * c2.image + c1.image * c2.real;
+            return res;
+        }
+        void show()
+        {
+            cout << "Real=" << real << " Image=" << image << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    float a, b;
+    cin >> a >> b;
+    Complex c1(a, b);
+    cin >> a >> b;
+    Complex c2(a, b);
+    Complex c3;
+    c3 = c1 + c2;
+    c3.show();
+    c3 = c1 - c2;
+    c3.show();
+    c3 = c1 * c2;
+    c3.show();
+    return 0;
+}
+
+
+
+47. 三维坐标点的平移（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Point
+{
+    int x;
+    int y;
+    int z;        
+    public:
+        Point(int xx = 0, int yy = 0, int zz = 0)
+        {
+            x = xx, y = yy, z = zz;
+        }
+        friend Point operator ++(Point &p)
+        {
+            p.x++, p.y++, p.z++;
+            return p;
+        }
+        friend Point operator ++(Point &p, int)
+        {
+            Point temp(p.x, p.y, p.z);
+            p.x++, p.y++, p.z++;
+            return temp;
+        }
+        friend Point operator --(Point &p)
+        {
+            p.x--, p.y--, p.z--;
+            return p;
+        }
+        friend Point operator --(Point &p, int)
+        {
+            Point temp(p.x, p.y, p.z);
+            p.x--, p.y--, p.z--;
+            return temp;
+        }
+        void show()
+        {
+            cout << "x=" << x << " " << "y=" << y << " " << "z=" << z << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int x, y, z;
+    cin >> x >> y >> z;
+    Point p1(x, y, z), tp(p1);
+
+    Point p2 = p1++;
+    p1.show();
+    p2.show();
+
+    p1 = tp;
+    p2 = ++p1;
+    p1.show();
+    p2.show();
+
+    p1 = tp;
+    p2 = p1--;
+    p1.show();
+    p2.show();
+
+    p1 = tp;
+    p2 = --p1;
+    p1.show();
+    p2.show();
+    return 0;
+}
+
+
+
+*48. 矩阵相乘（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CMatrix
+{
+    private:
+        int n, m;
+        int** data; 
+    public:
+        CMatrix()
+        {
+            n = 0; 
+            m = 0;
+            data = NULL;
+        }
+        CMatrix(int n1, int m1);
+        ~CMatrix();
+        CMatrix &operator =(const CMatrix &a)
+        {
+            if(data != NULL)
+            {
+                for (int i = 0; i < n; i++) delete []data[i];
+                delete []data;
+            }
+            n = a.n;
+            m = a.m;
+            data = new int*[n];
+            for (int i = 0; i < n; i++)
+            {
+                data[i] = new int[m];
+            }
+            for(int i = 0; i < n; ++i)
+				for(int j = 0; j < m; j++)
+					data[i][j] = a.data[i][j];
+            return *this;
+        }
+        int *const operator [](const int i)
+        {
+            return data[i];
+        }
+        int operator ()(int i, int j)
+        {
+            return data[i][j];
+        }
+        friend CMatrix operator *(CMatrix &a, CMatrix &b)
+        {
+            int n = a.n;
+            CMatrix ret(n, n);
+            for(int i = 0; i < n; i++)
+            {
+                for(int j = 0; j < n; j++)
+                {
+                    int sum = 0;
+                    for(int k = 0; k < n; k++) 
+                        sum += a[i][k] * b[k][j];
+                    ret[i][j] = sum;
+                }
+            }
+            return ret;
+        }
+};
+
+CMatrix::CMatrix(int n1, int m1)
+{
+    n = n1;
+    m = m1;
+    data = new int* [n];
+    for (int i = 0; i < n; i++)
+        data[i] = new int[m];
+    for(int i = 0; i < n; ++i)
+        for(int j = 0; j < n; ++j)
+            data[i][j] = 0;
+    for(int i = 0; i < n; ++i) 
+        data[i][i] = 1;
+}
+
+CMatrix::~CMatrix()
+{
+    for (int i = 0; i < n; i++)
+        delete[] data[i];
+    delete[] data;
+}
+
+int main()
+{
+    int t, n;
+    cin >> t >> n;
+    CMatrix ans(n, n);
+    while (t--)
+    {
+        CMatrix now(n, n);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                cin >> now[i][j];
+        ans = ans * now;
+    }
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            cout << ans[i][j] << " \n"[j == n - 1];
+    return 0;
+}
+
+
+
+*49. 学生生日差值计算（运算符重载）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Student
+{
+    public:
+        string name;
+        int year, mon, day;
+        Student(){}
+        Student(string nm, int yy, int mm, int dd) : name(nm), year(yy), mon(mm), day(dd){}
+        bool IsLeap(int year)
+        {
+            return (year % 4 == 0 || year % 400 == 0) && (year % 100 != 0);
+        }
+        int operator-(Student& b)
+        {
+            int DAY[12] = { 31,28,31,30,31,30,31,31,30,31,30,31};
+            int DAY1[12] = { 31,29,31,30,31,30,31,31,30,31,30,31};
+            int length1=0, length2=0;
+            
+            if (IsLeap(year)) {
+                for (int j = 0; j < mon-1; j++) {
+                    length1 += DAY1[j];
+                }	
+            }
+            else {
+                for (int j = 0; j < mon-1; j++) {
+                    length1 += DAY[j];
+                }	
+            }
+            length1 += day;
+
+            if (IsLeap(b.year)) {
+                for (int j = 0; j < b.mon-1; j++) {
+                    length2 += DAY1[j];
+                }
+            }
+            else {
+                for (int j = 0; j < b.mon-1; j++) {
+                    length2 += DAY[j];
+                }
+            }
+            length2 += b.day;
+
+            if (year == b.year) {
+                return abs(length1 - length2);
+            }
+            else if (year > b.year) {
+                int year2 = b.year;
+                while(year - year2) {
+                    if (IsLeap(year2)) {
+                        length1 += 366;
+                    }
+                    else {
+                        length1 += 365;
+                    }
+                    year2++;
+                }
+                return length1-length2;
+            }
+            else {
+                int year2 = year;
+                while (b.year - year2) {
+                    if (IsLeap(year2)) {
+                        length2 += 366;
+                    }
+                    else {
+                        length2 += 365;
+                    }
+                    year2++;
+                }
+                return length2 - length1;
+            }
+        }
+};
+
+int main()
+{
+    untie();
+    int n;
+    cin >> n;
+    Student *p = new Student[n];
+    string ans_name[2];
+    int ans_date = 0;
+
+    string name;
+    int y, m, d;
+    for(int i = 0; i < n; ++i)
+    {
+        cin >> name >> y >> m >> d;
+        p[i] = Student(name, y, m, d);
+    }
+    for(int i = 0; i < n; ++i)
+    {
+        for(int j = i + 1; j < n; ++j)
+        {
+            int now = p[j] - p[i];
+            if(now > ans_date)
+            {
+                ans_date = now;
+                ans_name[0] = p[i].name;
+                ans_name[1] = p[j].name;
+            }
+        }
+    }
+    cout << ans_name[0] << "和" << ans_name[1] << "年龄相差最大，为" << ans_date << "天。";
+    delete []p;
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -923,7 +923,7 @@ int main()
 
 ## Round 878
 
-### A ~ D
+### A ~ F
 
 ```c++
 A. 简单模拟
@@ -1060,8 +1060,67 @@ int main()
 
 
 
+F. 多操作模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 2e5 + 10;
+int n, q, t, T;
+string s[3];
+int main()
+{
+    untie();
+    cin >> T;
+    while(T--)
+    {
+        cin >> s[1] >> s[2];
+        cin >> t >> q;
 
+        int op, pos, cnt = 0;
+        n = s[1].size();
+        s[1] = '*' + s[1], s[2] = '*' + s[2];
 
+        for(int i = 1; i <= n; ++i)
+            if(s[1][i] != s[2][i]) ++cnt;
+
+        queue<int> lim;
+        
+        for(int k = 1; k <= q; ++k)
+        {
+            cin >> op;
+            if(!lim.empty() && lim.front() == k)
+            {
+                lim.pop();
+                ++cnt;
+            }
+            if(op == 1)
+            {
+                cin >> pos;
+                if(s[1][pos] != s[2][pos]) 
+                {
+                    lim.push(k + t);
+                    --cnt;
+                }
+            }
+            else if(op == 2)
+            {
+                int id1, id2, pos1, pos2;
+                cin >> id1 >> pos1 >> id2 >> pos2;
+                if(s[1][pos1] != s[2][pos1]) --cnt;
+                if(pos1 != pos2 && s[1][pos2] != s[2][pos2]) --cnt;
+                swap(s[id1][pos1], s[id2][pos2]);
+                if(s[1][pos1] != s[2][pos1]) ++cnt;
+                if(pos1 != pos2 && s[1][pos2] != s[2][pos2]) ++cnt;
+            }
+            else
+            {
+                cout << (cnt == 0 ? "YES\n" : "NO\n");
+            }
+        }
+    }
+    return 0;
+}
 
 
 
