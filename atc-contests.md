@@ -1,4 +1,4 @@
-# **atcoder contests **
+# [**atcoder contests **]()
 ---
 # ABC
 
@@ -969,6 +969,129 @@ int main()
     return 0;
 }
 ```
+
+
+
+
+
+## ABC 305
+
+### *D
+
+```c++
+STL二分 + 染色区间长度的前缀和存储
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int a[N], n, q;
+map<ll, int> mp;
+void Solve()
+{
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    //此处存储方式是重点，总体是前缀和的形式，但是是基于分段染色区间上的前缀和
+    for(int i = 1; i <= n; ++i)
+    {
+        if(i & 1) mp[a[i]] = mp[a[i - 1]] + a[i] - a[i - 1];
+        else mp[a[i]] = mp[a[i - 1]];
+        // cout << i << " " << a[i] << " " << mp[a[i]] << '\n';
+    }
+    cin >> q;
+    while(q--)
+    {
+        int l, r;
+        cin >> l >> r;
+        int x = upper_bound(a + 1, a + 1 + n, l) - a;
+        int y = upper_bound(a + 1, a + 1 + n, r) - a - 1;
+        ll ans = mp[a[y]] - mp[a[x]];
+        if(l < a[x] && x % 2 == 1) ans += a[x] - l;
+        if(r > a[y] && y % 2 == 0) ans += r - a[y];
+        cout << ans << '\n';
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+```
+
+### E
+
+```c++
+// 优先队列 + bfs
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+void Solve()
+{
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<int> G[n + 1];
+    while(m--)
+    {
+        int u, v; cin >> u >> v;
+        G[u].push_back(v);
+        G[v].push_back(u);
+    }
+    priority_queue<pair<int, int> > pq;//让能走的更远的点继续走，否则会被走得短的点占领，导致WA
+    while(k--)
+    {
+        int v, w; cin >> v >> w;
+        pq.push({w, v});
+    }
+    vector<bool> vis(n + 10, 0);
+    while(!pq.empty())
+    {
+        pair<int, int> now = pq.top(); pq.pop();
+        int u = now.second, w = now.first;
+        vis[u] = 1;
+        if(w == 0) continue;
+        for(int v : G[u])
+        {
+            if(vis[v]) continue;
+            vis[v] = 1;
+            pq.push({w - 1, v});
+        }
+    }
+    vector<int> ans;
+    for(int i = 1; i <= n; ++i)
+        if(vis[i]) ans.push_back(i);
+    cout << ans.size() << '\n';
+    for(int x : ans) cout << x << " ";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
 
 ---
 
