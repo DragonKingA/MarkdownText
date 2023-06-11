@@ -970,3 +970,120 @@ int main()
 }
 ```
 
+---
+
+# ARC
+
+---
+
+## ARC 161
+
+### A ~ B
+
+```c++
+A. 模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e4 + 10;
+
+void Solve()
+{
+    int n, x;
+    cin >> n;
+    vector<int> a(n + 1);
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    sort(all(a));
+    for(int i = 1, j = n / 2 + 2; j <= n; i++, ++j)
+    {
+        if(!(a[j] > a[i] && a[j] > a[i + 1]))
+        {
+            cout << "No\n";
+            return;
+        }
+    }
+    cout << "Yes\n";
+}
+
+int main()
+{
+    untie();
+    Solve();
+    return 0;
+}
+
+
+
+B. 模拟（自己想的 bitset 方法，但比较繁琐）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 63;
+ll n;
+
+bool check(bitset<N> bit) //判断第一个1在所有低位的情况（从大到小）
+{
+    int ind = bit._Find_first();
+    bit[ind] = 0;
+    for(int i = ind; i >= 0; --i)
+    {
+        bit[i] = 1;
+        ll now = bit.to_ullong();
+        if(now <= n)
+        {
+            cout << now << '\n';
+            return 1;
+        }
+        bit[i] = 0;
+    }
+    return 0;
+}
+
+void Solve()
+{
+    ll base = 7;
+    cin >> n;
+    if(n < 7)
+    {
+        cout << "-1\n";
+        return;
+    }
+
+    while(base <= n) base <<= 1;
+    bitset<N> now(n), bit(base);
+
+    int ind = bit._Find_first(); // 取低位第一个1位置
+
+    bit[ind] = bit[ind + 1] = bit[ind + 2] = 0;
+    for(int index = ind; index >= 0; --index) //枚举第一个1的位置（实际是枚举第三个1的位置）
+    {
+        bit[index + 2] = 1;
+        for(int i = index; i >= 0; --i)
+        {
+            bit[i] = bit[i + 1] = 1;
+            if(check(bit)) return;
+            bit[i] = bit[i + 1] = 0;
+        }
+        bit[index + 2] = 0;
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+```
+
