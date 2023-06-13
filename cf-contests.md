@@ -246,6 +246,132 @@ int main()
 }
 ```
 
+### C
+
+```c++
+// 模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e3;
+
+void Solve()
+{
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n + 1, 0);
+    int now = 0, num = n, ind = n + 1;
+    for(int i = 1; i <= n; ++i)
+    { 
+        if(now + i <= k)
+        {
+            a[i] = num--;
+            now += i;
+        }
+        else
+        {
+            int w = 0;
+            // cout << now << " " << k << '\n';
+            for(int j = i - 1; j >= k - now + 1; --j) w += a[j];
+            a[i] = -w - 1;
+            ind = i;
+            break;
+        }
+    }
+    for(int i = ind + 1; i <= n; ++i) a[i] = -1000;
+    for(int i = 1; i <= n; ++i) cout << a[i] << " \n"[i == n];
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+Edu Round 150
+
+### A ~ B
+
+```c++
+//A 找规律
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e3;
+
+void Solve()
+{
+    int n; cin >> n;
+    if(n >= 5) cout << "Alice\n";
+    else cout << "Bob\n";
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+// B 找规律模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e3;
+
+void Solve()
+{
+    int n; cin >> n;
+    vector<int> a(n + 1, 0);
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    cout << "1";
+    int maxn = a[1], maxv = -1;
+    for(int i = 2; i <= n; ++i)
+    {
+        if(a[i] >= maxn && maxv == -1) maxn = a[i], cout << "1";
+        else if(a[i] <= a[1] && a[i] >= maxv) maxv = a[i], cout << "1";
+        else cout << "0";
+    }
+    cout << '\n';
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+```
+
 
 
 ## Round 858
