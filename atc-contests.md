@@ -628,6 +628,185 @@ int main()
 
 ---
 
+## ABC 301
+
+### A ~ D
+
+```c++
+//四道都是模拟
+//A
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e4;
+
+void Solve()
+{
+    int n;
+    string s;
+    cin >> n >> s;
+    map<char, int> mp;
+    for(auto ch : s)
+        mp[ch]++;
+    if(mp['T'] > mp['A']) cout << "T\n";
+    else if(mp['T'] < mp['A']) cout << "A\n";
+    else cout << (s[n - 1] == 'T' ? 'A' : 'T') << '\n';
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+//B
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e3;
+int n, a[N];
+void Solve()
+{
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    cout << a[1] << " ";
+    for(int i = 2; i <= n; ++i)
+    {  
+        if(abs(a[i] - a[i - 1]) != 1)
+        {
+            if(a[i - 1] < a[i])
+            {
+                for(int j = a[i - 1] + 1; j < a[i]; ++j)
+                    cout << j << " ";
+            }
+            else
+            {
+                for(int j = a[i - 1] - 1; j > a[i]; --j)
+                    cout << j << " ";
+            }
+        }
+        cout << a[i] << " ";
+    }
+    cout << '\n';
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+//C
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e3;
+
+void Solve()
+{
+    map<char, int> mp, cnts, cntt;
+    string s, t;
+    cin >> s >> t;
+    mp['@'] = mp['a'] = mp['t'] = mp['c'] = mp['o'] = mp['d'] = mp['e'] = mp['r'] = 1;
+    for(auto ch : s) ++cnts[ch];
+    for(auto ch : t) ++cntt[ch];
+    for(auto ch : s)
+    {
+        if(ch == '@') continue;
+        if(cntt[ch] > 0 && cnts[ch] > 0) --cnts[ch], --cntt[ch];
+    }
+    for(auto ch : s)
+    {
+        if(ch == '@') continue;
+        if(cnts[ch] > 0 && mp[ch] && cntt['@'] > 0) --cnts[ch], --cntt['@'];
+    }
+    for(auto ch : t)
+    {
+        if(ch == '@') continue;
+        if(cntt[ch] > 0 && mp[ch] && cnts['@'] > 0) --cntt[ch], --cnts['@'];
+    }
+    bool ok = 1;
+    for(auto ch : s) if(ch != '@' && cnts[ch] > 0) ok = 0;
+    for(auto ch : t) if(ch != '@' && cntt[ch] > 0) ok = 0;
+    if(ok) cout << "Yes\n";
+    else cout << "No\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+//D
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+ll base[100];
+int main()
+{
+    untie();
+    string s;
+    ll n, now = 0;
+    cin >> s >> n;
+    int sz = s.size();
+    s = ' ' + s;
+    base[0] = 1;
+    for(int i = 1; i <= sz; ++i) base[i] = base[i - 1] << 1LL;
+    for(int i = 1; i <= sz; ++i)
+        if(s[i] != '?') now |= (s[i] - '0') * base[sz - i];
+    if(now > n)
+    {
+        cout << "-1\n";
+        return 0;
+    }
+    for(int i = 1; i <= sz; ++i)
+        if(s[i] == '?' && now + base[sz - i] <= n)
+            now |= base[sz - i];
+    cout << now << '\n';    
+    return 0;
+}
+```
+
+
+
+
+
+
+
+---
+
 ## ABC 302(*值得再看)
 
 ### B
