@@ -628,6 +628,207 @@ int main()
 
 ---
 
+## ABC 300
+
+### B ~ D
+
+```c++
+//均为模拟
+//B
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 100;
+string s;
+map<pair<int, int>, bool> mp1, mp2;
+bool Solve()
+{
+    int n, m; cin >> n >> m;
+    for(int i = 0; i < n; ++i)
+    {
+        cin >> s;
+        for(int j = 0; j < m; ++j)
+            if(s[j] == '#') mp1[make_pair(i, j)] = 1;
+    }
+    for(int i = 0; i < n; ++i)
+    {
+        cin >> s;
+        for(int j = 0; j < m; ++j)
+            if(s[j] == '#') mp2[make_pair(i, j)] = 1;
+    }
+    for(int dx = 0; dx < n; ++dx)
+    {
+        for(int dy = 0; dy < m; ++dy)
+        {
+            bool ok = 1;
+            for(auto [now, _] : mp1)
+            {
+                int x = now.first >= dx ? (now.first - dx) : (n - dx + now.first);
+                int y = now.second >= dy ? (now.second - dy) : (m - dy + now.second);
+                if(!mp2.count(make_pair(x, y)))
+                {
+                    ok = 0;
+                    break;
+                }
+            }
+            if(ok) return 1;
+        }
+    }
+    return 0;
+}
+
+int main()
+{
+    untie();
+    cout << (Solve() ? "Yes\n" : "No\n");
+    return 0;
+}
+
+
+
+//C
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 105;
+int n, m, k;
+char s[N][N];
+int ans[N];
+int dir[4][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+
+int check(int x, int y)
+{
+    int res = 0;
+    for(int d = 1; ; ++d)
+    {
+        bool ok = 1;
+        for(int p = 0; p < 4; ++p)
+        {   
+            int nx = x + d * dir[p][0], ny = y + d * dir[p][1];
+            if(!(nx > 0 && ny > 0 && nx <= n && ny <= m && s[nx][ny] == '#'))
+            {
+                ok = 0;
+                return res;
+            }
+        }
+        res += ok;
+    }
+    return 0;
+}
+
+int main()
+{
+    untie();
+    cin >> n >> m;
+    k = min(n, m);
+    for(int i = 1; i <= n; ++i)
+        for(int j = 1; j <= m; ++j)
+            cin >> s[i][j];
+    for(int i = 2; i < n; ++i)
+        for(int j = 2; j < m; ++j)
+            if(s[i][j] == '#') ans[check(i, j)]++;
+    for(int i = 1; i <= k; ++i) cout << ans[i] << " \n"[i == k];
+    return 0;
+}
+
+
+
+//D
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 1e6;
+ll n, ans = 0;
+vector<ll> p;
+bool isprime(ll x)
+{
+    for(ll i = 2; i * i <= x; ++i)
+        if(x % i == 0) return 0;
+    return x != 1;
+}
+bool check(ll a, ll b, ll c)
+{
+    if(a > n || b > n || c > n || a * b > n || b * c > n || a * c > n || a * b * c > n) return 0;
+    return 1;
+}
+int main()
+{
+    untie();
+    cin >> n;
+    for(ll i = 2; i <= N; ++i)
+        if(isprime(i)) p.push_back(i);
+    int sz = p.size();
+    for(int i = 0; i < sz - 2; ++i)
+    {
+        ll a = p[i] * p[i];
+        if(!check(a, p[i + 1], p[i + 2] * p[i + 2])) break;
+        for(int j = i + 1; i < sz - 1; ++j)
+        {
+            ll b = p[j];
+            if(!check(a, b, p[j + 1] * p[j + 1])) break;
+            for(int k = j + 1; k < sz; ++k)
+            {
+                ll c = p[k] * p[k];
+                if(!check(a, b, c)) break;
+                ++ans;
+            }
+        }
+    }
+    cout << ans << '\n';
+    return 0;
+}
+```
+
+### E
+
+```c++
+// 概率 + dfs
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 1e6;
+const ll mod = 998244353;
+ll n, inv;
+map<ll, ll> mp; // mp[x] = 得到x的概率
+ll quick_pow(ll base, ll index = mod - 2)
+{
+    ll ans = 1;
+    for(; index; index >>= 1)
+    {
+        if(index & 1) ans = ans * base % mod;
+        base = base * base % mod;
+    }
+    return ans;
+}
+ll dfs(ll now)
+{
+    if(now == 1) return 1; // 为 1 时只有一种情况
+    if(mp.count(now)) return mp[now]; // 记忆化
+    mp[now] = 0; // 初始化
+    for(ll k = 2; k <= 6; ++k) // 1 没有任何贡献，所以只有 5 种情况
+        if(now % k == 0) mp[now] = (mp[now] + dfs(now / k) * inv) % mod; 
+    // 概率叠加上 P(now / k) * P(k)，其中 P(k) = 1 / 5 = inv
+    return mp[now];
+}
+int main()
+{
+    untie();
+    inv = quick_pow(5); // 1 / 5
+    cin >> n;
+    cout << dfs(n);
+    return 0;
+}
+```
+
+
+
+---
+
 ## ABC 301
 
 ### A ~ D

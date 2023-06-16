@@ -12930,27 +12930,413 @@ int main()
 
 
 
+50. 元素查找（函数模板）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+template <typename T>
+int search(int n)
+{
+    T key;
+    T *a = new T[n + 1];
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    cin >> key;
+    for(int i = 1; i <= n; ++i)
+        if(a[i] == key) return i;
+    return 0;
+}
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        string s;
+        int n;
+        cin >> s >> n;
+        if(s[0] == 'I') cout << search<int>(n);
+        else if(s[0] == 'D') cout << search<double>(n);
+        else if(s[0] == 'C') cout << search<char>(n);
+        else if(s[0] == 'S') cout << search<string>(n);
+        cout << "\n";
+    }
+    return 0;
+}
 
 
 
+51. 谁的票数最高（函数模板）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+template <typename T>
+void search(int n)
+{
+    T *a = new T[n + 1];
+    map<T, int> cnt;
+    for(int i = 1; i <= n; ++i) cin >> a[i], cnt[a[i]]++;
+    T res;
+    int num = -1;
+    for(auto [x, y] : cnt)
+    {
+        if(y > num)
+        {
+            num = y;
+            res = x;
+        }
+    }
+    cout << res << " " << num;
+}
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        string s;
+        int n;
+        cin >> s >> n;
+        if(s[0] == 'I') search<int>(n);
+        else if(s[0] == 'C') search<char>(n);
+        else if(s[0] == 'S') search<string>(n);
+        cout << "\n";
+    }
+    return 0;
+}
 
 
 
+52. 抢票验证码（函数模板）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+template <typename T>
+void search()
+{
+    int n = 6;
+    T *a = new T[n + 1];
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    for(int i = 2; i <= n; ++i)
+    {
+        if(a[i] < a[i - 1]) 
+        {
+            cout << "Invalid";
+            return;
+        }
+    }
+    cout << "Valid";
+}
+
+int main()
+{
+    untie();
+    string s;
+    while(cin >> s)
+    {
+        if(s[0] == 'i') search<int>();
+        else if(s[0] == 'c') search<char>();
+        else if(s[0] == 'f') search<float>();
+        cout << "\n";
+    }
+    return 0;
+}
 
 
 
+53. 矩阵类模板（类模板）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+template <class T = int>
+class CMatrix
+{
+    private:
+        int n, m, maxn;
+        T** data; 
+    public:
+        CMatrix()
+        {
+            n = 0; 
+            m = 0;
+            maxn = 0;
+            data = NULL;
+        }
+        CMatrix(int n1, int m1)
+        {
+            n = n1;
+            m = m1;
+            maxn = max(n, m);
+            data = new T*[maxn];
+            for (int i = 0; i < maxn; i++)
+                data[i] = new T[maxn];
+            for(int i = 0; i < n; ++i)
+                for(int j = 0; j < m; ++j)
+                    cin >> data[i][j];
+        }
+        ~CMatrix()
+        {
+            for (int i = 0; i < maxn; i++)
+                delete[] data[i];
+            delete[] data;
+        }
+        CMatrix &operator =(const CMatrix &a)
+        {
+            if(data != NULL)
+            {
+                for (int i = 0; i < maxn; i++) delete []data[i];
+                delete []data;
+            }
+            n = a.n;
+            m = a.m;
+            data = new T*[maxn];
+            for (int i = 0; i < maxn; i++)
+            {
+                data[i] = new T[maxn];
+            }
+            for(int i = 0; i < n; ++i)
+				for(int j = 0; j < m; j++)
+					data[i][j] = a.data[i][j];
+            return *this;
+        }
+        T *const operator [](const int i)
+        {
+            return data[i];
+        }
+        T operator ()(int i, int j)
+        {
+            return data[i][j];
+        }
+        void transport()
+        {
+            T** tp = new T*[maxn];
+            for(int i = 0; i < maxn; ++i)
+            {
+                tp[i] = new T[maxn];
+            }
+            for(int j = 0; j < n; ++j)
+                for(int i = 0; i < m; ++i)
+                    tp[i][j] = data[j][i];
+            swap(n, m);
+            for(int i = 0; i < n; ++i)
+                for(int j = 0; j < m; ++j)
+                    data[i][j] = tp[i][j];
+            for (int i = 0; i < maxn; i++)
+                delete[] tp[i];
+            delete[] tp;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i)
+				for(int j = 0; j < m; j++)
+                    cout << data[i][j] << " \n"[j == m - 1];
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        int n, m;
+        string s;
+        cin >> s >> n >> m;
+        if(s[0] == 'I')
+        {
+            CMatrix<int> mat(n, m);
+            mat.transport();
+            mat.Print();
+        }
+        else if(s[0] == 'C')
+        {
+            CMatrix<char> mat(n, m);
+            mat.transport();
+            mat.Print();
+        }
+        else if(s[0] == 'D')
+        {
+            CMatrix<double> mat(n, m);
+            mat.transport();
+            mat.Print();
+        }
+    }
+    return 0;
+}
+/*
+实际上该题这样也能运行：
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+template <class T = int>
+class CMatrix
+{
+    private:
+        int n, m, maxn;
+        T** data; 
+    public:
+        CMatrix()
+        {
+            n = 0; 
+            m = 0;
+            maxn = 0;
+            data = NULL;
+        }
+        CMatrix(int n1, int m1)
+        {
+            n = n1;
+            m = m1;
+            maxn = max(n, m);
+            data = new T*[maxn];
+            for (int i = 0; i < maxn; i++)
+                data[i] = new T[maxn];
+            for(int i = 0; i < n; ++i)
+                for(int j = 0; j < m; ++j)
+                    cin >> data[i][j];
+        }
+        ~CMatrix()
+        {
+            for (int i = 0; i < maxn; i++)
+                delete[] data[i];
+            delete[] data;
+        }
+        void transport()
+        {
+            T** tp = new T*[maxn];
+            for(int i = 0; i < maxn; ++i)
+            {
+                tp[i] = new T[maxn];
+            }
+            for(int j = 0; j < n; ++j)
+                for(int i = 0; i < m; ++i)
+                    tp[i][j] = data[j][i];
+            swap(n, m);
+            for(int i = 0; i < n; ++i)
+                for(int j = 0; j < m; ++j)
+                    data[i][j] = tp[i][j];
+            for (int i = 0; i < maxn; i++)
+                delete[] tp[i];
+            delete[] tp;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i)
+				for(int j = 0; j < m; j++)
+                    cout << data[i][j] << " \n"[j == m - 1];
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        int n, m;
+        string s;
+        cin >> s >> n >> m;
+        if(s[0] == 'I')
+        {
+            CMatrix<int> mat(n, m);
+            mat.transport();
+            mat.Print();
+        }
+        else if(s[0] == 'C')
+        {
+            CMatrix<char> mat(n, m);
+            mat.transport();
+            mat.Print();
+        }
+        else if(s[0] == 'D')
+        {
+            CMatrix<double> mat(n, m);
+            mat.transport();
+            mat.Print();
+        }
+    }
+    return 0;
+}
+*/
 
 
+        
+54. 简单类模板(类模板)
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
 
+template <class T = int>
+class CList
+{
+    private:
+        int n;
+        T a[105];
+    public:
+        CList(){}
+        CList(int nn)
+        {
+            n = nn;
+            memset(a, -1, sizeof(a));
+            for(int i = 0; i < n; ++i) cin >> a[i];
+        }
+        void Insert(int pos, T val)
+        {
+            for(int i = n + 1; i > pos; --i) a[i] = a[i - 1];
+            a[pos] = val;
+            ++n;
+        }
+        void Delete(int pos)
+        {
+            for(int i = pos; i < n - 1; ++i) a[i] = a[i + 1];
+            a[n - 1] = -1;
+            --n;
+        }
+        void Print()
+        {
+            for(int i = 0; i < n; ++i)
+                cout << a[i] << " \n"[i == n - 1];
+        }
+};
 
+int main()
+{
+    untie();
+    int n, ins_pos, del_pos;
+    int ins_val1;
+    double ins_val2;
 
+    cin >> n;
+    CList<int> lis1(n);
+    cin >> ins_pos >> ins_val1 >> del_pos;
+    lis1.Insert(ins_pos, ins_val1);
+    lis1.Delete(del_pos);
+    lis1.Print();
 
-
-
-
-
-
-
+    cin >> n;
+    CList<double> lis2(n);
+    cin >> ins_pos >> ins_val2 >> del_pos;
+    lis2.Insert(ins_pos, ins_val2);
+    lis2.Delete(del_pos);
+    lis2.Print();
+    
+    return 0;
+}
 
 
 

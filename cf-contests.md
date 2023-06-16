@@ -660,6 +660,63 @@ int main()
 
 
 
+## Round 875
+
+### B
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int a[N], b[N];
+void Solve()
+{
+    int n, ans = 1; cin >> n;
+    a[n + 1] = -1, b[n + 1] = -2;
+    map<int, int> mp1, mp2;
+    int cnt = 1;
+    for(int i = 1; i <= n; ++i) cin >> a[i], mp1[a[i]] = 1;
+    for(int i = 1; i <= n; ++i) cin >> b[i], mp2[b[i]] = 1;
+    for(int i = 1; i <= n; ++i)
+    {
+        if(a[i] == a[i + 1]) ++cnt;
+        else
+        {
+            mp1[a[i]] = max(mp1[a[i]], cnt);
+            cnt = 1;
+        }
+    }
+    cnt = 1;
+    for(int i = 1; i <= n; ++i)
+    {
+        if(b[i] == b[i + 1]) ++cnt;
+        else
+        {
+            mp2[b[i]] = max(mp2[b[i]], cnt);
+            cnt = 1;
+        }
+    }
+    for(auto [x, y] : mp1) ans = max(ans, y + mp2[x]);
+    for(auto [x, y] : mp2) ans = max(ans, y + mp1[x]);
+    cout << ans << '\n';
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
 
 
 ---
@@ -2342,6 +2399,112 @@ int main()
         }
     
         cout << x << " " << y << '\n';
+    }
+    return 0;
+}
+```
+
+### G
+
+```c++
+// 模拟（平方和前缀和）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e3, M = 2e6;
+int mp[N][N], xx[M], yy[M]; // xx[n], yy[n] 分别记录 n 所在的 层数 和 横向索引
+
+ll sum(ll n)
+{
+    return n * (n + 1) * (2 * n + 1) / 6;
+}
+
+void Solve()
+{
+    ll n, ans = 0;
+    cin >> n;
+    int h = xx[n], l, r;
+    l = r = yy[n];
+    while(h)
+    {
+        if(!mp[h][r]) r--;
+        ans += sum(mp[h][r]) - sum(mp[h][l] - 1);
+        if(l > 1) l--;
+        h--;
+    }
+    cout << ans << '\n';
+}
+
+int main()
+{
+    untie();
+    int cnt = 0;
+    for(int i = 1; i < N; ++i)
+        for(int j = 1; j <= i; ++j)
+            mp[i][j] = ++cnt, xx[cnt] = i, yy[cnt] = j;
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### H
+
+```c++
+// 动态规划
+//题意：给含 n 个数的数组,问有多少个子序列在对序列中所有元素进行按位与操作后的结果的二进制表示中刚好含有 k 个 1
+//方法：设 dp[i][j] 表示在前 i 个数里面选，按位与和为 j 的子序列个数
+//不选 a[i] :        dp[i][j] += dp[i - 1][j]
+//选择 a[i] : dp[i][j & a[i]] += dp[i - 1][j]
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+const ll mod = 1e9 + 7;
+int a[N];
+
+void Solve()
+{
+    auto count = [](int x)
+    {
+        int res = 0;
+        for(; x; x >>= 1) res += x & 1; 
+        return res;
+    };
+    ll n, k, ans = 0;
+    cin >> n >> k;
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    vector<vector<ll> > dp(n + 1, vector<ll>(64, 0));
+    for(int i = 1; i <= n; ++i)
+    {
+        dp[i][a[i]] = 1;
+        for(int j = 0; j < 64; ++j)
+        {
+            dp[i][j] = (dp[i][j] + dp[i - 1][j]) % mod;
+            dp[i][j & a[i]] = (dp[i][j & a[i]] + dp[i - 1][j]) % mod;
+        }
+    }
+    for(int j = 0; j < 64; ++j)
+        if(count(j) == k) ans = (ans + dp[n][j]) % mod;
+    cout << ans << '\n';
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
     }
     return 0;
 }
