@@ -1473,6 +1473,88 @@ int main()
 
 
 
+## ABC 306
+
+### B ~ C
+
+```c++
+//B 有数据坑（最大范围为 unsigned long long）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll unsigned long long
+const int N = 100;
+ll p[N];
+int main()
+{
+    untie();
+    for(int i = 0; i < 64; ++i) p[i] = (1ULL << i);
+    ll ans = 0;
+    for(int i = 0; i < 64; ++i)
+    {
+        int x; cin >> x;
+        if(x) ans += p[i];
+    }
+    cout << ans;
+    return 0;
+}
+
+
+
+//C 模拟即可
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 3e5 + 100;
+int n, a[N], ans[N];
+bool vis[N];
+int main()
+{
+    untie();
+    cin >> n;
+    for(int i = 1; i <= 3 * n; ++i) cin >> a[i];
+    for(int i = 1; i <= 3 * n; ++i)
+    {
+        if(vis[a[i]] == 1 && !ans[a[i]]) ans[a[i]] = i;
+        vis[a[i]] = 1;
+    }
+    vector<pair<int, int> > v;
+    for(int i = 1; i <= n; ++i) v.push_back(make_pair(ans[i], i));
+    sort(v.begin(), v.end());
+    for(int i = 0; i < n; ++i) cout << v[i].second << " \n"[i == n - 1];
+    return 0;
+}
+```
+
+### D
+
+```c++
+// dp
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+const int N = 3e5 + 10;
+ll x[N], y[N], dp[2];
+int main()
+{
+    untie();
+    int n;
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> x[i] >> y[i];
+    for(int i = 1; i <= n; ++i)
+    {
+        if(x[i]) dp[1] = max(dp[0] + y[i], dp[1]);
+        else dp[0] = max(dp[0], max(dp[0], dp[1]) + y[i]);
+    }
+    cout << max(dp[0], dp[1]) << '\n';
+    return 0;
+}
+```
+
+
+
 ---
 
 # ARC

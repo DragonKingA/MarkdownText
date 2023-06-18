@@ -13340,9 +13340,490 @@ int main()
 
 
 
+55. 音像制品（类与对象）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+string base[5] = {"", "黑胶片", "CD", "VCD", "DVD"};
+
+class Product
+{
+    private:
+        int type, rent, status;
+        string name;
+    public:
+        Product(){}
+        Product(int a, string s, int c, int d)
+        {
+            type = a, name = s, rent = c, status = d;
+        }
+        void getRent(int x)
+        {
+            if(status) cout << "当前租金为" << rent * x << '\n';
+            else cout << "未产生租金\n";
+        }
+        void Print()
+        {
+            cout << base[type] << "[" << name << "]" << (status ? "已出租" : "未出租") << "\n";
+        }
+};
+
+int main()
+{
+    untie();
+    int n;
+    cin >> n;
+    for(int i = 0; i < n; ++i) 
+    {
+        int a, b, c, op;
+        string name;
+        cin >> a >> name >> b >> c >> op;
+        Product p(a, name, b, c);
+        p.Print();
+        if(op) p.getRent(op);
+    }
+    return 0;
+}
 
 
 
+56. 拯救小明（多继承+友元）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class Date
+{
+    protected:
+        int year, month, day;
+    public:
+        Date(){}
+        Date(int a, int b, int c) : year(a), month(b), day(c){}
+};
+
+class Time
+{
+    protected:
+        int hour, minute, second;
+    public:
+        Time(){}
+        Time(int a, int b, int c) : hour(a), minute(b), second(c){}
+};
+
+class Work : public Date, public Time
+{
+    protected:
+        int id;
+    public:
+        Work(){}
+        Work(int a, int b, int c, int d, int e, int f, int x) : Date(a, b, c), Time(d, e, f), id(x){}
+        friend bool before(const Work &w1, const Work &w2)
+        {
+            if(w1.year == w2.year)
+            {
+                if(w1.month == w2.month)
+                {
+                    if(w1.day == w2.day)
+                    {
+                        if(w1.hour == w2.hour)
+                        {
+                            if(w1.hour == w2.hour)
+                            {
+                                if(w1.minute == w2.minute)
+                                {
+                                    return w1.second < w2.second;
+                                }
+                                return w1.minute < w2.minute;
+                            }
+                            return w1.hour < w2.hour;
+                        }
+                        return w1.hour < w2.hour;
+                    }
+                    return w1.day < w2.day;
+                }
+                return w1.month < w2.month;
+            }
+            return w1.year < w2.year;
+        }
+        void Print()
+        {
+            cout << "The urgent Work is No." << id << ": " << year << "/" << (month < 10 ? "0" : "") << month << "/" << (day < 10 ? "0" : "") << day << " " << (hour < 10 ? "0" : "") << hour << ":" << (minute < 10 ? "0" : "") << minute << ":" << (second < 10 ? "0" : "") << second << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int id, y, m, d, hour, min, sec;
+    cin >> id >> y >> m >> d >> hour >> min >> sec;
+    Work ans(y, m, d, hour, min, sec, id);
+    while(cin >> id)    
+    {
+        if(!id) break;
+        cin >> y >> m >> d >> hour >> min >> sec;
+        Work now(y, m, d, hour, min, sec, id);
+        if(before(now, ans)) ans = now;
+    }
+    ans.Print();
+    return 0;
+}
+
+
+
+57. 宠物的生长（虚函数和多态）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CDate
+{
+    private:
+        int year, month, day;
+    public:
+        CDate(){}
+        CDate(int y, int m, int d) : year(y), month(m), day(d){}
+        int getDays() // 以日期 1-1-1 为基点
+        {
+            auto isLeap = [](int y){ return (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;};
+            int d[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+            if(isLeap(year)) d[2]++;
+            int res = day;
+            for(int i = 1; i < year; ++i) res += 365 + isLeap(i);
+            for(int i = 1; i < month; ++i) res += d[i];
+            return res;
+        }
+        friend int count(CDate c1, CDate c2)
+        {
+            return c2.getDays() - c1.getDays();
+        }
+};
+
+class Pet
+{
+    protected:
+        string name;
+        float length, weight;
+        CDate current;
+    public:
+        Pet(){}
+        Pet(string nm, float a, float b, int y, int m, int d) : current(y, m, d), name(nm), length(a), weight(b){}
+        virtual void display(CDate day) = 0;
+};
+
+class Cat : public Pet
+{
+    public:
+        Cat(){}
+        Cat(string nm, float a, float b, int y, int m, int d) : Pet(nm, a, b, y, m, d){}
+        void display(CDate day)
+        {
+            int sum = count(day, current);
+            if(sum < 0) cout << "error\n";
+            else cout << name << " after " << sum << " day: length=" << length + 0.1 * sum << ",weight=" << weight + 0.2 * sum << '\n';
+        }
+};
+
+class Dog : public Pet
+{
+    public:
+        Dog(){}
+        Dog(string nm, float a, float b, int y, int m, int d) : Pet(nm, a, b, y, m, d){}
+        void display(CDate day)
+        {
+            int sum = count(day, current);
+            if(sum < 0) cout << "error\n";
+            else cout << name << " after " << sum << " day: length=" << length + 0.2 * sum << ",weight=" << weight + 0.1 * sum << '\n';
+        }
+};
+
+int main()
+{
+    untie();
+    int T, y, m, d;
+    string name;
+    float len, wei;
+    cin >> T >> y >> m >> d;
+    cout << fixed << setprecision(2);
+    CDate start = CDate(y, m, d);
+    Pet *pt = NULL;
+    while(T--)
+    {
+        int op;
+        cin >> op >> name >> len >> wei >> y >> m >> d;
+        if(op == 1) pt = new Cat(name, len, wei, y, m, d);
+        else pt = new Dog(name, len, wei, y, m, d);
+        pt -> display(start);
+    }
+    return 0;
+}
+
+
+
+58. 集合（运算符重载）
+//做法1：友元重载二元运算符
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CSet
+{
+    private:
+        int n;
+        int *data;
+    public:
+        CSet(){ n = 0, data = NULL;}
+        CSet(int nn, int *num = NULL) : n(nn)
+        {
+            data = new int[n];
+            if(num != NULL)
+                for(int i = 0; i < n; ++i) data[i] = num[i];
+        }
+        ~CSet()
+        {
+            delete []data;
+            data = NULL;
+        }
+        friend CSet operator +(const CSet &c1, const CSet &c2)
+        {
+            map<int, bool> mp;
+            CSet res(c1.n + c2.n, c1.data);
+            for(int i = 0; i < c1.n; ++i) mp[c1.data[i]] = 1;
+            int j = c1.n;
+            for(int i = 0; i < c2.n; ++i)
+                if(!mp.count(c2.data[i])) res.data[j++] = c2.data[i];
+            res.n = j;
+            return res;
+        }
+        friend CSet operator -(const CSet &c1, const CSet &c2)
+        {
+            map<int, bool> mp;
+            CSet res(max(c1.n, c2.n));
+            for(int i = 0; i < c2.n; ++i) mp[c2.data[i]] = 1;
+            int j = 0;
+            for(int i = 0; i < c1.n; ++i)
+                if(!mp.count(c1.data[i])) res.data[j++] = c1.data[i];
+            res.n = j;
+            return res;
+        }
+        friend CSet operator *(const CSet &c1, const CSet &c2)
+        {
+            map<int, bool> mp;
+            CSet res(min(c1.n, c2.n));
+            for(int i = 0; i < c2.n; ++i) mp[c2.data[i]] = 1;
+            int j = 0;
+            for(int i = 0; i < c1.n; ++i)
+                if(mp.count(c1.data[i])) res.data[j++] = c1.data[i];
+            res.n = j;
+            return res;
+        }
+        friend ostream &operator <<(ostream &cout, CSet &st)
+        {
+            for(int i = 0; i < st.n; ++i) cout << st.data[i] << " \n"[i == st.n - 1];
+            return cout;
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        int n;
+        cin >> n;
+        int *num1 = new int[n];
+        for(int i = 0; i < n; ++i) cin >> num1[i];
+        CSet A(n, num1);
+
+        cin >> n;
+        int *num2 = new int[n];
+        for(int i = 0; i < n; ++i) cin >> num2[i];
+        CSet B(n, num2);
+        CSet ans1 = A + B, ans2 = A * B, ans3 = (A - B) + (B - A);
+        cout << "A:" << A;
+        cout << "B:" << B;
+        cout << "A+B:" << ans1;
+        cout << "A*B:" << ans2;
+        cout << "(A-B)+(B-A):" << ans3;
+        if(T) cout << "\n";
+        delete []num1;
+        delete []num2;
+    }
+    return 0;
+}
+//做法2：引用返回类型重载二元运算符（但会导致第一个算子被改变）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CSet
+{
+    private:
+        int n;
+        int *data;
+    public:
+        CSet(){ n = 0, data = NULL;}
+        CSet(int nn, int *num = NULL) : n(nn)
+        {
+            data = new int[n];
+            if(num != NULL)
+                for(int i = 0; i < n; ++i) data[i] = num[i];
+        }
+        ~CSet()
+        {
+            if(data != NULL)
+                delete []data;
+            data = NULL;
+        }
+        CSet &operator =(const CSet &c)
+        {
+            if(data != NULL) delete []data;
+            n = c.n;
+            data = new int[n];
+            for(int i = 0; i < n; ++i) data[i] = c.data[i];
+            return *this;
+        }
+        CSet &operator +(const CSet &c)
+        {
+            map<int, bool> mp;
+            vector<int> v;
+            for(int i = 0; i < n; ++i) mp[data[i]] = 1;
+            for(int i = 0; i < c.n; ++i)
+                if(!mp.count(c.data[i])) v.push_back(c.data[i]);
+            CSet res(n + v.size(), data);
+            for(int i = n; i < n + v.size(); ++i) res.data[i] = v[i - n];
+            *this = res;
+            return *this;
+        }
+        CSet &operator -(const CSet &c)
+        {
+            map<int, bool> mp;
+            vector<int> v;
+            for(int i = 0; i < c.n; ++i) mp[c.data[i]] = 1;
+            for(int i = 0; i < n; ++i)
+                if(!mp.count(data[i])) v.push_back(data[i]);
+            CSet res(v.size());
+            for(int i = 0; i < v.size(); ++i) res.data[i] = v[i];
+            *this = res;
+            return *this;
+        }
+        CSet &operator *(const CSet &c)
+        {
+            map<int, bool> mp;
+            vector<int> v;
+            for(int i = 0; i < c.n; ++i) mp[c.data[i]] = 1;
+            for(int i = 0; i < n; ++i)
+                if(mp.count(data[i])) v.push_back(data[i]);
+            CSet res(v.size());
+            for(int i = 0; i < v.size(); ++i) res.data[i] = v[i];
+            *this = res;
+            return *this;
+        }
+        friend ostream &operator <<(ostream &cout, CSet &st)
+        {
+            for(int i = 0; i < st.n; ++i) cout << st.data[i] << " \n"[i == st.n - 1];
+            return cout;
+        }
+};
+
+
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    while(T--)
+    {
+        int n;
+        cin >> n;
+        int *num1 = new int[n];
+        for(int i = 0; i < n; ++i) cin >> num1[i];
+        CSet A(n, num1), A1(n, num1), A2(n, num1), A3(n, num1);
+
+        cin >> n;
+        int *num2 = new int[n];
+        for(int i = 0; i < n; ++i) cin >> num2[i];
+        CSet B(n, num2), B1(n, num2);
+
+        cout << "A:" << A;
+        cout << "B:" << B;
+        cout << "A+B:" << A + B;
+        cout << "A*B:" << A1 * B;
+        cout << "(A-B)+(B-A):" << (A2 - B) + (B1 - A3);
+
+        if(T) cout << "\n";
+        delete []num1;
+        delete []num2;
+    }
+    return 0;
+}
+
+
+
+59. 最贵的书（重载+友元+引用）
+// 尽量使用冲突少的 c++ 11，这里 c++ 98 会报错
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+
+class CBook
+{
+    private:
+        string name, editor, press;
+        double price;
+    public:
+        CBook(){}
+        CBook(string nm, string edit, double pri, string pre) : name(nm), editor(edit), price(pri), press(pre){}
+        friend void find(CBook *book, int n, int &max1index, int &max2index)
+        {
+            double m1 = -1, m2 = -1;
+            for(int i = 0; i < n; ++i)
+                if(book[i].price > m1)
+                    max1index = i, m1 = book[i].price;
+            for(int i = 0; i < n; ++i)
+                if(i != max1index && book[i].price > m2)
+                    max2index = i, m2 = book[i].price;
+        }
+        friend istream &operator >>(istream &cin, CBook &b)
+        {
+            string s[4];
+            for(int i = 0; i < 4; ++i) getline(cin, s[i], i == 3 ? '\n' : ',');
+            b = CBook(s[0], s[1], stod(s[2]), s[3]);
+            return cin;
+        }
+        friend ostream &operator <<(ostream &cout, CBook &b)
+        {
+            cout << b.name << "\n" << b.editor << "\n" << b.price << "\n" << b.press << "\n";
+            return cout;
+        }
+};
+
+int main()
+{
+    untie();
+    int T;
+    cin >> T;
+    cout << fixed << setprecision(2);
+    while(T--)
+    {
+        int n, ind1 = 0, ind2 = 0;
+        cin >> n;
+        CBook *p = new CBook[n];
+        for(int i = 0; i < n; ++i) cin >> p[i];
+        find(p, n, ind1, ind2);
+        cout << p[ind1] << '\n';
+        cout << p[ind2];
+    }
+    return 0;
+}
 
 
 
