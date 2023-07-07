@@ -1555,6 +1555,225 @@ int main()
 
 
 
+## ABC 308
+
+### C ~ D
+
+```c++
+//C. 自定义排序 + long double
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define double long double
+const int N = 2e5 + 10;
+bool cmp(pair<double, int> p1, pair<double, int> p2)
+{
+    if(p1.first == p2.first) return p1.second < p2.second;
+    return p1.first > p2.first;
+}
+void Solve()
+{
+    int n; cin >> n;
+    vector<pair<double, int> > v;
+    for(int i = 0; i < n; ++i)
+    {
+        double a, b;
+        cin >> a >> b;
+        v.push_back(make_pair(a / (a + b), i));
+    }
+    sort(all(v), cmp);
+    for(int i = 0; i < n; ++i)
+        cout << v[i].second + 1 << " \n"[i == n - 1];
+
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+//D. 搜索
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define double long double
+const int N = 600;
+int n, m;
+char mp[N][N];
+bool vis[N][N];
+int dir[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+map<char, char> check;
+bool bfs()
+{
+    memset(vis, 0, sizeof(vis));
+    queue<array<int, 2> > q;
+    q.push({1, 1});
+    vis[1][1] = 1;
+    while(!q.empty())
+    {
+        array<int, 2> now = q.front(); q.pop();
+        for(int i = 0; i < 4; ++i)
+        {
+            int nx = now[0] + dir[i][0], ny = now[1] + dir[i][1];
+            if(nx >= 1 && nx <= n && ny >= 1 && ny <= m && !vis[nx][ny] && check[mp[now[0]][now[1]]] == mp[nx][ny])
+            {
+                q.push({nx, ny});
+                vis[nx][ny] = 1;
+            }
+        }
+    }
+    return vis[n][m];
+}
+void Solve()
+{
+    check['s'] = 'n';
+    check['n'] = 'u';
+    check['u'] = 'k';
+    check['k'] = 'e';
+    check['e'] = 's';
+    cin >> n >> m;
+    for(int i = 1; i <= n; ++i)
+        for(int j = 1; j <= m; ++j)
+            cin >> mp[i][j];
+    cout << (bfs() ? "Yes\n" : "No\n");
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### E
+
+```C++
+// 前缀和 + 后缀和
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define double long double
+const int N = 2e5 + 10;
+int a[N];
+
+int cal(int a, int b, int c)
+{
+    for(int i = 0; i < 4; ++i)
+        if(i != a && i != b && i != c) return i;
+}
+void Solve()
+{
+    ll ans = 0;
+    int n; cin >> n;
+    vector<vector<int>> cntl(n + 5, vector<int>(3, 0)), cntr(n + 5, vector<int>(3, 0));
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    string s; cin >> s; s = ' ' + s;
+    for(int i = 1; i <= n; ++i)
+    {
+        cntl[i] = cntl[i - 1];
+        if(s[i] == 'M') cntl[i][a[i]]++;
+    }
+    for(int i = n; i >= 0; --i)
+    {
+        cntr[i] = cntr[i + 1];
+        if(s[i] == 'X') cntr[i][a[i]]++;
+    }
+    for(int i = 1; i <= n; ++i)
+    {
+        if(s[i] != 'E') continue; 
+        for(int j = 0; j < 3; ++j)
+            for(int k = 0; k < 3; ++k)
+                ans += 1LL * cntl[i][j] * cntr[i][k] * cal(a[i], j, k);
+    }
+    cout << ans << '\n';
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### F
+
+关于用 `lambda` 表达式重载优先队列中的自定义比较函数以及关键字 `decltype` 的使用。
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define pii pair<int, int>
+const int N = 2e5 + 10;
+
+void Solve()
+{
+    ll ans = 0;
+    int n, m; cin >> n >> m;
+    vector<int> p(n, 0);
+    vector<pii > v(m);
+    for(int &x : p) cin >> x, ans += x;
+    for(auto &x : v) cin >> x.first;
+    for(auto &x : v) cin >> x.second;
+    sort(all(p));
+    sort(all(v));
+    auto fun = [](pii p1, pii p2) -> bool {return p1.second < p2.second;};
+    priority_queue<pii, vector<pii >, decltype(fun)> pq(fun);
+    int idx = 0;
+    for(int x : p)
+    {
+        while(idx < m && v[idx].first <= x) pq.push(v[idx++]);
+        if(pq.empty()) continue;
+        ans -= pq.top().second;
+        pq.pop();
+    }
+    cout << ans << '\n';
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
 ---
 
 # ARC
@@ -1670,5 +1889,87 @@ int main()
 }
 
 
+```
+
+
+
+## ARC 163
+
+### A ~ B
+
+```c++
+// A 模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e4;
+
+void Solve()
+{
+    int n;
+    string s;
+    cin >> n >> s;
+    for(int i = 0; i < n; ++i)
+        if(s.substr(0, i + 1) < s.substr(i + 1))
+        {
+            cout << "Yes\n";
+            return;
+        }
+    cout << "No\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+// B 模拟
+// 只改变 a1 和 a2 即可
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int a[N];
+
+void Solve()
+{
+    int n, m, ans = 2e9;
+    cin >> n >> m;
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    sort(a + 3, a + 1 + n);
+    for(int i = 3; i + m - 1 <= n; ++i)
+    {
+        int l = a[i], r = a[i + m - 1], now = 0;
+        if(l < a[1]) now += a[1] - l;
+        if(r > a[2]) now += r - a[2];
+        ans = min(ans, now);
+    }
+    cout << ans << '\n';
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
 ```
 

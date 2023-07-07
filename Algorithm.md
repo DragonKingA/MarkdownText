@@ -10090,7 +10090,6 @@ int main()
 #include <map>
 #include <queue>
 #include <iomanip>
-
 using namespace std;
 #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
 #define ll long long
@@ -10111,6 +10110,7 @@ class CVector{
             }
         }
         CVector(int n1, int *a = NULL)
+            
         {
             n = n1;
             data = new int[n1];
@@ -13827,6 +13827,461 @@ int main()
 
 
 
+60. 一、会员积分（期末模拟）
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <functional>
+#include <iomanip>
+using namespace std;
+
+class Member
+{
+    protected:
+        int id, score;
+        string name;        
+    public:
+        Member(){}
+        Member(int ID, int s, string nm) : id(ID), score(s), name(nm){}
+        virtual void add(int m)
+        {
+            score += m;
+        }
+        virtual int exchange(int s)
+        {
+            if(score - s / 100 * 100 >= 0) score -= s / 100 * 100;
+            return s / 100;
+        }
+        virtual void Print()
+        {
+            cout << "普通会员" << id << "--" << name << "--" << score << '\n';
+        }
+};
+
+class VIP : public Member
+{
+    protected:
+        int add_rate, exc_rate;
+    public:
+        VIP(){}
+        VIP(int ID, int s, string nm, int r1, int r2) : Member(ID, s, nm)
+        {
+            add_rate = r1;
+            exc_rate = r2;
+        }
+        virtual void add(int m)
+        {
+            score += add_rate * m;
+        }
+        virtual int exchange(int s)
+        {
+            if(exc_rate == 0) return 0;
+            if(score - s / exc_rate * exc_rate >= 0) score -= s / exc_rate * exc_rate;
+            return s / exc_rate;
+        }
+        virtual void Print()
+        {
+            cout << "贵宾会员" << id << "--" << name << "--" << score << '\n';
+        }
+};
+
+int main()
+{
+    Member *pm;
+    int id, score, cost, exc, r1, r2;
+    string name;
+
+    cin >> id >> name >> score;
+    Member mm(id, score, name);
+    pm = &mm;
+    cin >> cost >> exc;
+    pm->add(cost);
+    pm->exchange(exc);
+    pm->Print();
+
+    cin >> id >> name >> score >> r1 >> r2;
+    VIP vv(id, score, name, r1, r2);
+    pm = &vv;
+    cin >> cost >> exc;
+    pm->add(cost);
+    pm->exchange(exc);
+    pm->Print();
+
+    pm = NULL;
+    return 0;
+}
+
+
+
+61. 二、金属加工（期末模拟）
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <functional>
+#include <iomanip>
+using namespace std;
+
+class Metal
+{
+    private:
+        int hard, weight, vol;
+    public:
+        Metal(){}
+        Metal(int h, int w, int v) : hard(h), weight(w), vol(v){}
+        friend Metal operator +(const Metal &m1, const Metal &m2)
+        {
+            return Metal(m1.hard + m2.hard, m1.weight + m2.weight, m1.vol + m2.vol);
+        }
+        friend Metal operator *(const Metal &m, int rate)
+        {
+            return Metal(m.hard, m.weight, m.vol * rate);
+        }
+        Metal &operator ++()
+        {
+            hard++;
+            weight += weight / 10;
+            vol += vol / 10;
+            return *this;
+        }
+        Metal operator --(int)
+        {
+            Metal res(hard, weight, vol);
+            hard--;
+            weight -= weight / 10;
+            vol -= vol / 10;
+            return res;
+        }
+        void Print()
+        {
+            cout << "硬度" << hard << "--重量" << weight << "--体积" << vol << "\n";
+        }
+};
+
+int main()
+{
+    int hard, w, v, n;
+    cin >> hard >> w >> v;
+    Metal m1(hard, w, v);
+    cin >> hard >> w >> v;
+    Metal m2(hard, w, v);
+
+    Metal temp = m1 + m2;
+    temp.Print();
+
+    cin >> n;
+    temp = m1 * n;
+    temp.Print();
+
+    ++m1;
+    m1.Print();
+
+    m2--;
+    m2.Print();
+
+    return 0;
+}
+
+
+
+62. 三、加密模板（期末模拟）
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <functional>
+#include <iomanip>
+using namespace std;
+
+template<typename T>
+T max(T num[], int n)
+{
+    T x = num[0];
+    for(int i = 1; i < n; ++i)
+        if(num[i] > x) x = num[i];
+    return x;
+}
+
+template<typename T>
+class Cryption
+{
+    private:
+        T ptxt[100]; //明文
+        T ctxt[100]; //密文
+        T key; //密钥
+        int len; //长度
+    public:
+        Cryption(T tk, T tt[], int n); //参数依次对应密钥、明文、长度
+        void encrypt(); //加密
+        void print() //打印，无需改造
+        {
+            int i;
+            for (i = 0; i < len - 1; i++)
+            {
+                cout << ctxt[i] << " ";
+            }
+            cout << ctxt[i] << endl;
+        }
+};
+
+template<typename T>
+Cryption<T>::Cryption(T tk, T tt[], int n)
+{
+    key = tk;
+    len = n;
+    for(int i = 0; i < len; ++i) ptxt[i] = tt[i];
+}
+
+template<typename T>
+void Cryption<T>::encrypt()
+{
+    T maxn = max<T>(ptxt, len);
+    for(int i = 0; i < len; ++i) ctxt[i] = maxn - ptxt[i] + key;
+}
+
+//支持三种类型的主函数
+int main()
+{
+	int i;
+	int length; //长度
+	int ik, itxt[100];
+	double dk, dtxt[100];
+	char ck, ctxt[100];
+	//整数加密
+	cin >> ik >> length;
+	for (i = 0; i < length; i++)
+	{
+		cin >> itxt[i];
+	}
+	Cryption<int> ic(ik, itxt, length);
+	ic.encrypt();
+	ic.print();
+	//浮点数加密
+	cin >> dk >> length;
+	for (i = 0; i < length; i++)
+	{
+		cin >> dtxt[i];
+	}
+	Cryption<double> dc(dk, dtxt, length);
+	dc.encrypt();
+	dc.print();
+	//字符加密
+	cin >> ck >> length;
+	for (i = 0; i < length; i++)
+	{
+		cin >> ctxt[i];
+	}
+	Cryption<char> cc(ck, ctxt, length);
+	cc.encrypt();
+	cc.print();
+
+	return 0;
+}
+
+
+
+63. *四、加湿风扇（期末模拟）-- 区分虚基类、基类、派生类
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <functional>
+#include <iomanip>
+using namespace std;
+
+class EletricApp // 虚基类
+{
+    protected:
+        int id, power;
+    public:
+        EletricApp(){}
+        EletricApp(int ID, int p) : id(ID), power(p){}
+        virtual void Print() = 0;// 抽象类
+};
+
+class Fan : virtual public EletricApp // 基类
+{
+    protected:
+        int dir, force;
+    public:
+        Fan(){}
+        Fan(int ID, int p, int d, int f) : EletricApp(ID, p), dir(d), force(f){}
+        void dir_control(int x){ dir = x;}
+        void force_control(int x){ force = x;}
+};
+
+class Humidifier : virtual public EletricApp // 基类
+{
+    protected:
+        double cap_actual, cap_max;
+    public:
+        Humidifier(){}
+        Humidifier(int ID, int p, double act, double maxn) : EletricApp(ID, p), cap_actual(act), cap_max(maxn){}
+        int preWarn()
+        {
+            if(cap_actual >= cap_max / 2) return 1;
+            else if(cap_actual >= cap_max / 10) return 2;
+            return 3;
+        }
+};
+
+class HumidifyFan : public Fan, public Humidifier // 派生类
+{
+    protected:
+        int proper;
+    public:
+        HumidifyFan(){}
+        HumidifyFan(int ID, int p, int d, int f, double act, double maxn, int pro) : EletricApp(ID, p), Fan(ID, p, d, f), Humidifier(ID, p, act, maxn), proper(pro){}
+        void pro_control(int x)
+        {
+            proper = x;
+            if(x != 0)
+            {
+                force_control(x);
+                if(x == 1) dir_control(0);
+                else dir_control(1);
+            }
+        }
+        void Print()
+        {
+            string op[4] = {"", "正常", "偏低", "不足"};
+            cout << "加湿风扇--档位" << proper << "\n";
+            cout << "编号" << id << "--功率" << power << "W\n";
+            cout << (dir ? "旋转吹风" : "定向吹风") << "--风力" << force << "级\n";
+            cout << "实际水容量" << cap_actual << "升--水量" << op[preWarn()] << "\n";
+        }
+};
+
+int main()
+{
+	int T;
+    cin >> T;
+    while(T--)
+    {
+        int id, power, dir, force, proper, proper_next;
+        double cap_act, cap_max;
+        cin >> id >> power >> dir >> force >> cap_act >> cap_max >> proper;
+        HumidifyFan hFan(id, power, dir, force, cap_act, cap_max, proper);
+        cin >> proper_next;
+        hFan.pro_control(proper_next);
+        hFan.Print();
+    }
+	return 0;
+}
+
+
+
+64. 五、计重转换（期末模拟）
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <functional>
+#include <iomanip>
+using namespace std;
+
+class CN; //提前声明
+class EN; //提前声明
+
+// 抽象类
+class Weight
+{
+    protected:
+        char kind[20]; //计重类型
+        int gram; // 克
+    public:
+        Weight(const char tk[] = "no name", int tg = 0)
+        {
+            strcpy(kind, tk);
+            gram = tg;
+        }
+        virtual void print(ostream& out) = 0; // 输出不同类型的计重信息
+};
+
+// 中国计重
+class CN : public Weight
+{
+	protected:
+        int jin, liang, qian;
+    public:
+        CN(int a = 0, int b = 0, int c = 0, int tg = 0, const char tk[] = "no name") : Weight(tk, tg), jin(a), liang(b), qian(c){}
+        void Convert(int g)
+        {
+            jin = g / 500;
+            g %= 500;
+            liang = g / 50;
+            g %= 50;
+            qian = g / 5;
+            g %= 5;
+            gram = g;
+        }
+        void print(ostream& out)
+        {
+            out << "中国计重:" << jin << "斤" << liang << "两" << qian << "钱" << gram << "克\n";
+        }
+};
+
+// 英国计重
+class EN : public Weight
+{
+	protected:
+        int pound, ounce, duran;
+    public:
+        EN(int d = 0, int e = 0, int f = 0, int tg = 0, const char tk[] = "no name") : Weight(tk, tg), pound(d), ounce(e), duran(f){}
+        void Convert(int g)
+        {
+            pound = g / 512;
+            g %= 512;
+            ounce = g / 32;
+            g %= 32;
+            duran = g / 2;
+            g %= 2;
+            gram = g;
+        }
+        void print(ostream& out)
+        {
+            out << "英国计重:" << pound << "磅" << ounce << "盎司" << duran << "打兰" << gram << "克\n";
+        }
+        operator CN()
+        {
+            int g = gram + duran * 2 + ounce * 32 + pound * 512;
+            CN res;
+            res.Convert(g);
+            return res;
+        }
+};
+
+// 以全局函数方式重载输出运算符，代码3-5行....自行编写
+// 重载函数包含两个参数：ostream流对象、Weight类对象，参数可以是对象或对象引用
+// 重载函数必须调用参数Weight对象的print方法
+ostream &operator <<(ostream &out, Weight &w)
+{
+    w.print(out);
+    return out;
+}
+
+// 主函数
+int main()
+{
+	int tw;
+	// 创建一个中国计重类对象cn
+	// 构造参数对应斤、两、钱、克、类型，其中克和类型是对应基类属性gram和kind
+	CN cn(0, 0, 0, 0, "中国计重");
+	cin >> tw;
+	cn.Convert(tw); // 把输入的克数转成中国计重
+	cout << cn;
+
+	// 创建英国计重类对象en
+	// 构造参数对应磅、盎司、打兰、克、类型，其中克和类型是对应基类属性gram和kind
+	EN en(0, 0, 0, 0, "英国计重");
+	cin >> tw;
+	en.Convert(tw); // 把输入的克数转成英国计重
+	cout << en;
+	cn = en; // 把英国计重转成中国计重
+	cout << cn;
+	return 0;
+}
 
 ```
 

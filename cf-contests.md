@@ -1313,6 +1313,360 @@ int main()
 
 
 
+## Round 881
+
+### D
+
+```c++
+// 树形dfs
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+void dfs(vector<ll> &ans, vector<int> G[], int u, int fa = -1)
+{
+    if(G[u].size() == 1 && u != 1) ans[u] = 1;
+    for(int v : G[u])
+    {
+        if(v == fa) continue;
+        dfs(ans, G, v, u);
+        ans[u] += ans[v];
+    }
+}
+
+void Solve()
+{
+    int n, q; cin >> n;
+    vector<int> G[n + 5];
+    vector<ll> ans(n + 5, 0);
+    for(int i = 0; i < n - 1; ++i)
+    {
+        int u, v; cin >> u >> v;
+        G[u].push_back(v);
+        G[v].push_back(u);
+    }
+    dfs(ans, G, 1);
+    cin >> q;
+    while(q--)
+    {
+        int x, y; cin >> x >> y;
+        cout << ans[x] * ans[y] << "\n";
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+## Round 883
+
+### B ~ D
+
+```c++
+// B 被人 Hack
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+string s[10];
+
+void Solve()
+{
+    int f = 0;
+    char ch = '?';
+    for (int i = 0; i < 3; i++) cin >> s[i];
+    for (int i = 0; i < 3; i++) if (s[i][0] != '.' && s[i][0] == s[i][1] && s[i][1] == s[i][2]) f = 1, ch = s[i][0];
+    for (int i = 0; i < 3; i++) if (s[0][i] != '.' && s[0][i] == s[1][i] && s[1][i] == s[2][i]) f = 1, ch = s[0][i];
+    if (s[0][0] != '.' && s[0][0] == s[1][1] && s[1][1] == s[2][2] || s[0][2] != '.' && s[0][2] == s[1][1] && s[1][1] == s[2][0]) f = 1, ch = s[1][1];
+    if (ch != '.' && ch != '?') cout << ch << endl;
+    else cout << "DRAW" << endl;
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+// C 排序
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int n, m, h;
+vector<int> base;
+bool cmp(vector<int> &a, vector<int> &b)
+{
+    int sa = 0, sb = 0, aa = 0, bb = 0, t = 0;
+    for(int x : a)
+        if(t + x <= h)
+            sa += t + x, aa++, t += x;
+    t = 0;
+    for(int x : b)
+        if(t + x <= h)
+            sb += t + x, bb++, t += x;
+    if(aa == bb) return sa < sb;
+    return aa > bb;
+}
+
+bool cmp2(vector<int> &a, vector<int> &b)
+{
+    int sa = 0, sb = 0, aa = 0, bb = 0, t = 0;
+    for(int x : a)
+        if(t + x <= h)
+            sa += t + x, aa++, t += x;
+    t = 0;
+    for(int x : b)
+        if(t + x <= h)
+            sb += t + x, bb++, t += x;
+    if(aa == bb && sa == sb) return 1;
+    return 0; 
+}
+
+void Solve()
+{
+    cin >> n >> m >> h;
+    vector<int> a[n + 5];
+    for(int i = 1; i <= n; ++i)
+    {
+        for(int j = 1; j <= m; ++j)
+        {
+            int x; cin >> x;
+            a[i].push_back(x);
+        }
+        sort(all(a[i]));
+    }
+    base = a[1];
+    sort(a + 1, a + 1 + n, cmp);
+    if(cmp2(a[1], a[2]) && a[2] == base)
+    {
+        cout << "1\n";
+    }
+    else
+    {
+        for(int i = 1; i <= n; ++i)
+        {
+            if(a[i] == base)
+            {
+                cout << i <<"\n";
+                return;
+            }
+        }
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+// D 
+ #include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define double long double
+const int N = 2e5 + 10;
+int n;
+double d, h;
+double a[N];
+double cal(double y1, double y2)
+{
+    if(h + y1 <= y2) return 0;
+    double h1 = h - (y2 - y1);
+    double len = h1 * d / h;
+    return len * h1 / 2;
+}
+ 
+void Solve()
+{
+    cin >> n >> d >> h;
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    sort(a, a + n);
+    double s = h * d / 2, res = s;
+    for(int i = 1; i < n; ++i)
+    {
+        res += s;
+        res -= cal(a[i - 1], a[i]);
+    }
+    cout << fixed << setprecision(7) << res << "\n";
+}
+ 
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### E1 ~ E2
+
+```c++
+// E1 暴力
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define double long double
+const int N = 1e6 + 10;
+
+vector<ll> base;
+map<ll, bool> mp;
+
+bool judge(ll x)
+{
+    for(ll i = 2; i * i <= x; ++i)
+        if(x % i == 0) return 0;
+    return 1;
+}
+
+void Solve()
+{
+    ll n; cin >> n;
+    if(n < 5)
+    {
+        cout << "NO\n";
+        return;
+    }
+    if(mp[n]) cout << "YES\n";
+    else cout << "NO\n";
+}
+
+int main()
+{
+    untie();
+    for(ll x = 2; x <= (ll)1000; ++x)
+    {
+        if(1 || x == 2 || judge(x))
+        {
+            ll s = x + 1, t = x;
+            while(t <= (ll)1000000 && s <= (ll)1000000)
+            {
+                t *= x;
+                s += t;
+                mp[s] = true;
+            }
+        }
+    }
+
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+// E2 枚举 n（次数）  +  二分 k（底数）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define double long double
+const int N = 1e6 + 10;
+
+ll n;
+ll cal(ll x, int lim)
+{
+    ll res = 1 + x, base = x;
+    for(int i = 2; i <= lim; ++i)
+    {
+        if(base > n / x || res > n) return n + 1;
+        base *= x;
+        res += base;
+    }
+    return res;
+}
+
+void Solve()
+{
+    cin >> n;
+    if(n < 5)
+    {
+        cout << "NO\n";
+        return;
+    }
+    for(int lim = 2; lim < 64; ++lim)
+    {
+        ll l = 2, r = n / 2;
+        while(l <= r)
+        {
+            ll mid = l + r >> 1, s = cal(mid, lim);
+            if(s == n)
+            {
+                cout << "YES\n";
+                return;
+            }
+            if(s <= n) l = mid + 1;
+            else r = mid - 1;
+        } 
+    }
+    cout << "NO\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
 ---
 
 # Div 4
