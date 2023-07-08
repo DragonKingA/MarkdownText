@@ -1377,7 +1377,8 @@ int main()
 ### B ~ D
 
 ```c++
-// B 被人 Hack
+// B 
+// 被人 Hack
 #include <bits/stdc++.h>
 using namespace std;
 #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
@@ -1414,70 +1415,49 @@ int main()
 
 
 // C 排序
+// 也被人 Hack 了
 #include <bits/stdc++.h>
 using namespace std;
 #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
 #define ll long long
 #define all(v) v.begin(), v.end()
 const int N = 2e5 + 10;
-int n, m, h;
-vector<int> base;
-bool cmp(vector<int> &a, vector<int> &b)
-{
-    int sa = 0, sb = 0, aa = 0, bb = 0, t = 0;
-    for(int x : a)
-        if(t + x <= h)
-            sa += t + x, aa++, t += x;
-    t = 0;
-    for(int x : b)
-        if(t + x <= h)
-            sb += t + x, bb++, t += x;
-    if(aa == bb) return sa < sb;
-    return aa > bb;
-}
-
-bool cmp2(vector<int> &a, vector<int> &b)
-{
-    int sa = 0, sb = 0, aa = 0, bb = 0, t = 0;
-    for(int x : a)
-        if(t + x <= h)
-            sa += t + x, aa++, t += x;
-    t = 0;
-    for(int x : b)
-        if(t + x <= h)
-            sb += t + x, bb++, t += x;
-    if(aa == bb && sa == sb) return 1;
-    return 0; 
-}
 
 void Solve()
 {
+    int n, m, h;
     cin >> n >> m >> h;
-    vector<int> a[n + 5];
-    for(int i = 1; i <= n; ++i)
+    vector<array<ll, 3> > a(n);
+    for(int i = 0; i < n; ++i)
     {
-        for(int j = 1; j <= m; ++j)
+        vector<ll> now(m);
+        for(ll &x : now) cin >> x;
+        sort(all(now));
+        a[i][0] = a[i][1] = 0, a[i][2] = i;
+        ll t = 0;
+        for(ll x : now)
         {
-            int x; cin >> x;
-            a[i].push_back(x);
+            t += x;
+            if(t > h) break;
+            a[i][0]++;
+            a[i][1] += t;
         }
-        sort(all(a[i]));
     }
-    base = a[1];
-    sort(a + 1, a + 1 + n, cmp);
-    if(cmp2(a[1], a[2]) && a[2] == base)
+    sort(all(a), [](array<ll, 3> a, array<ll, 3> b) -> bool
     {
-        cout << "1\n";
-    }
-    else
-    {
-        for(int i = 1; i <= n; ++i)
+        if(a[0] == b[0])
         {
-            if(a[i] == base)
-            {
-                cout << i <<"\n";
-                return;
-            }
+            if(a[1] == b[1]) return a[2] < b[2];
+            return a[1] < b[1]; 
+        }
+        return a[0] > b[0];
+    });
+    for(int i = 0; i < n; ++i)
+    {
+        if(a[i][2] == 0)
+        {
+            cout << i + 1 << "\n";
+            return;
         }
     }
 }

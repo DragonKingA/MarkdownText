@@ -1774,6 +1774,136 @@ int main()
 
 
 
+## ABC 309
+
+### D
+
+```c++
+// 两次 dijkstra
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 3e5 + 10;
+const ll inf = (1LL << 31) - 1;
+
+struct edge{
+    int to; int w;
+    edge(int a = 0, int b = 0){ to = a, w = b;}
+};
+struct node{
+    int id; int dis;
+    node(int a = 0, int b = 0){ id = a, dis = b;}
+    bool operator <(const node &x)const{ return dis > x.dis;}
+};
+int n1, n2, m;
+bool vis[N];
+vector<edge> e[N];
+
+void dijkstra(vector<int> &dis, int ns, int ne, int s)
+{
+    dis[s] = 0;
+    priority_queue<node> q;
+    q.push(node(s, dis[s]));
+    while(!q.empty())
+    {
+        node u = q.top(); q.pop();
+        if(vis[u.id]) continue;
+        vis[u.id] = 1;
+        for(int i = 0; i < e[u.id].size(); i++)
+        {
+            edge ne = e[u.id][i];
+            if(!vis[ne.to] && dis[ne.to] > u.dis + ne.w)
+            {
+                dis[ne.to] = u.dis + ne.w;
+                q.push(node(ne.to, dis[ne.to]));
+            }
+        }
+    }
+}
+
+void Solve()
+{
+    int n1, n2, m; cin >> n1 >> n2 >> m;
+    vector<int> dp(n1 + n2 + 1, inf - 1);
+    while(m--)
+    {
+        int u, v; cin >> u >> v;
+        e[u].push_back(edge(v, 1));
+        e[v].push_back(edge(u, 1));
+    }
+    dijkstra(dp, 1, n1, 1);
+    dijkstra(dp, n1 + 1, n1 + n2, n1 + n2);
+    cout << *max_element(dp.begin() + 1, dp.begin() + n1 + 1) + *max_element(dp.begin() + n1 + 1, dp.begin() + n1 + n2 + 1) + 1 << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 1;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### E
+
+```C++
+// 简单图论 + dfs
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 3e5 + 10;
+vector<int> G[N];
+ll lim[N], ans = 0;
+
+void dfs(int u, ll d = -2e9)
+{
+    d = max(d, lim[u]);
+    if(d >= 0) ++ans;
+    for(int v : G[u]) dfs(v, d - 1);
+}
+
+void Solve()
+{
+    int n, m; cin >> n >> m;
+    for(int i = 2; i <= n; ++i)
+    {
+        int j; cin >> j;
+        G[j].push_back(i);
+    }
+    memset(lim, -0x3f, sizeof(lim));
+    while(m--)
+    {
+        ll x, y; cin >> x >> y;
+        lim[x] = max(lim[x], y);        
+    }
+    dfs(1);
+    cout << ans << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 1;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
 ---
 
 # ARC
