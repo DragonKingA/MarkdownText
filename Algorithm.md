@@ -3692,6 +3692,8 @@ int main()
 
   用链表`vector<Edge> e[N]` 存，e[u] = {邻居点 v 的集合 及 到该点的边权`<u, v>`}。
 
+  无权图直接用 `vector<int> e[N]` 存即可
+
   ```c++
   #include <iostream>
   #include <algorithm>
@@ -7925,7 +7927,64 @@ int main()
     return 0;
 }
 
+// 用上模板类：
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int M = 6e3 + 10, N = 2 * M;
 
+int n, m, cnt = 1;
+int head[N];
+ll dp[N][2];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+};
+
+Edge<int> e[M];
+bool vis[N];
+
+void dfs(int u)
+{
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        dfs(v);
+        dp[u][0] += max(dp[v][0], dp[v][1]);
+        dp[u][1] += dp[v][0];
+    }
+}
+
+int main()
+{
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> dp[i][1];
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v;
+        cin >> v >> u;
+        addedge(e, u, v);
+        vis[v] = 1;
+    }
+    int rt = 0;
+    for(int i = 1; i <= n; ++i)
+        if(!vis[i]) rt = i;
+    dfs(rt);
+    cout << max(dp[rt][0], dp[rt][1]) << "\n";
+    return 0;
+}
 ```
 
 ---
@@ -8010,6 +8069,71 @@ int main()
 }
 
 
+// 类模板写法
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int M = 1e5 + 10, N = 2 * M;
+
+int n, m, cnt = 1;
+int head[N];
+int dp[N][2];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+};
+
+Edge<int> e[M];
+bool vis[N];
+
+void dfs(int u, int fa = 0)
+{
+    dp[u][0] = 0;
+    dp[u][1] = 1;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        dfs(v, u);
+        dp[u][0] += dp[v][1];
+        dp[u][1] += min(dp[v][0], dp[v][1]);
+    }
+}
+
+int main()
+{
+    cin >> n;
+    for(int i = 1; i <= n; ++i)
+    {
+        int u, k; cin >> u >> k;
+        u++;
+        while(k--)
+        {
+            int v; cin >> v;
+            v++;
+            addedge_undirected(e, u, v);
+            vis[v] = 1;
+        }
+    }
+    int rt = 0;
+    for(int i = 1; i <= n; ++i)
+        if(!vis[i]) rt = i;
+    dfs(rt);
+    cout << min(dp[rt][0], dp[rt][1]) << "\n";
+    return 0;
+}
 ```
 
 ---
@@ -8092,6 +8216,76 @@ int main()
     }
     dfs(u);//无根，随便选个点开始
     cout << min(dp[u][0], dp[u][2]) << '\n';
+    return 0;
+}
+
+
+// 类模板写法
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int M = 2e5 + 10, N = 2 * M;
+
+int n, m, cnt = 1;
+int head[N];
+int dp[N][3];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+void dfs(int u, int fa = 0)
+{
+    bool fl = 0;
+    int p = 0x7fffffff;
+    dp[u][0] = 1;
+    dp[u][1] = dp[u][2] = 0;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        dfs(v, u);
+        dp[u][0] += min({dp[v][0], dp[v][1], dp[v][2]});
+        dp[u][1] += min(dp[v][0], dp[v][2]);
+        if(dp[v][0] <= dp[v][2])
+        {
+            fl = 1;
+            dp[u][2] += dp[v][0];
+        }
+        else
+        {
+            p = min(p, dp[v][0] - dp[v][2]);
+            dp[u][2] += dp[v][2];
+        }
+    }
+    if(!fl) dp[u][2] += p;
+}
+
+int main()
+{
+    int u, v;
+    cin >> n;
+    for(int i = 1; i < n; ++i)
+    {
+        cin >> u >> v;
+        addedge_undirected(e, u, v);
+    }
+    dfs(u);
+    cout << min(dp[u][0], dp[u][2]) << "\n";
     return 0;
 }
 ```
@@ -8301,9 +8495,81 @@ int main()
     cout << ans << '\n';
     return 0;
 }
+
+
+// 类模板写法
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int M = 2e6 + 10, N = M;
+
+int n, m, cnt = 1;
+int head[N];
+int sz[N];
+int ans = 0;
+ll dp[N];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+void pre_dfs(int u, int fa = 0)
+{
+    sz[u] = 1;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        pre_dfs(v, u);
+        sz[u] += sz[v];
+    }
+}
+
+void dp_dfs(int u, int fa = 0)
+{
+    if(dp[u] > dp[ans]) ans = u;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        dp[v] = dp[u] - sz[v] + (n - sz[v]);
+        dp_dfs(v, u);
+    }
+}
+
+int main()
+{
+    int u, v;
+    cin >> n;
+    for(int i = 1; i < n; ++i)
+    {
+        cin >> u >> v;
+        addedge_undirected(e, u, v);
+    }
+    pre_dfs(u);
+    dp[u] = sz[u];
+    ans = u;
+    dp_dfs(u);
+    cout << ans << "\n";
+    return 0;
+}
 ```
 
-其他例题：
+换根dp 其他例题：
 
 ```c++
 1.P2986 Great Cow Gathering G
@@ -8370,6 +8636,7 @@ int main()
     cout << ans << '\n';
     return 0;
 }
+
 ```
 
 
@@ -8503,6 +8770,73 @@ int main()
 
 
 ---
+
+# 五. 模板总结
+
+
+
+* 链式前向星
+
+  ```c++
+  const int M = 1e6 + 10, N = 2 * M;
+  int n, m, cnt = 1;
+  int head[N];
+  template <class T = int> // 创建数组仍需要指示类型 Edge<int> e[M];
+  class Edge
+  {
+      public:
+          int to, next;
+          T w;
+          Edge(){}
+          Edge(int a, int b, T c) : to(a), next(b), w(c){}
+          friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+          friend void addedge(Edge e[], int u, int v, T c = 0)
+          {
+              e[cnt] = Edge(v, head[u], c);
+              head[u] = cnt++;
+          }
+  };
+  ```
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+
 
 类的学习
 
