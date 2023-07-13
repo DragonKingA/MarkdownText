@@ -6916,6 +6916,8 @@ int main()
 
 依赖关系以图论中的 "森林" 形式给出，也就是说主件的**附件**依旧可以有自己的**附件集合**（如图）。
 
+该问题的最佳解法是 **树形背包DP**
+
 <img src="D:\MarkdownText\image\动态规划\背包3.png" alt="背包3" style="zoom:80%;" />
 
 ```c++
@@ -6996,7 +6998,7 @@ int main()
 }
 
 
-3.当作一种深度仅为 2 的特殊树形背包来解
+3.当作一种深度仅为 2 的特殊树形背包来解（最佳）
 #include <stdio.h>
 #include <algorithm>
 #include <vector>
@@ -8307,7 +8309,10 @@ int main()
 
 普通背包dp定义：`dp[i][j]` 表示前 i 个物品占用 j 的空间所得最大价值。
 
-树形背包dp定义：`dp[u][i][j]` 表示以结点 u 为**根节点**的子树下的前 i 个子树（以 u 的子节点为根）中选中 j 个结点所得最大价值。
+树形背包dp定义：
+
+* 按点：`dp[u][i][j]` 表示以结点 u 为**根节点**的子树下的前 i 个子树（以 u 的子节点为根）中选中 j 个结点所得最大价值。
+* 按边：`dp[u][i]` 表示以结点 u 为根节点的子树选择 i 条边的最优权值花费。
 
 
 
@@ -8361,6 +8366,67 @@ int main()
     return 0;
 }
 
+// 理解2（最佳）：
+// dp[u][i] 表示以结点 u 为根节点的子树选择 i 条边的最优权值花费。
+// 当某条边被保留下来时，从根节点到这条边的路径上的所有边也都必须保留下来
+// dp 转移：dp[u][i] = max(dp[u][i], dp[u][i - (j + 1)] + dp[v][j] + w)
+// 其中 dp[u][i - (j + 1)] 即留 j + 1 条边，其中 1 条为边 u - v，剩余 j 条留给子树 v
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int N = 1e2 + 10, M = 2 * N;
+
+int n, m, cnt = 1;
+int head[N];
+int sz_edge[N]; // 存以结点 u 为根的子树所含边数
+int dp[N][M];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+void dfs(int u, int fa = 0)
+{
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w;
+        if(v == fa) continue;
+        dfs(v, u);
+        sz_edge[u] += sz_edge[v] + 1; // 可以用以优化下面的 dp 过程
+        for(int j = min(m, sz_edge[u]); j; --j) // 01背包，逆序遍历容量
+            for(int k = 0; k <= min(j - 1, sz_edge[v]); ++k) // 剩下 k 条留给子树 v
+                dp[u][j] = max(dp[u][j], dp[u][j - (k + 1)] + dp[v][k] + w);
+    }
+}
+
+int main()
+{
+    cin >> n >> m;
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v, w;
+        cin >> u >> v >> w;
+        addedge_undirected(e, u, v, w);
+    }
+    dfs(1);
+    cout << dp[1][m] << "\n";
+    return 0;
+}
+
 
 
 2.P2014 选课（树上有依赖的背包问题 -- 必须先选主件才能选附件）
@@ -8368,36 +8434,65 @@ int main()
 思路：题目相当于给一个可能有多个入度为0的根节点即有多个不连通的树构成森林，故添加超级源点 0 连通那些没有先修课的课，连接起孤立的树。定义 dp[u][j] 为选中结点 u 的 j 个子节点的最大价值（即不包括 u）。
 #include <bits/stdc++.h>
 using namespace std;
-const int N = 400, inf = 0x3f3f3f3f;
-int n, m, dp[N][N];
-vector<int> G[N];
-void dfs(int u)
+#define ll long long
+const int N = 1e3 + 10, M = 2 * N;
+
+int n, m, cnt = 1;
+int head[N];
+int dp[N][M];
+
+template <class T = int>
+class Edge
 {
-    for(int v : G[u])
-    {
-        dfs(v);//自底向上
-        for(int j = m; j >= 1; --j)//至少选一门 v
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
         {
-            for(int k = 0; k < j; ++k)//分配给子节点
-            {
-                dp[u][j] = max(dp[u][j], dp[v][k] + dp[u][j - k]);//dp[u][j] 不包括结点 u 本身，即相当于只选了 v 的子树 k，只用 j - k 即可
-            }
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
         }
+};
+
+Edge<int> e[M];
+
+void dfs(int u, int fa = 0)
+{
+    for(int i = head[u]; ~i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w;
+        if(v == fa) continue;
+        dfs(v, u);
+        for(int j = m; j >= 1; --j) // 至少选一门即一定选结点 u，这样才能选其子树下的其他结点（依赖性）
+            for(int k = 0; k < j; ++k) // 子节点可以选 0 ~ j - 1 个（第 j 个是 u）
+                dp[u][j] = max(dp[u][j], dp[u][j - k] + dp[v][k]);
     }
 }
+
 int main()
 {
     cin >> n >> m;
-    ++m;//由于加入了源点 0，至少需要选点 0
-    for(int v = 1, u; v <= n; ++v)
+    ++m; // 题意所构成的树以点 0 为根
+    memset(head, -1, sizeof(head));
+    for(int v = 1; v <= n; ++v)
     {
-        cin >> u >> dp[v][1];//直接初始化选 v 时的价值
-        G[u].push_back(v);
+        int u;
+        cin >> u >> dp[v][1];
+        addedge(e, u, v);
     }
     dfs(0);
-    cout << dp[0][m] << '\n';
+    cout << dp[0][m] << "\n";
     return 0;
 }
+
+
+
+3.P1273 有线电视网
+
+
 
 
 
@@ -8636,6 +8731,172 @@ int main()
     cout << ans << '\n';
     return 0;
 }
+
+// 类模板写法
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int M = 1e6 + 10, N = M;
+
+int n, m, cnt = 1;
+int head[N];
+int a[N];
+ll dp[N], amt[N], num = 0;
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+ll pre_dfs(int u, int fa = 0)
+{
+    ll s = 0;
+    amt[u] = a[u];
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        ll w = e[i].w;
+        if(v == fa) continue;
+        s += pre_dfs(v, u) + amt[v] * w;
+        amt[u] += amt[v];
+    }
+    return s;
+}
+
+void dp_dfs(int u, int fa = 0)
+{
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        ll w = e[i].w;
+        if(v == fa) continue;
+        dp[v] = dp[u] - w * amt[v] + w * (num - amt[v]);
+        dp_dfs(v, u);
+    }
+}
+
+int main()
+{
+    int u, v, w;
+    cin >> n;
+    for(int i = 1; i <= n; ++i) cin >> a[i], num += 1LL * a[i];
+    for(int i = 1; i < n; ++i)
+    {
+        cin >> u >> v >> w;
+        addedge_undirected(e, u, v, w);
+    }
+    dp[u] = pre_dfs(u);
+    dp_dfs(u);
+    cout << *min_element(dp + 1, dp + 1 + n) << "\n";
+    return 0;
+}
+
+
+
+2.Hdu 2196 Computer 
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+#define ll long long
+const int N = 1e4 + 10, M = 2 * N;
+
+int n, m, cnt = 1;
+int head[N], f[N][2];// f[u][0] 为 u 到叶子节点的最长距离，f[u][1] 为次长距离
+int dp[N];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+void pre_dfs(int u, int fa = 0)
+{
+    f[u][0] = f[u][1] = 0;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w;
+        if(v == fa) continue;
+        pre_dfs(v, u);
+        int now = w + f[v][0];
+        if(now > f[u][0])
+        {
+            f[u][1] = f[u][0];
+            f[u][0] = now;
+        }
+        else if(now > f[u][1])
+        {
+            f[u][1] = now;
+        }
+    }
+}
+
+void dp_dfs(int u, int fa = 0)
+{
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w;
+        if(v == fa) continue;
+        dp[v] = max(dp[u], f[v][0] + w == f[u][0] ? f[u][1] : f[u][0]) + w;
+        dp_dfs(v, u);
+    }
+}
+
+int main()
+{
+    while(cin >> n)
+    {
+        cnt = 1;
+        memset(head, 0, sizeof(head));
+        memset(dp, 0, sizeof(dp));
+
+        for(int u = 2; u <= n; ++u)
+        {
+            int v, w;
+            cin >> v >> w;
+            addedge_undirected(e, u, v, w);
+        }
+        pre_dfs(1);
+        dp_dfs(1);
+        for(int i = 1; i <= n; ++i) cout << max(f[i][0], dp[i]) << "\n";
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
 
 ```
 
@@ -14619,3 +14880,4 @@ int main()
 
 ```
 
+``
