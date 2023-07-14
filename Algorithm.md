@@ -8408,7 +8408,7 @@ void dfs(int u, int fa = 0)
         dfs(v, u);
         sz_edge[u] += sz_edge[v] + 1; // 可以用以优化下面的 dp 过程
         for(int j = min(m, sz_edge[u]); j; --j) // 01背包，逆序遍历容量
-            for(int k = 0; k <= min(j - 1, sz_edge[v]); ++k) // 剩下 k 条留给子树 v
+            for(int k = min(j - 1, sz_edge[v]); k >= 0; --k) // 剩下 k 条留给子树 v，这一维正序倒序都无所谓，但是把取min放在初始化部分里可以减少运算次数，算是一个优化的小习惯
                 dp[u][j] = max(dp[u][j], dp[u][j - (k + 1)] + dp[v][k] + w);
     }
 }
@@ -8490,7 +8490,89 @@ int main()
 
 
 
-3.P1273 有线电视网
+3.P1273 有线电视网（树上分组背包）
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int N = 3e3 + 10, M = 2 * N;
+
+int n, m, cnt = 1;
+int head[N];
+int dp[N][N]; // dp[u][j] 表示根节点为 u 的子树中选 j 个结点的最优花费
+int val[N];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+int dfs(int u, int fa = 0) // 返回叶子结点个数
+{
+    dp[u][0] = 0; // 初始化
+    if(u > n - m) // 叶子结点
+    {
+        dp[u][1] = val[u];
+        return 1;
+    }
+    int sum = 0;
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w, t = 0;
+        if(v == fa) continue;
+        t = dfs(v, u); // v 为根节点的子树的叶子节点个数 t
+        sum += t;
+        for(int j = sum; j; --j) // 前 i 个子树中选，前 i 个子树中共有 sum 个叶子节点（dp[u][i][j] 滚动到 dp[u][j]）
+        {
+            for(int k = min(j, t); k; --k) // 遍历该组方案（即遍历子树 v 的所有种选择 ——— 不选、选1个、选2个 ……）
+            {
+                dp[u][j] = max(dp[u][j], dp[u][j - k] + dp[v][k] - w);
+            }
+        }
+
+    }
+    return sum;
+}
+
+int main()
+{
+    memset(dp, -0x3f, sizeof(dp)); // 无穷小
+    cin >> n >> m;
+    for(int u = 1; u <= n - m; ++u)
+    {
+        int k, v, w;
+        cin >> k;
+        while(k--)
+        {
+            cin >> v >> w;
+            addedge(e, u, v, w);
+        }
+    }
+    for(int i = n - m + 1; i <= n; ++i) cin >> val[i];
+    // for(int i = n - m + 1; i <= n; ++i) cin >> dp[i][1], dp[i][0] = 0; // 也可以直接初始化
+    dfs(1);
+    for(int j = m; j; --j)
+    {
+        if(dp[1][j] >= 0)
+        {
+            cout << j << "\n";
+            break;
+        }
+    }
+    return 0;
+}
 
 
 
