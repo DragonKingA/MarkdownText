@@ -8986,6 +8986,99 @@ int main()
 
 ---
 
+### 其他
+
+```c++
+1.P3047 [USACO12FEB] Nearby Cows G （两次dfs更新 + 容斥定理）
+// 这里两次 dfs 对应于从某个结点 u 出发的两个不同方向：子树方向 和 父节点方向
+// dp[u][j] 只记录了 u 从上往下走 j 步的点权和，但忽略了 u 的父节点到达 u 的情况，故需要第二次 dfs 从上往下更新
+// 第二次 dfs :
+// 首先由于 j - 1 层包含其子树所有结点，利用容斥定理减去 j - 2 层就只剩下 j - 1 一层结点
+// 然后，仿照第一次 dfs 的更新方法：dp[v][j] += dp[u][j - 1] ，从 u 到 v 差一步
+// 先后顺序不能反转，防止待利用状态被覆盖
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int N = 1e5 + 10, M = 2 * N;
+
+int n, m, k, cnt = 1;
+int head[N];
+int dp[N][25]; // dp[u][j] 表示根节点 u 向下走 j 步的点权和
+int ans[N];
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+void dp_dfs(int u, int fa = 0) // 在子树内的情况
+{
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w, t = 0;
+        if(v == fa) continue;
+        dp_dfs(v, u);
+        for(int j = 1; j <= k; ++j) dp[u][j] += dp[v][j - 1]; // v 向上走一步到达 u
+    }
+}
+
+void dp_dfs2(int u, int fa = 0) // 不在子树内的情况（父节点方向）
+{
+
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to, w = e[i].w, t = 0;
+        if(v == fa) continue;
+        for(int j = k; j >= 2; --j) dp[v][j] -= dp[v][j - 2]; // 逆序遍历，否则导致待使用状态被覆盖
+        for(int j = 1; j <= k; ++j) dp[v][j] += dp[u][j - 1]; // 父亲更新儿子
+        dp_dfs2(v, u);
+    }
+}
+
+int main()
+{
+    cin >> n >> k;
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v;
+        cin >> u >> v;
+        addedge_undirected(e, u, v);
+    }
+    for(int i = 1; i <= n; ++i) cin >> dp[i][0];
+    dp_dfs(1);
+    dp_dfs2(1);
+    for(int i = 1; i <= n; ++i)
+        for(int j = 0; j <= k; ++j)
+            ans[i] += dp[i][j];
+    for(int i = 1; i <= n; ++i) cout << ans[i] << "\n";
+    return 0;
+}
+
+
+
+
+
+```
+
+
+
+
+
+---
+
 ## 状压dp
 
 > 通过**将 K 种状态压缩为 K进制整数**来达到优化转移的目的
