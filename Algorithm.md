@@ -7865,8 +7865,8 @@ int main()
 
 定义dp状态：
 
-* `dp[u][0]`：以 u 为根的子树不选择 u 的最多选中结点数目
-* `dp[u][1]`：以 u 为根的子树选择 u 的最多选中结点数目
+* `dp[u][0]`：以 u 为根的子树不选择 u 的最多选中结点数目或最大价值
+* `dp[u][1]`：以 u 为根的子树选择 u 的最多选中结点数目或最大价值
 
 状态转移：
 
@@ -9066,6 +9066,75 @@ int main()
     for(int i = 1; i <= n; ++i) cout << ans[i] << "\n";
     return 0;
 }
+
+
+
+2.P3698 [CQOI2017] 小Q的棋盘
+// 贪心
+// 可以走 k 步，要尽可能保证每一次移动都到达一个新的节点，所以要先向深度最深的节点走。设最长链长度为 lmax
+// k <= lmax，则直接沿着最长链走最优，每走一步就多一个节点，那么总节点数为 lmax + 1
+// k > lmax，首先走完最长链后还有剩余步数 k - lmax，在走最长链的过程中若要添加一个邻点并回到最长链上，则需要两步
+//          显然，添加 num 个邻点，这需要 2 * num 步，那么可添入邻点数量为 (k - lmax) / 2，故总节点数为 lmax + 1 + (k - lmax) / 2
+//          注意，k 可能特别大，结果有可能超过 n，故最终答案为 min(n, lmax + 1 + (k - lmax) / 2)
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+const int N = 200 + 10, M = 2 * N;
+
+int n, m, k, cnt = 1;
+int head[N];
+int lmax = 0;
+
+template <class T = int>
+class Edge
+{
+    public:
+        int to, next;
+        T w;
+        Edge(){}
+        Edge(int a, int b, T c) : to(a), next(b), w(c){}
+        friend void addedge_undirected(Edge e[], int u, int v, T c = 0){ addedge(e, u, v, c), addedge(e, v, u, c);}
+        friend void addedge(Edge e[], int u, int v, T c = 0)
+        {
+            e[cnt] = Edge(v, head[u], c);
+            head[u] = cnt++;
+        }
+};
+
+Edge<int> e[M];
+
+void dp_dfs(int u, int fa = 0, int len = 0)
+{
+    lmax = max(lmax, len);
+    for(int i = head[u]; i; i = e[i].next)
+    {
+        int v = e[i].to;
+        if(v == fa) continue;
+        dp_dfs(v, u, len + 1);
+    }
+}
+
+int main()
+{
+    cin >> n >> k;
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v;
+        cin >> u >> v;
+        ++u, ++v;
+        addedge_undirected(e, u, v);
+    }
+    dp_dfs(1);
+    
+    if(k <= lmax) cout << k + 1 << "\n";
+    else cout << min(n, lmax + 1 + (k - lmax) / 2) << "\n";
+    return 0;
+}
+
+
+
+
+
 
 
 
