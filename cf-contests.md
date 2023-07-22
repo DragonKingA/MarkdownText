@@ -1798,6 +1798,184 @@ int main()
 
 
 
+## Round 835
+
+### E
+
+```c++
+// 前缀和 + 后缀和
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+void Solve()
+{
+	int n; cin >> n;
+    ll tp = 0, ans = 0;
+    vector<int> a(n + 5, 0), cnt0(n + 5, 0), cnt1(n + 5, 0);
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    for(int i = 1; i <= n; ++i) cnt1[i] = cnt1[i - 1] + (a[i] == 1);
+    for(int i = n; i >= 1; --i) cnt0[i] = cnt0[i + 1] + (a[i] == 0);
+    for(int i = 1; i <= n; ++i)
+        if(!a[i]) tp += 1LL * cnt1[i];
+    ans = tp;
+    for(int i = 1; i <= n; ++i)
+    {
+        if(a[i]) ans = max(ans, tp + cnt1[i - 1] - cnt0[i + 1]);
+        else ans = max(ans, tp - cnt1[i - 1] + cnt0[i + 1]);
+    }
+    cout << ans << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### F
+
+```c++
+// 二分 + 枚举
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+ll n, c, d;
+
+bool check(vector<ll> a, ll k)
+{
+    ll s = 0, cnt = 0, ind = 1;
+    for(int i = 0; i < d; ++i)
+    {
+        if(ind <= n) s += a[ind++];
+        ++cnt;
+        if(cnt == k + 1) cnt = 0, ind = 1;
+    }
+    return s < c;
+}
+
+void Solve()
+{
+    ll sum = 0;
+    cin >> n >> c >> d;
+    vector<ll> a(n + 5, 0);
+    for(int i = 1; i <= n; ++i) cin >> a[i];
+    sort(a.begin() + 1, a.begin() + 1 + n, greater<ll>());
+    for(int i = 1; i <= min(n, d); ++i) sum += a[i];
+    if(sum >= c) cout << "Infinity\n";
+    else if(d * a[1] < c) cout << "Impossible\n";
+    else
+    {
+        ll l = 0, r = d;
+        while(l < r)
+        {
+            ll mid = l + r >> 1;
+            if(check(a, mid)) r = mid;
+            else l = mid + 1;
+        }
+        cout << l - 1 << "\n";
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### G
+
+```c++
+// dfs
+// 分别以 a 和 b 为根 dfs 求异或和，并分别统计所有路径的异或和值，若两次 dfs 存在终点相同且异或值相同的两条路径则合并后则为异或值为 0 的从 a 到 b 的路径
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+struct nd{
+    int v, w;
+    nd(int vv = 0, int ww = 0){ v = vv, w = ww;}
+};
+
+void dfs(vector<nd> G[], vector<int> &dis, int u, int fa, int out)
+{
+    for(auto now : G[u])
+    {
+        int v = now.v, w = now.w;
+        if(v == fa || v == out) continue;
+        dis[v] = dis[u] ^ w;
+        dfs(G, dis, v, u, out);
+    }
+}
+
+void Solve()
+{
+    int n, a, b, ok = 0;
+    cin >> n >> a >> b;
+    vector<nd> G[n + 5];
+    vector<int> dis1(n + 5, -1), dis2(n + 5, -1);
+    set<int> st;
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v, w;
+        cin >> u >> v >> w;
+        G[u].push_back(nd(v, w));
+        G[v].push_back(nd(u, w));
+    }
+
+    dis1[a] = 0;
+    dfs(G, dis1, a, a, b); // 不经过 b 点，方便操作（若加入到 b 点的路径则需要额外特判）
+    for(int i = 1; i <= n; ++i)
+        if(dis1[i] != -1) st.insert(dis1[i]);
+
+    dis2[b] = 0;
+    dfs(G, dis2, b, b, -1);
+    for(int i = 1; i <= n; ++i)
+        if(i != b && (dis2[i] == 0 || st.count(dis2[i])))
+            ok = 1;
+    cout << (ok ? "YES" : "NO") << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
 ## Round 849
 
 ### A ~ D 、G1
@@ -2835,6 +3013,280 @@ int main()
 {
     untie();
     int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+## Round 886
+
+### D
+
+```c++
+// 思维 + 模拟
+// 思路：分割出所有满足条件的连续区间，各自作为一个集合，求出最大集合大小 cnt（至少为 1），随后只保留该集合，其余集合全部移除，故答案为除最大集合外其余集合的大小和，即 n - cnt
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+void Solve()
+{
+    ll n, k, cnt = 1; cin >> n >> k;
+    vector<int> a(n);
+    for(int i = 0; i < n; ++i) cin >> a[i];
+    sort(all(a));
+    for(int i = 1; i < n; ++i)
+    {
+        ll tp = 1;
+        while(i < n && a[i] - a[i - 1] <= k) ++tp, ++i;
+        cnt = max(cnt, tp);
+    }
+    cout << n - cnt << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+### E
+
+```C++
+// 二分 + 枚举
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll unsigned long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+ll n, c;
+
+bool check(vector<ll> a, ll w)
+{
+    ll s = 0;
+    for(int i = 0; i < n; ++i)
+    {
+        ll t = a[i] + 2 * w;
+        s += t * t;
+        if(w > c || t > c || s > c || w * w > c) return 1; // 防止数据溢出
+    }
+    return 0;
+}
+
+void Solve()
+{
+    cin >> n >> c;
+    vector<ll> a(n);
+    for(ll &x : a) cin >> x;
+    ll l = 1, r = 1e9;
+    while(l < r)
+    {
+        ll mid = l + r >> 1;
+        if(check(a, mid)) r = mid;
+        else l = mid + 1;
+    }
+    cout << l - 1 << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+### F
+
+```c++
+// 枚举所有可以到达数 i 的因数 j，注意除了 j * j == i 外，存在另外一个数 i / j 也是 i 的因数，同样可达 i
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll unsigned long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+
+void Solve()
+{
+    int n; cin >> n;
+    map<int, int> mp;
+    vector<int> ans(n + 5, 0);
+    for(int i = 0; i < n; ++i)
+    {
+        int x; cin >> x;
+        if(x <= n) mp[x]++;
+    }
+    for(int i = 1; i <= n; ++i)
+    {
+        for(int j = 1; j * j <= i; ++j)
+        {
+            if(i % j == 0)
+            {
+                if(j * j == i) ans[i] += mp[j];
+                else ans[i] += mp[j] + mp[i / j];
+            }
+        }
+    }
+    cout << *max_element(all(ans)) << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+### G
+
+```c++
+// 思维
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+
+void Solve()
+{
+    ll ans = 0;
+    int n; cin >> n;
+    map<ll, ll> xx, yy, xoy, yox;
+    for(int i = 0; i < n; ++i)
+    {
+        ll x, y; cin >> x >> y;
+        xx[x]++;
+        yy[y]++;
+        xoy[x + y]++;
+        yox[x - y]++;
+        // 两个斜方向的直线方程分别是 y = x + c1 和 y = -x + c2，则就有定值 x - y = c1 和 x + y = c2
+        // 所以 x + y 代表斜向右上的方向且其值能具体到某条直线，x - y 则代表斜向右下
+    }
+    for(auto mp : {xx, yy, xoy, yox})
+        for(auto [val, cnt] : mp)
+            ans += cnt * (cnt - 1);
+    cout << ans << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+### H
+
+```c++
+// bfs
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll unsigned long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+
+bool bfs(vector<pair<int, ll> > G[], vector<bool> &vis, vector<ll> &dis, int st)
+{
+    queue<int> q;
+    q.push(st);
+    vis[st] = 1;
+    while(!q.empty())
+    {
+        int u = q.front(); q.pop();
+        for(auto [v, w] : G[u])
+        {
+            if(!vis[v])
+            {
+                vis[v] = 1;
+                q.push(v);
+                dis[v] = dis[u] + w;
+            }
+            else if(dis[v] != dis[u] + w) // 只需要判断是否存在两点的矛盾关系即可
+            {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+void Solve()
+{
+    int n, m; cin >> n >> m;
+
+    vector<pair<int, ll> > G[n + 5];
+    vector<bool> vis(n + 5, 0);
+    vector<ll> dis(n + 5, 0);
+
+    while(m--)
+    {
+        int u, v, w; cin >> u >> v >> w;
+        G[u].emplace_back(v, w);
+        G[v].emplace_back(u, -w);
+    }
+
+    bool ok = 1;
+    for(int i = 1; i <= n; ++i) // 不一定所有点连通
+        if(!vis[i]) ok &= bfs(G, vis, dis, i);
+    cout << (ok ? "YES" : "NO") << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // int T = 100;
     cin >> T;
     while(T--)
     {
