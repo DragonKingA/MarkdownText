@@ -4425,6 +4425,159 @@ int main()
 
 
 
+## 判环与环路径输出
+
+[C - Find it!](https://atcoder.jp/contests/abc311/tasks/abc311_c)
+
+```c++
+// 写法1：并查集判环（最简洁高效）
+// 该题为判单环，并查集实际上可以处理多个环
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int vis[N], ok = 0;
+int st, ed; // 环的首尾结点
+int path[N];
+int ds[N];
+
+int find_set(int x)
+{
+    return x == ds[x] ? x : (ds[x] = find_set(ds[x]));
+}
+
+void dfs(vector<int> G[], int u, int step) // step 记录步数
+{
+    vis[u] = 1;
+    path[step] = u;
+    if(u == ed)
+    {
+        cout << step << "\n";
+        for(int i = 1; i <= step; ++i) cout << path[i] << " \n"[i == step];
+        return;
+    }
+    for(int v : G[u])
+        if(!vis[v]) dfs(G, v, step + 1);
+}
+
+void Solve()
+{
+    int n; cin >> n;
+    vector<int> G[n + 5];
+    for(int i = 1; i <= n; ++i) ds[i] = i;
+    for(int u = 1; u <= n; ++u)
+    {
+        int v; cin >> v;
+        int fu = find_set(u), fv = find_set(v);
+        if(fu == fv) st = v, ed = u; // 此时 u -> v 是 尾结点 接 首结点 的边
+        else ds[fu] = fv;
+        G[u].push_back(v);
+    }
+    dfs(G, st, 1);
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+// 写法2：定义三种状态区分点的状态
+// vis[i] 有 3 个状态：未遍历、正在遍历、已遍历
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int vis[N], ok = 0;
+int pre[N]; // 前驱存储
+vector<int> vec;
+
+bool dfs(vector<int> G[], int u, int fa)
+{
+    vis[u] = 0; // 正在遍历
+    pre[u] = fa;
+    for(int v : G[u])
+    {
+        if(vis[v] == 0) // 遇到正在遍历的路径上的点，由于是有向图，说明 v 是路径的头结点，即已经接头了
+        {
+            while(u != v) // v 是路径头结点，倒序遍历到头结点
+            {
+                vec.push_back(u);
+                u = pre[u];
+            }
+            vec.push_back(v); // 最后记得加入头节点
+            return 1;
+        }
+        else if(vis[v] == -1)
+        {
+            // pre[v] = u;
+            if(dfs(G, v, u)) 
+            {
+                return 1;
+            }
+        }
+    }
+    vis[u] = 1; // 已遍历
+    return 0;
+}
+
+void Solve()
+{
+    int n; cin >> n;
+    vector<int> G[n + 5];
+    for(int u = 1; u <= n; ++u)
+    {
+        int v; cin >> v;
+        G[u].push_back(v);
+    }
+    memset(vis, -1, sizeof(vis)); // 初始化为未遍历状态
+    for(int i = 1; i <= n; ++i)
+    {
+        if(vis[i] == -1)
+        {
+           if(dfs(G, i, 0)) 
+           {
+                int sz = vec.size();
+                reverse(all(vec));
+                cout << sz << "\n";
+                for(int k = 0; k < sz; ++k)
+                    cout << vec[k] << " \n"[k == sz - 1];
+                return;
+           }
+        }
+    }
+    
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+
+```
+
 
 
 
@@ -9319,9 +9472,9 @@ int main()
 
 
 
+---
 
-
-
+## 概率dp
 
 
 

@@ -1008,7 +1008,7 @@ int main()
 
 ---
 
-## ABC 302(*值得再看)
+## (*)ABC 302
 
 ### B
 
@@ -1251,7 +1251,7 @@ int main()
 
 ---
 
-## ABC 304(*)
+## (*)ABC 304
 
 ### D
 
@@ -1894,6 +1894,266 @@ int main()
     untie();
     int T = 1;
     // int T = 1;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+
+
+
+
+## (*)ABC 311
+
+### C 判环
+
+```C++
+// 本来可以AC，但是忘记输出路径长度
+// 法1：并查集
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int vis[N], ok = 0;
+int st, ed;
+int path[N];
+int ds[N];
+
+int find_set(int x)
+{
+    return x == ds[x] ? x : (ds[x] = find_set(ds[x]));
+}
+
+void dfs(vector<int> G[], int u, int step)
+{
+    vis[u] = 1;
+    path[step] = u;
+    if(u == ed)
+    {
+        cout << step << "\n";
+        for(int i = 1; i <= step; ++i) cout << path[i] << " \n"[i == step];
+        return;
+    }
+    for(int v : G[u])
+        if(!vis[v]) dfs(G, v, step + 1);
+}
+
+void Solve()
+{
+    int n; cin >> n;
+    vector<int> G[n + 5];
+    for(int i = 1; i <= n; ++i) ds[i] = i;
+    for(int u = 1; u <= n; ++u)
+    {
+        int v; cin >> v;
+        int fu = find_set(u), fv = find_set(v);
+        if(fu == fv) st = v, ed = u;
+        else ds[fu] = fv;
+        G[u].push_back(v);
+    }
+    dfs(G, st, 1);
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+// 法2：定义三种 vis[u] 状态
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int vis[N], ok = 0;
+int pre[N];
+vector<int> vec;
+
+bool dfs(vector<int> G[], int u, int fa)
+{
+    vis[u] = 0;
+    pre[u] = fa;
+    for(int v : G[u])
+    {
+        if(vis[v] == 0) 
+        {
+            while(u != v)
+            {
+                vec.push_back(u);
+                u = pre[u];
+            }
+            vec.push_back(v);
+            return 1;
+        }
+        else if(vis[v] == -1)
+        {
+            // pre[v] = u;
+            if(dfs(G, v, u)) 
+            {
+                return 1;
+            }
+        }
+    }
+    vis[u] = 1;
+    return 0;
+}
+
+void Solve()
+{
+    int n; cin >> n;
+    vector<int> G[n + 5];
+    for(int u = 1; u <= n; ++u)
+    {
+        int v; cin >> v;
+        G[u].push_back(v);
+    }
+    memset(vis, -1, sizeof(vis));
+    for(int i = 1; i <= n; ++i)
+    {
+        if(vis[i] == -1)
+        {
+           if(dfs(G, i, 0)) 
+           {
+                int sz = vec.size();
+                reverse(all(vec));
+                cout << sz << "\n";
+                for(int k = 0; k < sz; ++k)
+                    cout << vec[k] << " \n"[k == sz - 1];
+                return;
+           }
+        }
+    }
+    
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### D 多方向DFS的技巧
+
+```c++
+// 定义 vis[N][N][4] 使得在该点上每种 dfs 方向都独立判定
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 200 + 10;
+
+string s[N];
+bool vis[N][N][4]; // 四个方向的点状态
+int dir[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+int n, m, cnt = 0; 
+
+void dfs(int x, int y, int d)
+{
+    if(vis[x][y][0] + vis[x][y][1] + vis[x][y][2] + vis[x][y][3] == 0) ++cnt;
+    vis[x][y][d] = 1;
+    int tx = x + dir[d][0], ty = y + dir[d][1];
+    if(s[tx][ty] == '.') // 沿该方向继续遍历
+    {
+        dfs(tx, ty, d);
+    }
+    else 				// 转向处
+    {
+        for(int i = 0; i < 4; ++i)
+        {
+            int nx = x + dir[i][0], ny = y + dir[i][1];
+            if(s[nx][ny] == '.' && !vis[nx][ny][i])
+            {
+                dfs(nx, ny, i);
+            }
+        }
+    }
+    
+}
+
+void Solve()
+{
+    cin >> n >> m;
+    for(int i = 0; i < n; ++i) cin >> s[i];
+    for(int i = 0; i < 4; ++i) dfs(1, 1, i);
+    cout << cnt << "\n";
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### E
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 3e3 + 10;
+int n, m, k;
+
+void Solve()
+{
+    cin >> n >> m >> k;
+    vector<vector<ll> > dp(n + 5, vector<ll>(m + 5, 1)); // 初始化为每个点可取
+    while(k--)
+    {
+        int x, y; cin >> x >> y;
+        dp[x][y] = 0; // 该点不可取（或者用另外的数组 vis[][] 存储）
+    }
+    for(int i = 0; i <= n; ++i) dp[i][0] = 0; // 初始化这些点不可取
+    for(int j = 0; j <= m; ++j) dp[0][j] = 0; // 初始化这些点不可取
+    // 若(i, j)可取，dp转移只转移最小量，因为(i, j)的状态受这三方状态的同时制约；否则为 0
+    for(int i = 1; i <= n; ++i)
+        for(int j = 1; j <= m; ++j)
+            dp[i][j] += (dp[i][j] ? min({dp[i - 1][j - 1], dp[i][j - 1], dp[i - 1][j]}) : 0);
+    ll ans = 0;
+    for(int i = 1; i <= n; ++i)
+        for(int j = 1; j <= m; ++j)
+            ans += dp[i][j];
+    cout << ans << "\n";
+}
+
+int main()
+{
+    // untie();
+    int T = 1;
+    // cin >> T;
     while(T--)
     {
         Solve();

@@ -1370,6 +1370,63 @@ int main()
 }
 ```
 
+### E
+
+```c++
+// 二分 + 前缀和 + 离线
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+const int N = 1e5 + 10;
+
+void Solve()
+{
+    int q, n, m; cin >> n >> m;
+    vector<array<int, 2> > arr(m);
+    for(auto &[l, r] : arr) cin >> l >> r;
+    cin >> q;
+    vector<int> que(q);
+    for(int &x : que) cin >> x;
+    
+    int l = 1, r = q;
+    while(l <= r)
+    {
+        int mid = l + r >> 1;
+        auto check = [q, n, m, arr, que](int mid)
+        {
+            vector<int> sum(n + 1, 0);
+            for(int i = 0; i < mid; ++i) sum[que[i]] = 1;
+            for(int i = 1; i <= n; ++i) sum[i] += sum[i - 1];
+            for(auto &[l, r] : arr)
+                if(sum[r] - sum[l - 1] > (r - l + 1) / 2)
+                    return 1;
+            return 0;
+        };
+        if(check(mid)) r = mid - 1;
+        else l = mid + 1;
+    }
+    if(r == q) cout << "-1\n";
+    else cout << r + 1 << "\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+```
+
+
+
 
 
 ## Round 883
