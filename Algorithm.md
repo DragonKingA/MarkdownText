@@ -591,7 +591,7 @@ int main()
 [洛谷 P3370 【模板】字符串哈希]([P3370 【模板】字符串哈希 - 洛谷 | 计算机科学教育新生态 (luogu.com.cn)](https://www.luogu.com.cn/problem/P3370))
 
 ```c++
-//写法1：自然溢出（158ms 得益于 set 的加速）
+//写法1：自然溢出（158ms 得益于 uo_set 的加速）
 #include <cstdio>
 #include <algorithm>
 #include <iostream>
