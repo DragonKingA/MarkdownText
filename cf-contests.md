@@ -725,9 +725,124 @@ int main()
 
 ## Round 855
 
+### D
 
+```c++
+// Hash 或 贪心
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll  unsigned long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+const ll b0 = 13, b1 = 31;
+int n;
+ll bit[N][2];
+vector<array<ll, 2> > Hash;
 
+ll cal(int l, int r, int op)
+{
+    if(l > n || r < 1) return 0;
+    return Hash[r][op] - Hash[l - 1][op] * bit[r - l + 1][op];
+}
 
+void Solve()
+{
+    map<pair<ll, ll>, bool> mp;
+    string s;
+    cin >> n >> s;
+    s = '?' + s;
+    Hash.resize(n + 5);
+    for(int i = 0; i < n + 5; ++i) Hash[i] = {0, 0};
+    for(int i = 1; i <= n; ++i)
+    {
+        Hash[i][0] = Hash[i - 1][0] * b0 + s[i];
+        Hash[i][1] = Hash[i - 1][1] * b1 + s[i];
+    }
+    for(int i = 1; i < n; ++i)
+    {
+        ll h0 = cal(1, i - 1, 0) * bit[n - i - 1][0] + cal(i + 2, n, 0);
+        ll h1 = cal(1, i - 1, 1) * bit[n - i - 1][1] + cal(i + 2, n, 1);
+        mp[make_pair(h0, h1)] = 1;
+    }
+    cout << mp.size() << "\n";
+}
+
+int main()
+{
+    bit[0][0] = bit[0][1] = 1;
+    for(int i = 1; i < N; ++i) bit[i][0] = bit[i - 1][0] * b0, bit[i][1] = bit[i - 1][1] * b1;
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+### E1、E2
+
+```c++
+// 并查集 或者 模拟
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll  unsigned long long
+#define all(v) v.begin(), v.end()
+const int N = 2e5 + 10;
+int n, k, ds[N];
+string st, ed;
+
+int find_set(int x) { return x == ds[x] ? x : (ds[x] = find_set(ds[x]));}
+void merge_set(int x, int y) { x = find_set(x), y = find_set(y); if(x != y) ds[x] = y;}
+
+void Solve()
+{
+    cin >> n >> k >> st >> ed;
+    st = '?' + st, ed = '?' + ed;
+    vector<int> fs[n + 5], fe[n + 5];
+    set<int> leader;
+    for(int i = 1; i <= n; ++i) ds[i] = i;
+    for(int i = 1; i <= n; ++i)
+    {
+        if(i + k <= n) merge_set(i, i + k);
+        if(i + k + 1 <= n) merge_set(i, i + k + 1);
+    }
+    for(int i = 1; i <= n; ++i)
+    {
+        int fi = find_set(i);
+        fs[fi].push_back(st[i]);
+        fe[fi].push_back(ed[i]);
+        leader.insert(fi);
+    }
+    for(int i : leader)
+    {
+        sort(all(fs[i]));
+        sort(all(fe[i]));
+        if(fs[i] != fe[i])
+        {
+            cout << "NO\n";
+            return;
+        }
+    }
+    cout << "YES\n";
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
 
 
