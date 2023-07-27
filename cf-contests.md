@@ -844,6 +844,54 @@ int main()
 }
 ```
 
+### F
+
+```c++
+// Q1:合并后总长度为奇数，每个字母个数为奇数，而实际上后者包括了前者，因为字母种数也要求是奇数
+// Q2:只包含25种字母（最多为 26 种），故只需要遍历缺少其中一个字母的情况即可
+// 思路：位运算存储信息并判定合法性，记 now 为缺单个字母的序列，依据异或运算法则
+// 由 cnt[i] ^ cnt[j] = now 可以简化成 cnt[i] ^ now = cnt[j] （只需要遍历 cnt[i] 和 now 即可）
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll  unsigned long long
+#define all(v) v.begin(), v.end()
+#define chx(ch) ch - 'a'
+const int N = 2e5 + 10;
+string s;
+int cnt[N], have[N];
+unordered_map<int, int> mp;
+
+int main()
+{
+    untie();
+    ll n, ans = 0; 
+    cin >> n;
+    for(int i = 0; i < n; ++i)
+    {
+        cin >> s;
+        for(auto ch : s)
+        {
+            have[i] |= 1 << chx(ch); // 存储字母种数
+            cnt[i]  ^= 1 << chx(ch); // 存储每个字母各自的个数的奇偶性
+        }
+    }
+    for(int k = 0; k < 26; ++k) // 遍历缺漏的一个字母
+    {
+        mp.clear();
+        int now = (1 << 26) - 1 - (1 << k);
+        for(int i = 0; i < n; ++i)
+        {
+            if((have[i] >> k) & 1) continue;
+            if(mp.count(cnt[i] ^ now)) ans += mp[cnt[i] ^ now];
+            ++mp[cnt[i]]; // 加入当前序列
+        }
+    }
+    cout << ans << "\n";
+    return 0;
+}
+```
+
 
 
 
