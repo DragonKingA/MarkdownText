@@ -2,9 +2,64 @@
 
 ---
 
-# 零、输入与输出
+# 零、基础知识
 
 ---
+
+## 包和模块
+
+### 概念
+
+1. 模块(module)：简单来说就是 .py 文件，其中包含了一组相关的函数、类、变量和常量。通常情况下，每个模块都会定义一组相关的功能，以便在其他Python程序中重复使用。
+
+2. 包(package)：包是一个包含多个模块或者多个子包的有层次的文件目录结构。通常情况下，包中的每个模块都会定义一组相关的功能，以便在其他Python程序中重复使用，且该目录下一定包含`__init__.py`文件。
+
+   创建包时：创建一个文件夹, 文件夹内务必创建一个`__init__.py`文件(其实python3.3版本之后不必创建, 但是为了代码兼容, 以及做一些其他包处理操作, 目前还是建议创建)
+
+3. 库：指完成一定功能的代码集合，在python中的形式是模块和包。如：
+
+   - NumPy：用于数值计算和科学计算的库
+   - Pandas：用于数据分析和数据处理的库
+   - Flask：用于Web开发的轻量级框架
+   - Django：用于Web开发的全功能框架
+   - TensorFlow：用于机器学习的库
+   - Matplotlib：用于数据可视化的库
+
+### 分类
+
+1. 标准包/模块：标准库包是Python语言本身提供的包，无需额外安装即可使用。这些包包括`os`、`sys`、`re`、`math`等，它们提供了许多常用的功能。
+2. 第三方包/模块：第三方包是由第三方开发人员或团队开发的包，提供了各种不同的功能。这些包需要通过`pip`或其他包管理器进行安装，例如`numpy`、`requests`、`pandas`等。
+3. 自定义包/模块
+
+### 导入
+
+1. `import M`: 使用`import`语句可以导入一个模块, 如果是某个包里面的模块, 则可以通过点语法来定位, 需要注意的是每次调用包时, 都会先执行包里面的`__init__.py` 文件
+
+2. `import M1, M2` : 导入多个模块, 可以用逗号隔开
+
+3. `import M as ...` : 使用import...as语句可以给导入的模块或函数起一个别名, 可以简化资源访问前缀, 增加程序的扩展性
+
+4. `from ... import ...[as ...]`: 从一个模块中导入**指定**的函数、类或变量; 需要明确的是只能从大的地方找小的东西: 包 > 模块 > 模块资源, 而且注意面向关系, 即包只能看到模块, 模块只能看到模块资源
+
+   ```python
+   # 只能从包到模块, 模块到模块资源
+   from p1 import Tool1 as t1, Tool2 as t2      # 多模块
+   from p1 import Tool1, Tool2
+   from p1.sub_p import sub_tool                # 多层级
+   ```
+
+5. `from ... import * [as ...]` : 导入一个模块或者包中的**所有非下划线开头**的公共函数、类和变量, 在使用时我们需要小心, 因为我们无法预知会导入哪些内容到当前位置, 容易产生变量名冲突
+
+   ```python
+   # 也可以通过在模块中重写__all__列表, 来选择我们所认为的需要从模块中导入的资源, 或者从包中需要导入的模块; 注意列表中每个元素都是字符串, 即引号包含变量名称或者文件名称
+   __all__ = ["num1", ... ]
+   ```
+
+
+
+---
+
+## 输入与输出
 
 **输入**
 
@@ -1395,4 +1450,305 @@ print(stu.age)
 print(Student.name)
 # print(Student.age) 报错
 ```
+
+---
+
+# 四、常见包
+
+---
+
+
+
+
+
+
+
+## pathlib 
+
+> 该模块提供了表示**文件系统路径的类**，可适用于不同的操作系统。使用 pathlib 模块，相比于 os 模块可以写出更简洁，易读的代码。pathlib 模块中的 Path 类继承自 PurePath，对 PurePath 中的部分方法进行了重载，相比于 os.path 有更高的抽象级别。
+
+**Path 和 PurePath** 
+
+* Path：Path访问实际文件系统的**“真正路径”**，Path对象可用于判断对应的文件是否存在、是否为文件、是否为目录等。有两个子类，即PosixPath和WindowsPath，前者用于操作UNIX（包括 Mac OS X）风格的路径，后者用于操作Windows风格的路径。
+
+* PurePath：PurePath访问实际文件系统的**“纯路径”**，只负责对**路径字符串**执行操作。PurePath有两个子类，即PurePosixPath和PathWindowsPath，前者用于操作UNIX（包括 Mac OS X）风格的路径，后者用于操作Windows风格的路径。
+
+* 区别：
+
+  Path 是 PurePath 的子类，除了支持 PurePath 的各种操作、属性和方法之外，还会真正访问底层的文件系统，包括判断 Path 对应的路径是否存在，获取 Path 对应路径的各种属性（如是否只读、是文件还是文件夹等），甚至可以对文件进行读写。
+
+  PurePath 和 Path 最根本的区别在于，PurePath 处理的仅是字符串，而 Path 则会真正访问底层的文件路径，因此它提供了属性和方法来访问底层的文件系统。
+
+### 具体操作
+
+| pathlib操作            | os及os.path操作      | 功能描述                                                     |
+| ---------------------- | -------------------- | ------------------------------------------------------------ |
+| Path.resolve()         | os.path.abspath()    | 获得绝对路径                                                 |
+| Path.chmod()           | os.chmod()           | 修改文件权限和时间戳                                         |
+| Path.mkdir()           | os.mkdir()           | 创建目录                                                     |
+| Path.rename()          | os.rename()          | 文件或文件夹重命名，如果路径不同，会移动并重新命名           |
+| Path.replace()         | os.replace()         | 文件或文件夹重命名，如果路径不同，会移动并重新命名，如果存在，则破坏现有目标。 |
+| Path.rmdir()           | os.rmdir()           | 删除目录                                                     |
+| Path.unlink()          | os.remove()          | 删除一个文件                                                 |
+| Path.unlink()          | os.unlink()          | 删除一个文件                                                 |
+| Path.cwd()             | os.getcwd()          | 获得当前工作目录                                             |
+| Path.exists()          | os.path.exists()     | 判断是否存在文件或目录name                                   |
+| Path.home()            | os.path.expanduser() | 返回电脑的用户目录                                           |
+| Path.is_dir()          | os.path.isdir()      | 检验给出的路径是一个目录                                     |
+| Path.is_file()         | os.path.isfile()     | 检验给出的路径是一个文件                                     |
+| Path.is_symlink()      | os.path.islink()     | 检验给出的路径是一个符号链接                                 |
+| Path.stat()            | os.stat()            | 获得文件属性                                                 |
+| PurePath.is_absolute() | os.path.isabs()      | 判断是否为绝对路径                                           |
+| PurePath.joinpath()    | os.path.join()       | 连接目录与文件名或目录                                       |
+| PurePath.name          | os.path.basename()   | 返回文件名                                                   |
+| PurePath.parent        | os.path.dirname()    | 返回文件路径                                                 |
+| Path.samefile()        | os.path.samefile()   | 判断两个路径是否相同                                         |
+| PurePath.suffix        | os.path.splitext()   | 分离文件名和扩展名                                           |
+
+
+
+### 使用方法
+
+首先导入模块
+
+```python
+from pathlib import *
+```
+
+#### 获取路径
+
+1. 传入字符串
+
+   在创建PurePath和Path时，既可以传入单个字符串，也可传入多个路径字符串，PurePath会将它们拼接成一个字符串。
+
+   ```python
+   # 以下结果均指返回值
+   
+   PurePath('M工具箱','MTool工具/示例','info')
+   # 结果： PureWindowsPath('M工具箱/MTool工具/示例/info')
+   
+   Path('M工具箱')
+   # 结果： WindowsPath('M工具箱')
+   
+   input_path = r"C:\Users\okmfj\Desktop\MTool工具"
+   Path(input_path)
+   # 结果： WindowsPath('C:/Users/okmfj/Desktop/MTool工具')
+   ```
+
+2. 获取目录
+
+   - `Path.cwd()`，返回文件当前所在目录；
+   - `Path.home()`，返回电脑用户的目录。
+
+   ```python
+   Path.cwd()
+   # 结果： WindowsPath('D:/M工具箱')
+   
+   Path.home()
+   # 结果： WindowsPath('C:/Users/okmfj')
+   ```
+
+3. 目录拼接
+
+   拼接出Windows桌面路径，当前路径下的子目录或文件路径。
+
+   ```python
+   # 拼接出Windows桌面路径
+   # 法1
+   Path(Path.home(), "Desktop")
+   # 结果： WindowsPath('C:/Users/okmfj/Desktop')
+   
+   # 法2
+   Path.joinpath(Path.home(), "Desktop")
+   # 结果： WindowsPath('C:/Users/okmfj/Desktop')
+   
+   
+   
+   # 用重载后的 '/' 运算符拼接出当前路径下的“MTool工具”子文件夹路径
+   res = Path.cwd() / 'MTool工具'
+   # 结果： WindowsPath('D:/M工具箱/MTool工具')
+   ```
+
+
+
+#### 路径处理
+
+获取路径的不同部分、或不同字段等内容，用于后续的路径处理，如拼接路径、修改文件名、更改文件后缀等。
+
+```python
+from pathlib import *
+
+input_path = r"C:\Users\okmfj\Desktop\MTool工具"
+
+Path(input_path).name  # 返回文件名+文件后缀
+Path(input_path).stem  # 返回文件名
+Path(input_path).suffix  # 返回文件后缀
+Path(input_path).suffixes  # 返回文件后缀列表
+Path(input_path).root  # 返回根目录
+Path(input_path).parts  # 返回文件
+Path(input_path).anchor  # 返回根目录
+Path(input_path).parent  # 返回父级目录
+Path(input_path).parents  # 返回所有上级目录的列表
+```
+
+
+
+#### 路径判断
+
+- `Path.exists()`，判断 Path 路径是否是一个已存在的文件或文件夹；
+- `Path.is_dir()`，判断 Path 是否是一个文件夹；
+- `Path.is_file()`，判断 Path 是否是一个文件。
+
+```python
+from pathlib import *
+
+input_path = r"C:\Users\okmfj\Desktop\MTool工具"
+
+if Path(input_path ).exists():
+	if Path(input_path ).is_file():
+		print("是文件！")
+	elif Path(input_path ).is_dar():
+		print("是文件夹！")
+else:
+	print("路径有误，请检查!")
+```
+
+
+
+#### 路径建立、删除
+
+- `Path.mkdir()`，创建文件夹；
+- `Path.rmdir()`，删除文件夹，文件夹必须为空；
+- `Path.unlink()`，删除文件。
+
+```python
+from pathlib import *
+
+input_path = r"C:\Users\okmfj\Desktop\MTool工具"
+
+# 创建文件夹函数
+def creat_dir(dir_path):
+	if Path(dir_path).exists():  # 如果已经存在，则跳过并提示
+		print("文件夹已经存在！")
+	else:
+		Path.mkdir(Path(dir_path))  # 创建文件夹
+
+creat_dir(input_path )  # 调用函数
+
+# 删除文件夹函数
+def del_dir(dir_path):
+	if Path(dir_path).exists():  # 如果存在，则删除文件夹
+		Path.rmdir(Path(dir_path))
+	else:
+		print("文件夹不存在！")  # 文件夹不存在
+
+del_dir(input_path )  # 调用函数
+
+# 删除文件函数
+def del_file(dir_path):
+	if Path(dir_path).exists():  # 如果存在，则删除文件
+		Path.unlink()(Path(dir_path))
+	else:
+		print("文件不存在！")  # 文件不存在
+
+del_file(input_path )  # 调用函数
+```
+
+
+
+#### 路径匹配查找（迭代）
+
+- `Path.iterdir()`，查找文件夹下的所有文件，返回的是一个生成器类型；
+
+  ```python
+  from pathlib import *
+  
+  input_path = r"C:\Users\okmfj\Desktop\MTool工具"
+  
+  # 获取文件夹下所有文件，返回文件路径（字符）列表，采用iterdir方法
+  [str(f) for f in Path(x).iterdir() if Path(f).is_file()]
+  
+  # 获取文件夹下所有文件类型，返回文件后缀的列表，采用iterdir方法
+  list(set([Path(f).suffix for f in Path(x).iterdir() if Path(f).is_file()]))
+  # 结果： ['.pdf', '.txt', '.docx']
+  ```
+
+- `Path.glob(pattern)`，查找文件夹下所有与 pattern 匹配的文件，返回的是一个生成器类型；
+
+  ```python
+  from pathlib import *
+  
+  input_path = r"C:\Users\okmfj\Desktop\MTool工具"
+  
+  # 获取文件夹下所有文件，返回文件路径（字符）列表，采用glog方法
+  [str(f) for f in Path(input_path).glob(f"*.*") if Path(f).is_file()]
+  
+  # 获取文件夹下所有文件，返回文件路径（字符）列表，采用glog方法
+  [str(f) for f in Path(input_path).glob(f"**\*.*") if Path(f).is_file()]
+  
+  # 获取文件夹下所有文件类型，返回文件后缀的列表，采用glog方法
+  list(set([Path(f).suffix for f in Path(input_path).glob(f"*.*") if Path(f).is_file()]))
+  # 结果： ['.pdf', '.txt', '.docx']
+  
+  # 获取文件夹下（含子文件）所有文件类型，返回文件后缀的列表，采用glog方法
+  list(set([Path(f).suffix for f in Path(x).glob(f"**\*.*") if Path(f).is_file()]))
+  # 结果： ['.pdf', '.txt', '.docx']
+  ```
+
+  
+
+- `Path.rglob(pattern)`，查找文件夹下所有子文件夹中与 pattern 匹配的文件，返回的是一个生成器类型。
+
+  ```python
+  from pathlib import *
+  
+  input_path = r"C:\Users\okmfj\Desktop\MTool工具"
+  
+  # 获取文件夹下（含子文件）所有文件，返回文件路径(字符)列表，采用rglog方法
+  [str(f) for f in Path(x).rglob(f"*.*") if Path(f).is_file()]
+  
+  # 获取文件夹下（含子文件）所有文件类型，返回文件后缀的列表，采用rglog方法
+  list(set([Path(f).suffix for f in Path(x).rglob(f"*.*") if Path(f).is_file()]))
+  # 结果： ['.pdf', '.txt', '.docx']
+  ```
+
+  
+
+#### 读、写文件
+
+- `Path.open(mode='r')`，以 "r" 格式打开 Path 路径下的文件，若文件不存在即创建后打开。
+- `Path.read_bytes()`，打开 Path 路径下的文件，以字节流格式读取文件内容，等同 open 操作文件的 "rb" 格式。
+- `Path.read_text()`，打开 Path 路径下的文件，以 str 格式读取文件内容，等同 open 操作文件的 "r" 格式。
+- `Path.write_bytes()`，对 Path 路径下的文件进行写操作，等同 open 操作文件的 "wb" 格式。
+- `Path.write_text()`，对 Path 路径下的文件进行写操作，等同 open 操作文件的 "w" 格式。
+
+![读、写模式汇总表](https://pic4.zhimg.com/80/v2-6575c60a57fbf05cf64144b74d8f03ab_1440w.webp)
+
+```python
+from pathlib import *
+
+input_path = r"C:\Users\okmfj\Desktop\MTool工具\1.txt"
+
+with Path(input_path).open('w') as f:  # 创建并打开文件
+	f.write('M工具箱')  # 写入内容
+f = open(input_path, 'r')  # 读取内容
+print(f"读取的文件内容为：{f.read()}")
+f.close()
+```
+
+
+
+#### 属性和方法汇总
+
+![img](https://pic3.zhimg.com/80/v2-dfcb4f5442973aa7f8058075f949660e_1440w.webp)
+
+![img](https://pic2.zhimg.com/80/v2-2983703aa2b4632016e25c4fe5a8b0d9_1440w.webp)
+
+
+
+## pandas
+
+[pandas数据分析总结大全（入门加进阶） - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/142556037)
+
+
 
