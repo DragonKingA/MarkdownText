@@ -375,10 +375,36 @@
 
    1. 常用：每个实例都使用一个**标识符**来决定是否进入测试集，如计算每个实例标识符的哈希值，选取哈希值小于或等于最大哈希值20%的实例加入测试集。若以行索引作为唯一标识符，则必须保证新数据在数据集的末尾添加，并且不会删除任何一行数据。关于标识符的选择，通常需要选择一个最稳定的特征来创建，如不变的位置数据等。
 
+      ```python
+      # 按行索引作为标识符
+      from zlib import crc32
+      
+      def is_id_in_test_set(identifier, test_ratio):
+          return crc32(np.int64(identifier)) < test_ratio * 2**32
+      
+      def split_data_with_id_hash(data, test_ratio, id_column):
+          ids = data[id_column]
+          in_test_set = ids.apply(lambda id_: is_id_in_test_set(id_, test_ratio))
+          return data.loc[~in_test_set], data.loc[in_test_set]
+      
+      housing_with_id = housing.reset_index()  # adds an `index` column
+      train_set, test_set = split_data_with_id_hash(housing_with_id, 0.2, "index")
+      
+      housing_with_id["id"] = housing["longitude"] * 1000 + housing["latitude"] # 以经纬度信息区分
+      train_set, test_set = split_data_with_id_hash(housing_with_id, 0.2, "id")
+      
+      from sklearn.model_selection import train_test_split
+      train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+      
+      test_set["total_bedrooms"].isnull().sum()
+      ```
+   
+      
+   
    2. 第一次运行程序后立即保存测试集并置其于一旁。
-
+   
    3. 导入 `import numpy as np` ，先设置随机数种子（如果不设置种子，函数会使用系统时间作为随机数生成的种子）如 `np.random.seed(42)` ，然后调用 `np.random.permutation()`，函数接受一个数组作为输入，并返回一个打乱顺序的新数组。并且注意种子值必须固定下来，以保证调试时能够复现同一种情况。
-
+   
       ```python
       import numpy as np
       
@@ -390,23 +416,321 @@
           return data.iloc[train_indices], data.iloc[test_indices]
       
       train_set, test_set = shuffle_and_split_data(housing, 0.2)
-      ```
-
       
+      # 确认训练集和测试集的数据量
+      len(train_set) 
+      len(test_set)
+      ```
+   
+   
+   评估所选测试集的合理性
+   
+   1. 评估抽样误差
+   
+      ```python
+      # 为了找出当人口的女性比例为51.1%时，1000人的随机样本中女性比例低于48.5%或高于53.5%的概率
+      # 法1：我们使用了二项式分布。二项式分布的cdf（）方法给出了女性数量等于或小于给定值的概率。
+      from scipy.stats import binom
+      
+      sample_size = 1000
+      ratio_female = 0.511
+      proba_too_small = binom(sample_size, ratio_female).cdf(485 - 1)
+      proba_too_large = 1 - binom(sample_size, ratio_female).cdf(535)
+      print(proba_too_small + proba_too_large)
+      # 0.10736798530929946
+      # 发现有 10.7% 的概率会从测试集中获得差的样本
+      
+      
+      
+      #法2：直接模拟，乱序后取前 1000 个样例并统计
+      np.random.seed(42)
+      samples = (np.random.rand(100_000, sample_size) < ratio_female).sum(axis=1)
+      ((samples < 485) | (samples > 535)).mean() # 求平均值
+      # 0.1071
+      # 同样发现有 10.7% 的概率会从测试集中获得差的样本
+      ```
+   
+      若离群样品抽取概率过大，则需要重新制定抽样计划或者重新获取测试集。
+   
+   2. 咨询专家意见或自行思考与目标值**很可能**有较大相关性的属性特征，若非数据中已有属性，则需要创建新属性。随即以合适的方式在整个数据集中进行抽样（如分层抽样）得到测试集，然后统计并评估该测试集在该属性上表现是否与整个数据集一致。
+   
+      ```python
+      # 如该案例下，从专家得知收入中位数与房价中位数联系非常密切，则在数据集副本中创建收入中位数这一属性
+      housing["income_cat"] = pd.cut(housing["median_income"],
+                                     bins=[0., 1.5, 3.0, 4.5, 6., np.inf],
+                                     labels=[1, 2, 3, 4, 5])
+      
+      housing["income_cat"].value_counts().sort_index().plot.bar(rot=0, grid=True)
+      plt.xlabel("Income category")
+      plt.ylabel("Number of districts")
+      save_fig("housing_income_cat_bar_plot")  # extra code - save the picture
+      plt.show()
+      
+      # 按收入中位数分层抽样
+      from sklearn.model_selection import StratifiedShuffleSplit
+      
+      splitter = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
+      strat_splits = []
+      for train_index, test_index in splitter.split(housing, housing["income_cat"]):
+          strat_train_set_n = housing.iloc[train_index]
+          strat_test_set_n = housing.iloc[test_index]
+          strat_splits.append([strat_train_set_n, strat_test_set_n])
+          
+      strat_train_set, strat_test_set = strat_splits[0]
+      ```
+   
+      ```python
+      # 更简便的写法
+      strat_train_set, strat_test_set = train_test_split(
+          housing, test_size=0.2, stratify=housing["income_cat"], random_state=42) # 分层抽样
+      
+      strat_test_set["income_cat"].value_counts() / len(strat_test_set)
+      # 显示分层抽样得到的测试集的收入类别比例分布
+      ```
+   
+      extra：比较总数据集、分层抽样集、随机抽样集三者的收入中位数分布情况与偏差
+   
+      ```python
+      def income_cat_proportions(data):
+          return data["income_cat"].value_counts() / len(data)
+      
+      train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+      
+      compare_props = pd.DataFrame({
+          "Overall %": income_cat_proportions(housing),
+          "Stratified %": income_cat_proportions(strat_test_set),
+          "Random %": income_cat_proportions(test_set),
+      }).sort_index()
+      compare_props.index.name = "Income Category"
+      compare_props["Strat. Error %"] = (compare_props["Stratified %"] /
+                                         compare_props["Overall %"] - 1)
+      compare_props["Rand. Error %"] = (compare_props["Random %"] /
+                                        compare_props["Overall %"] - 1)
+      (compare_props * 100).round(2)
+      ```
+   
+      最后，若不是对副本进行操作，则必须要对原训练集和原测试集的数据进行恢复操作
+   
+      ```python
+      # 从数据中剔除收入类别属性，恢复数据
+      for set_ in (strat_train_set, strat_test_set):
+          set_.drop("income_cat", axis=1, inplace=True)
+      ```
+   
+      
+   
+   
 
 
 
 ### 从数据探索和可视化中获得洞见
 
-创建一个训练集的副本（若训练集足够大，则直接从中抽样出一个**探索集**也可），并直接在其上操作而不损坏原训练集
+创建一个训练集的**副本**（若训练集足够大，则直接从中抽样出一个**探索集**也可），并直接在其上操作而不损坏原训练集。
 
-* 将**地理数据**（或其他数据）可视化
+```python
+housing = strat_train_set.copy() # 创建副本
+```
 
-* 寻找**相关性**：可通过 `corr()` 方法计算出每对属性之间的**标准相关系数**，则可以获得与目标值相关性较强的某些属性。而属性之间的这些相关性，也可以通过 `pandas`的 `scatter_matrix()` 函数将相关性可视化展示。
+* 将**地理数据**（或其他数据）可视化。若发现目标值与地理位置（如靠近海边）有关，通用办法是使用**聚类算法**来检测主集群，然后再为各个集群中心添加一个新的**衡量邻近距离**的特征（如海洋邻近度），但也要注意目标值不一定就与地理位置较强地相关。
 
+  ```python
+  # 几种可视化方法：
+  # 1.最粗糙
+  housing.plot(kind="scatter", x="longitude", y="latitude", grid=True)
+  save_fig("bad_visualization_plot")  # extra code
+  plt.show()
+  
+  # 2.优化后
+  # 设置 alpha 值，更清楚地看到高密度数据点
+  housing.plot(kind="scatter", x="longitude", y="latitude", grid=True, alpha=0.2)
+  save_fig("better_visualization_plot")  # extra code
+  plt.show()
+  
+  # 3.更优秀的可视化
+  # 使用名叫 jet 的预定义颜色表来衡量数据点密度
+  housing.plot(kind="scatter", x="longitude", y="latitude", grid=True,
+               s=housing["population"] / 100, label="population",
+               c="median_house_value", cmap="jet", colorbar=True,
+               legend=True, sharex=False, figsize=(10, 7))
+  save_fig("housing_prices_scatterplot")  # extra code
+  plt.show()
+  
+  # 4.结合当地地理情况的可视化
+  # 下载美国加州区域地图，并以此为底图，其余与法3一致。
+  filename = "california.png"
+  if not (IMAGES_PATH / filename).is_file():
+      homl3_root = "https://github.com/ageron/handson-ml3/raw/main/"
+      url = homl3_root + "images/end_to_end_project/" + filename
+      print("Downloading", filename)
+      urllib.request.urlretrieve(url, IMAGES_PATH / filename)
+  
+  housing_renamed = housing.rename(columns={
+      "latitude": "Latitude", "longitude": "Longitude",
+      "population": "Population",
+      "median_house_value": "Median house value (ᴜsᴅ)"})
+  housing_renamed.plot(
+               kind="scatter", x="Longitude", y="Latitude",
+               s=housing_renamed["Population"] / 100, label="Population",
+               c="Median house value (ᴜsᴅ)", cmap="jet", colorbar=True,
+               legend=True, sharex=False, figsize=(10, 7))
+  
+  california_img = plt.imread(IMAGES_PATH / filename)
+  axis = -124.55, -113.95, 32.45, 42.05
+  plt.axis(axis)
+  plt.imshow(california_img, extent=axis) # 绘制底图
+  
+  save_fig("california_housing_prices_plot")
+  plt.show()
+  ```
+
+* 寻找**相关性**：可通过 `corr()` 方法（数据集不是特别大时使用）计算出每对属性之间的**标准相关系数**，则可以获得与目标值相关性较强的某些属性。而属性之间的这些相关性，也可以通过 `pandas`的 `scatter_matrix()` 函数将相关性可视化展示。
+
+  ```python
+  # 计算每对属性之间的标准相关系数
+  corr_matrix = housing.corr() 
+  # 注：此处将原始数据中 ocean_proximity 属性部分的字符串表达全部对应替换成 -1 ~ -5 才可运行，
+  # 因为 pandas 的 corr() 函数会将数字和数字字符串转化为浮点型，但如果识别到不可转换的字符串则会报错
+  
+  # 得到每个属性与目标值房价中位数的相关性
+  corr_matrix["median_house_value"].sort_values(ascending=False)
+  
+  # 可视化上述相关性
+  from pandas.plotting import scatter_matrix
+  
+  attributes = ["median_house_value", "median_income", "total_rooms",
+                "housing_median_age"]
+  scatter_matrix(housing[attributes], figsize=(12, 8))
+  save_fig("scatter_matrix_plot")  # extra code
+  plt.show()
+  
+  # 将相关性表现较好的单拎出来，发现最有潜力能够预测房价中位数的属性是收入中位数
+  housing.plot(kind="scatter", x="median_income", y="median_house_value",
+               alpha=0.1, grid=True)
+  save_fig("income_vs_house_value_scatterplot")  # extra code
+  plt.show()
+  
+  # 至此，得到结论：已有属性中契合度最好的是收入中位数
+  ```
+  
   此外，还可以试验**不同属性的组合情况**，比如以某两个属性的**比值**作为一个新属性，并重新评估其与目标值的相关性，很多时候会发现其相关性会高于原本两个属性各自贡献的相关性。
+  
+  ```python
+  # 可以通过某种方式（如比值）组合不同的属性得到的新属性，重新评估其与目标值的价值，通常得到的属性与目标值的相关性更强
+  housing["rooms_per_house"] = housing["total_rooms"] / housing["households"]
+  housing["bedrooms_ratio"] = housing["total_bedrooms"] / housing["total_rooms"]
+  housing["people_per_house"] = housing["population"] / housing["households"]
+  
+  corr_matrix = housing.corr()
+  corr_matrix["median_house_value"].sort_values(ascending=False)
+  # 发现组合属性的表现并不理想（虽然比原单属性的表现更好），契合度远远低于收入中位数，故作罢
+  ```
+  
+  此时，你应当找到与目标值具有较强相关性的若干个属性或属性组合，并从中继续着手研究。
+  
+  
 
-此时，你应当找到与目标值具有较强相关性的若干个属性或属性组合，并从中继续着手研究。
+### 数据准备
 
+首先确保训练集是原始数据，然后分离训练集中的预测器和标签（因为我们不一定对它们使用相同的转换方式）以便单独对其一进行操作。
 
+```python
+# drop() 返回一个缺少标签值 "median_house_value" 的 strat_train_set 副本，注意并不会实际影响到 strat_train_set
+housing = strat_train_set.drop("median_house_value", axis=1)
+
+# 复制一份标签
+housing_labels = strat_train_set["median_house_value"].copy()
+```
+
+* **数据清理**
+
+  **异常值检验**
+
+  以下是一些常见的异常值类型：
+
+  1. 离群值（Outliers）：离群值是指与其他数据点明显不同的值。它们可能是由于测量误差、异常情况、录入错误等原因导致的。离群值可能是极端值，也可能是偏离常规分布的值。
+  2. 错误数据（Erroneous Data）：错误数据是指由于系统错误或人为错误而导致的不正确数据。这可能包括错误的测量、传感器失灵、数据录入错误等。
+  3. 噪声（Noise）：噪声是指在数据中存在的不相关或随机的扰动。虽然噪声不一定表示异常，但它可能与真实数据之间的差异过大导致误判异常。
+  4. 缺失值（Missing Values）：缺失值是指数据集中某些特征或属性缺少数值。这种缺失可能由于测量问题、人为错误或者其他原因导致，缺失值的存在可能会对机器学习模型的性能产生不良影响。
+  5. 异常模式（Anomalous Patterns）：异常模式是指在数据中存在的与预期模式或常规模式不一致的特定模式。这可能包括数据分布的突变、时序中的异常趋势等。
+
+  * 缺失值检验：由于大部分机器学习算法无法在缺失值的特征上工作，则需要创建一些函数来辅助算法进行下去。当某属性在部分样本中值缺失，现有三种解决方式（以下函数使用的均是 `pandas` 中的 `DataFrame`）：
+
+    1. 放弃这些相应区域，即直接删除含属性值缺失的样本
+
+       ```python
+       housing.dropna(subset=["total_bedrooms"], inplace=True) 
+       ```
+
+    2. 放弃整个属性，即从所有样本中剔除该属性特征
+
+       ```python
+       housing.drop("total_bedrooms", axis=1)
+       ```
+
+    3. 将缺失值填充为某个值（0、平均数或中位数等）来代替“值缺失”这一状态
+
+       ```python
+       median = housing["total_bedrooms"].median()  		  # 计算中位数
+       housing["total_bedrooms"].fillna(median, inplace=True) # 并用中位数代替
+       ```
+
+       若需要用中位数替代缺失值，这里有更易操作的类。并且我们无法确定新数据是否一定不存在缺失值，故稳妥起见应将 `imputer` 应用于所有的数值属性，这样对于新数据中的缺失值均会自动替换为此时所得的中位数值。
+
+       ```python
+       from sklearn.impute import SimpleImputer
+       
+       imputer = SimpleImputer(strategy="median")
+       
+       # 中位数只能计算于数值属性上，而不能计算文本属性，故先创建一个只有数值属性的副本
+       housing_num = housing.select_dtypes(include=[np.number])
+       
+       # 使用 fit() 方法将 imputer 实例适配到训练数据中（实际上就是开始计算数据中的中位数值）
+       imputer.fit(housing_num)
+       
+       # 替换操作，将训练集转换
+       X = imputer.transform(housing_num)
+       
+       # X 是一个 NumPy 数组，可以转化回为 pandas DataFrame
+       housing_tr = pd.DataFrame(X, columns=housing_num.columns,
+                                 index=housing_num.index)
+       ```
+
+       `imputer`计算每个属性的中位数值，并存储在实例变量 `statistics_` 中
+
+       ```python
+       # 两种方法均可查询各属性的中位数值
+       imputer.statistics_
+       
+       housing_num.median().values
+       
+       # 查看所计算的所有属性名
+       imputer.feature_names_in_
+       
+       # 查看计算的目标值类别（如中位数）
+       imputer.strategy
+       ```
+
+  * 离群值检验：
+
+    ```python
+    # 离群值检验算法
+    from sklearn.ensemble import IsolationForest
+    
+    isolation_forest = IsolationForest(random_state=42)
+    outlier_pred = isolation_forest.fit_predict(X)
+    
+    outlier_pred
+    
+    # 删除离群值
+    housing = housing.iloc[outlier_pred == 1]
+    housing_labels = housing_labels.iloc[outlier_pred == 1]
+    ```
+
+  注意在之后评估系统时也要对测试集进行相同方式的清理
+
+  
+
+* **处理文本和分类属性**
+
+  
 
