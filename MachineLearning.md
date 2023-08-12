@@ -732,5 +732,25 @@ housing_labels = strat_train_set["median_house_value"].copy()
 
 * **处理文本和分类属性**
 
+  由于大部分机器学习算法更倾向于对数值属性进行处理和学习，因此通常将文本属性转化为相应的数值属性方便算法学习。一般方法是使用 `Scikit-Learn` 的 `OrdinalEncoder` 类将文本值等不便处理的数据类型转化为**整数编码**：
+  
+  ```python
+  # 可预先粗略了解文本属性的某些值
+  # housing_cat = housing[["ocean_proximity"]]
+  # housing_cat.head(8) 
+  
+  # 转换为整数编码
+  from sklearn.preprocessing import OrdinalEncoder
+  
+  ordinal_encoder = OrdinalEncoder()
+  housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
+  
+  # 展示前 8 个样本的该属性（若有多个，则以 '.' 为分隔符展示在一个数组中，数组之间则以 ',' 为分隔符）对应替换后的整数编码
+  housing_cat_encoded[:8]
+  
+  # 查看类别列表（每个类比属性对应一个一维数组，存储该类别属性的所有可能的文本值）
+  ordinal_encoder.categories_
+  ```
+  
   
 
