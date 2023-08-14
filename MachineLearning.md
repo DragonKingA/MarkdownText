@@ -302,7 +302,7 @@
 
 ### 获得数据
 
-1. 制作从网络或私人数据库爬取所需数据的脚本，又或者自行抽样调查（随机抽样、分层抽样）；
+1. 制作从公共网络或私人数据库爬取所需数据的脚本；
 
    ```python
    from pathlib import Path
@@ -329,7 +329,7 @@
        return pd.read_csv(Path("datasets/housing/housing.csv"))	   # 读取并返回 csv 文件对象
    ```
 
-2. 快速查看数据结构，了解数据所含属性；
+2. 快速查看数据结构，了解数据所含属性及其类型；
 
    ```python
    housing = load_housing_data() # 获取数据对象
@@ -337,7 +337,7 @@
    housing.head()						    # 展示数据集中的前五个数据
    housing.info()						    # 展示各属性的数据量和数据类型
    housing["ocean_proximity"].value_counts() # 计数所有该属性的所有数值的出现次数（由多到少排列）
-   housing.describe()						# 所有属性的基础数据一览（包括最大最小值、平均值、数量、标准误差等）
+   housing.describe()						# 所有属性的基础数值数据一览（包括最大最小值、平均值、数量、标准误差等）
    ```
 
    保存和展示图片
@@ -369,11 +369,11 @@
 
    
 
-3. *创建测试集，通常是随机选择数据集中**20%**的实例，若数据集非常大，则可以适当缩小该比例。
+3. **创建测试集**，通常是随机选择数据集中**20%**的实例，若数据集非常大，则可以适当缩小该比例。
 
-   常见几种选取方案:
+   从数据集中选取测试集（多种方案）
 
-   1. 常用：每个实例都使用一个**标识符**来决定是否进入测试集，如计算每个实例标识符的哈希值，选取哈希值小于或等于最大哈希值20%的实例加入测试集。若以行索引作为唯一标识符，则必须保证新数据在数据集的末尾添加，并且不会删除任何一行数据。关于标识符的选择，通常需要选择一个最稳定的特征来创建，如不变的位置数据等。
+   1. 常用方法：每个实例都使用一个**标识符**来决定是否进入测试集，如计算每个实例标识符的哈希值，选取哈希值小于或等于最大哈希值20%的实例加入测试集。若以行索引作为唯一标识符，则必须保证新数据在数据集的末尾添加，并且不会删除任何一行数据。关于标识符的选择，通常需要选择一个最稳定的特征来创建，如不变的位置数据等。
 
       ```python
       # 按行索引作为标识符
@@ -399,11 +399,9 @@
       test_set["total_bedrooms"].isnull().sum()
       ```
    
-      
-   
    2. 第一次运行程序后立即保存测试集并置其于一旁。
    
-   3. 导入 `import numpy as np` ，先设置随机数种子（如果不设置种子，函数会使用系统时间作为随机数生成的种子）如 `np.random.seed(42)` ，然后调用 `np.random.permutation()`，函数接受一个数组作为输入，并返回一个打乱顺序的新数组。并且注意种子值必须固定下来，以保证调试时能够复现同一种情况。
+   3. 导入 `import numpy as np` ，先设置随机数种子（如果不设置种子，函数会使用系统时间作为随机数生成的种子）如 `np.random.seed(42)` ，然后调用 `np.random.permutation()`，函数接受一个数组作为输入，并返回一个打乱顺序的新数组。并且注意**种子值必须固定下来**，以保证调试时能够复现同一种情况。
    
       ```python
       import numpy as np
@@ -447,10 +445,10 @@
       samples = (np.random.rand(100_000, sample_size) < ratio_female).sum(axis=1)
       ((samples < 485) | (samples > 535)).mean() # 求平均值
       # 0.1071
-      # 同样发现有 10.7% 的概率会从测试集中获得差的样本
+      # 同样发现有 10.7% 的概率会从测试集中获得表现差的样本
       ```
    
-      若离群样品抽取概率过大，则需要重新制定抽样计划或者重新获取测试集。
+      若表现差的样品的抽取概率过大，则需要重新制定抽样计划或者重新获取测试集。
    
    2. 咨询专家意见或自行思考与目标值**很可能**有较大相关性的属性特征，若非数据中已有属性，则需要创建新属性。随即以合适的方式在整个数据集中进行抽样（如分层抽样）得到测试集，然后统计并评估该测试集在该属性上表现是否与整个数据集一致。
    
@@ -517,9 +515,8 @@
           set_.drop("income_cat", axis=1, inplace=True)
       ```
    
-      
-   
-   
+
+
 
 
 
@@ -625,13 +622,13 @@ housing = strat_train_set.copy() # 创建副本
   # 发现组合属性的表现并不理想（虽然比原单属性的表现更好），契合度远远低于收入中位数，故作罢
   ```
   
-  此时，你应当找到与目标值具有较强相关性的若干个属性或属性组合，并从中继续着手研究。
+  此时，你应当找到与目标值具有较强相关性的若干个属性或属性组合。
   
   
 
 ### 数据准备
 
-首先确保训练集是原始数据，然后分离训练集中的预测器和标签（因为我们不一定对它们使用相同的转换方式）以便单独对其一进行操作。
+首先确保训练集是原始数据，然后**分离**训练集中的预测器和标签（因为我们不一定对它们使用相同的转换方式）以便单独对其一进行操作。
 
 ```python
 # drop() 返回一个缺少标签值 "median_house_value" 的 strat_train_set 副本，注意并不会实际影响到 strat_train_set
@@ -726,31 +723,144 @@ housing_labels = strat_train_set["median_house_value"].copy()
     housing_labels = housing_labels.iloc[outlier_pred == 1]
     ```
 
-  注意在之后评估系统时也要对测试集进行相同方式的清理
+  注意在之后评估系统时也要对测试集进行相同方式的数据清理
 
-  
+
 
 * **处理文本和分类属性**
 
-  由于大部分机器学习算法更倾向于对数值属性进行处理和学习，因此通常将文本属性转化为相应的数值属性方便算法学习。一般方法是使用 `Scikit-Learn` 的 `OrdinalEncoder` 类将文本值等不便处理的数据类型转化为**整数编码**：
-  
+  由于大部分机器学习算法更倾向于对数值属性进行处理和学习，因此通常将文本属性转化为相应的数值属性方便算法学习，而选择哪种编码方法取决于具体的数据特征和机器学习算法的要求。
+
   ```python
   # 可预先粗略了解文本属性的某些值
-  # housing_cat = housing[["ocean_proximity"]]
-  # housing_cat.head(8) 
-  
-  # 转换为整数编码
-  from sklearn.preprocessing import OrdinalEncoder
-  
-  ordinal_encoder = OrdinalEncoder()
-  housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
-  
-  # 展示前 8 个样本的该属性（若有多个，则以 '.' 为分隔符展示在一个数组中，数组之间则以 ',' 为分隔符）对应替换后的整数编码
-  housing_cat_encoded[:8]
-  
-  # 查看类别列表（每个类比属性对应一个一维数组，存储该类别属性的所有可能的文本值）
-  ordinal_encoder.categories_
+  housing_cat = housing[["ocean_proximity"]]
+  housing_cat.head(8) # 前 8 个样本
   ```
-  
-  
 
+  * 方法一：**OrdinalEncoder类**
+
+    一般方法是使用 `Scikit-Learn` 的 `OrdinalEncoder` 类将文本值等不便处理的数据类型转化为**连续整数编码**。
+
+    ```python
+    # 转换为整数编码
+    from sklearn.preprocessing import OrdinalEncoder
+    
+    ordinal_encoder = OrdinalEncoder()
+    housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
+    
+    # 展示前 8 个样本的该属性（若有多个，则以 '.' 为分隔符展示在一个数组中，数组之间则以 ',' 为分隔符）对应替换后的整数编码
+    housing_cat_encoded[:8]
+    
+    # 查看类别列表（每个类比属性对应一个一维数组，存储该类别属性的所有可能的文本值）
+    ordinal_encoder.categories_
+    ```
+
+    特点：这种编码顾名思义是有顺序的，即不同的文本值之间存在一个固定的顺序。例如，将"低"、“中”、"高"这样的文本属性编码为0、1、2。这种编码适用于文本属性之间**有一定顺序关系**的情况，可以保留文本属性之间的相对顺序信息。
+
+  * 方法二：**独热编码**
+
+    定义：即 One-Hot 编码，又称一位有效编码。其方法是使用 N位 状态寄存器来对 N个状态 进行编码，每个状态都有它独立的寄存器位，并且在任意时候，其中**只有一位有效**。One-Hot 编码是**分类变量**作为**二进制向量**的表示。
+
+    例如，某个属性有四种状态，那么将用四位二进制来表示，如 0001 表示该属性处于第一种状态。对于一个样本，若有三种各有四种状态的属性，如 `[1000, 0001, 0010]` 其独热编码表示为 `100000010010` 一串二进制序列。
+
+    特点：这种编码适用于文本属性之间**没有顺序关系**的情况，可以将文本属性转换为机器学习算法更容易处理的格式，用于表示文本属性的存在与否。。
+
+    优点：解决了 **分类器不好处理离散数据** 的问题，在一定程度上也起到了 **扩充特征** 的作用。
+
+    缺点：
+
+    1. 它是一个词袋模型，不考虑 **词与词之间的顺序**（文本中词的顺序信息也是很重要的）；
+    2. 它 **假设词与词相互独立**（在大多数情况下，词与词是相互影响的）；
+    3. 它得到的 **特征是离散稀疏** 的 (这个问题最严重)。
+
+    编码方式：
+
+    * 方法一：`scikit-learn`库的`OneHotEncoder`类——该类提供了更灵活的控制选项，可以处理多个特征列和处理稀疏矩阵等情况。
+
+      ```python
+      # 写法1：
+      # 转换为独热编码
+      from sklearn.preprocessing import OneHotEncoder
+      
+      cat_encoder = OneHotEncoder()
+      housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
+      housing_cat_1hot
+      
+      housing_cat_1hot.toarray() # 将 SciPy 稀疏矩阵转换为密集的 NumPy 数组，节省内存
+      
+      
+      
+      # 写法2：
+      # 转换为独热编码时将 sparse 参数设置为 False 即可直接得到 NumPy 数组，可省去转换为密集矩阵的步骤
+      cat_encoder = OneHotEncoder(sparse=False)
+      housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
+      housing_cat_1hot
+      ```
+
+      ```python
+      # 查看类别列表
+      cat_encoder.categories_
+      ```
+
+    * 方法二：`pandas`库的`get_dummies()`函数——该函数可以将指定的列转换为独热编码的形式。
+
+      ```python
+      df_test = pd.DataFrame({"ocean_proximity": ["INLAND", "NEAR BAY"]}) # 选择该属性的这两列值
+      pd.get_dummies(df_test)
+      cat_encoder.transform(df_test) # 进行独热编码
+      
+      
+      df_test_unknown = pd.DataFrame({"ocean_proximity": ["<2H OCEAN", "ISLAND"]}) # 选择该属性的这两列值
+      pd.get_dummies(df_test_unknown)
+      cat_encoder.handle_unknown = "ignore"  # 在转换过程中遇到未知分类特征时，是引发错误还是忽略（默认为引发，即参数默认为“error”）。当此参数设置为“ignore”并且在转换过程中遇到未知类别时，这一特征的 one-hot 编码列将全置为 0。在逆变换中，未知类别将表示为 None。
+      cat_encoder.transform(df_test_unknown) # 进行独热编码
+      
+      
+      cat_encoder.feature_names_in_       # 查询特征类名
+      cat_encoder.get_feature_names_out() # 查询对应特征值（获取特征值列表）
+      
+      
+      # 输出编码结果
+      df_output = pd.DataFrame(cat_encoder.transform(df_test_unknown),
+                               columns=cat_encoder.get_feature_names_out(),
+                               index=df_test_unknown.index)
+      df_output
+      ```
+
+
+
+* **自定义转换器**
+
+  在这之前，需要知道的是，`Scikit-Learn` 提供了许多有用的转换器，当你需要完成自定义清理操作或组合特定属性等任务时同样可以利用它来编写自己的转换器。
+
+  > `Scikit-Learn` 依赖于**鸭子类型**的编译，而不是继承。鸭子类型是一种动态类型的概念，其核心思想是**关注对象的行为**（方法和属性），而不是关注对象的具体类型或类别。只要一个对象拥有特定的方法和属性，那么它就可以被视为具有某个特定类型或类别的对象，无论其实际的类型是什么。
+  >
+  > 例如，在分类问题中，我们可以使用逻辑回归、支持向量机或决策树等不同的模型，但只要这些模型具有“训练”和“预测”等通用方法，我们就可以将它们视为可用于分类任务的模型。
+
+  一般自定义操作为：创建一个类，编写`fit() -> 返回 self、transform()、fit_transform()` 这三种方法，还可以通过添加`Scikit-Learn` 中的 `TransformerMixin`作为基类直接获得方法 `fit_transform()`，并且若添加 `BaseEstimator` 作为基类（并在构造函数中避免 `*args` 和 `**kargs`）可以获得自动调整超参数的两种方法 `get_params()` 和 `set_params()`。
+
+
+
+* **特征缩放**
+
+  当输入的数值属性具有非常大的比例差异，往往会导致机器学习算法性能表现不佳，如房屋数据里的房间总数范围大致从 6 ~ 39320，而收入中位数的范围是 0 ~ 15。（注意：目标值通常不需要缩放）
+
+  同比例缩放所有数值属性的常用方法：
+
+  * **最小-最大缩放**（又称归一化）——`Scikit-Learn` 中的 `MinMaxScaler` 转换器
+
+    将值减去最小值并除以最大值和最小值的差，数据范围将缩放至 0 ~ 1。若有时候期望的范围不是 0 ~ 1，则可以调整超参数 `feature_range` 来更改最终数据范围。
+
+  * **标准化** ——`Scikit-Learn` 中的 `StandardScaler` 转换器
+
+    将值减去平均值（使得标准化值的均值总是零），然后除以方差（从而使得结果的分布具备单位方差）。
+
+    区别：不同于归一化，标准化得到的值不会被绑定在一个特定范围（这有时会成为问题），但该方法受**异常值**的影响更小。
+
+  特别注意：跟所有转换一样，缩放器**只能用来拟合训练集**（即其中所需的数据如最值、平均值、方差等均从训练集中统计而来），但不能从完整数据集（包括测试集）获取对应数据信息。这样才可以确保在缩放的过程中不会使用测试集的信息，从而更好地模拟实际应用中的情况。这样可以确保模型在预测时对未见过的数据有更好的泛化能力。
+
+
+
+* **转换流水线**
+
+  
