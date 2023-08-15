@@ -851,12 +851,57 @@ housing_labels = strat_train_set["median_house_value"].copy()
 
     将值减去最小值并除以最大值和最小值的差，数据范围将缩放至 0 ~ 1。若有时候期望的范围不是 0 ~ 1，则可以调整超参数 `feature_range` 来更改最终数据范围。
 
+    ```python
+    from sklearn.preprocessing import MinMaxScaler
+    
+    min_max_scaler = MinMaxScaler(feature_range=(-1, 1))
+    housing_num_min_max_scaled = min_max_scaler.fit_transform(housing_num)
+    ```
+  
+    
+  
   * **标准化** ——`Scikit-Learn` 中的 `StandardScaler` 转换器
-
-    将值减去平均值（使得标准化值的均值总是零），然后除以方差（从而使得结果的分布具备单位方差）。
-
-    区别：不同于归一化，标准化得到的值不会被绑定在一个特定范围（这有时会成为问题），但该方法受**异常值**的影响更小。
-
+  
+    将值减去平均值（使得标准化后数据的均值总是零），然后除以方差（从而使得结果的分布具备单位方差）。
+  
+    区别：不同于归一化，标准化得到的值不会被绑定在一个特定范围（这有时会成为问题），对于每个属性/每列来说所有数据都聚集在 0 附近，方差为 1。但该方法受**异常值**的影响更小。
+    
+    ```python
+    from sklearn.preprocessing import StandardScaler
+    
+    std_scaler = StandardScaler()
+    housing_num_std_scaled = std_scaler.fit_transform(housing_num)
+    ```
+    
+    验证
+    
+    ```python
+    # 输出标准化后数据的数值分布图 —— 均匀分布（并不一定是标准正态分布）
+    fig, axs = plt.subplots(1, 2, figsize=(8, 3), sharey=True)
+    housing["population"].hist(ax=axs[0], bins=50)
+    housing["population"].apply(np.log).hist(ax=axs[1], bins=50)
+    axs[0].set_xlabel("Population")
+    axs[1].set_xlabel("Log of population")
+    axs[0].set_ylabel("Number of districts")
+    save_fig("long_tail_plot")
+    plt.show()
+    
+    
+    # 每个数值转换成其自身的百分位上的数值，展示所得数据的均匀分布性
+    percentiles = [np.percentile(housing["median_income"], p)
+                   for p in range(1, 100)]
+    flattened_median_income = pd.cut(housing["median_income"],
+                                     bins=[-np.inf] + percentiles + [np.inf],
+                                     labels=range(1, 100 + 1))
+    flattened_median_income.hist(bins=50)
+    plt.xlabel("Median income percentile")
+    plt.ylabel("Number of districts")
+    plt.show()
+    # 注：第一百分位以下的收入标注为 1，第九十九百分位以上的收入标注100。这就是为什么下面的分布范围从1到100（而不是 0 到 100）。
+    ```
+    
+    
+  
   特别注意：跟所有转换一样，缩放器**只能用来拟合训练集**（即其中所需的数据如最值、平均值、方差等均从训练集中统计而来），但不能从完整数据集（包括测试集）获取对应数据信息。这样才可以确保在缩放的过程中不会使用测试集的信息，从而更好地模拟实际应用中的情况。这样可以确保模型在预测时对未见过的数据有更好的泛化能力。
 
 
