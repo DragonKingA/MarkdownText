@@ -837,13 +837,122 @@ housing_labels = strat_train_set["median_house_value"].copy()
   >
   > 例如，在分类问题中，我们可以使用逻辑回归、支持向量机或决策树等不同的模型，但只要这些模型具有“训练”和“预测”等通用方法，我们就可以将它们视为可用于分类任务的模型。
 
-  一般自定义操作为：创建一个类，编写`fit() -> 返回 self、transform()、fit_transform()` 这三种方法，还可以通过添加`Scikit-Learn` 中的 `TransformerMixin`作为基类直接获得方法 `fit_transform()`，并且若添加 `BaseEstimator` 作为基类（并在构造函数中避免 `*args` 和 `**kargs`）可以获得自动调整超参数的两种方法 `get_params()` 和 `set_params()`。
+  一般自定义操作为：
+  
+  * 利用`Scikit-Learn` 中的 `FunctionTransformer`方法，它第一个参数为单变元函数（只有一个自变量和一个因变量即 `y = f(x)`，故也可以是 Lambda 表达式），并将该函数转换为**可用于数据转换的转换器**
+  
+    ```python
+    # 以下为一些简单的自定义转换器
+    # 1. 转换为 log{e} 的值
+    from sklearn.preprocessing import FunctionTransformer
+    
+    log_transformer = FunctionTransformer(np.log, inverse_func=np.exp) # 以 e 为底
+    log_pop = log_transformer.transform(housing[["population"]])
+    
+    log_pop
+    
+    # 2. 转换为基于 rbf_kernel 核函数转换的值
+    rbf_transformer = FunctionTransformer(rbf_kernel,
+                                          kw_args=dict(Y=[[35.]], gamma=0.1))
+    # kw_args 表示传递给前面函数的关键字参数，里面的关键字参数将指定前面函数的某些参数的值
+    age_simil_35 = rbf_transformer.transform(housing[["housing_median_age"]])
+    
+    age_simil_35
+    
+    # 3. 转换为基于 rbf_kernel 核函数转换的值，并指定核函数的关键字参数
+    sf_coords = 37.7749, -122.41
+    sf_transformer = FunctionTransformer(rbf_kernel,
+                                         kw_args=dict(Y=[sf_coords], gamma=0.1))
+    sf_simil = sf_transformer.transform(housing[["latitude", "longitude"]])
+    
+    sf_simil
+    
+    # 4. 传入lambda函数
+    ratio_transformer = FunctionTransformer(lambda X: X[:, [0]] / X[:, [1]]) # 第一列除以第二列的结果
+    ratio_transformer.transform(np.array([[1., 2.], [3., 4.]]))
+    ```
+  
+  * 创建一个类，编写`fit() -> 返回 self、transform()、fit_transform()` 这三种方法，还可以通过添加`Scikit-Learn` 中的 `TransformerMixin`作为基类直接获得方法 `fit_transform()`，并且若添加 `BaseEstimator` 作为基类（并在构造函数中避免 `*args` 和 `**kargs`）可以获得自动调整超参数的两种方法 `get_params()` 和 `set_params()`。
+  
+    ```python
+    # 1.
+    from sklearn.base import BaseEstimator, TransformerMixin
+    from sklearn.utils.validation import check_array, check_is_fitted
+    
+    class StandardScalerClone(BaseEstimator, TransformerMixin):
+        def __init__(self, with_mean=True):  # no *args or **kwargs!
+            self.with_mean = with_mean
+    
+        def fit(self, X, y=None):  # y is required even though we don't use it
+            X = check_array(X)  # checks that X is an array with finite float values
+            self.mean_ = X.mean(axis=0)
+            self.scale_ = X.std(axis=0)
+            self.n_features_in_ = X.shape[1]  # every estimator stores this in fit()
+            return self  # always return self!
+    
+        def transform(self, X):
+            check_is_fitted(self)  # looks for learned attributes (with trailing _)
+            X = check_array(X)
+            assert self.n_features_in_ == X.shape[1]
+            if self.with_mean:
+                X = X - self.mean_
+            return X / self.scale_
+        
+        
+        
+    # 2. K-均值聚类算法
+    from sklearn.cluster import KMeans
+    
+    class ClusterSimilarity(BaseEstimator, TransformerMixin):
+        def __init__(self, n_clusters=10, gamma=1.0, random_state=None): # 默认将数据分为 10 簇类
+            self.n_clusters = n_clusters
+            self.gamma = gamma
+            self.random_state = random_state
+    
+        def fit(self, X, y=None, sample_weight=None):
+            self.kmeans_ = KMeans(self.n_clusters, n_init = 'auto', random_state=self.random_state, algorithm = 'elkan') 
+            # sklearn 或 numpy 的版本bug，需要指定  n_init = 'auto' 以及 algorithm = 'elkan' ，否则报错
+            self.kmeans_.fit(X, sample_weight=sample_weight)
+            return self  # always return self!
+    
+        def transform(self, X):
+            return rbf_kernel(X, self.kmeans_.cluster_centers_, gamma=self.gamma)
+        
+        def get_feature_names_out(self, names=None):
+            return [f"Cluster {i} similarity" for i in range(self.n_clusters)]
+        
+    cluster_simil = ClusterSimilarity(n_clusters=10, gamma=1., random_state=42)
+    similarities = cluster_simil.fit_transform(housing[["latitude", "longitude"]],
+                                               sample_weight=housing_labels)
+    
+    similarities[:3].round(2)
+    
+    # extra code – 显示图像： K-均值算法得到的 K 个聚类中心
+    housing_renamed = housing.rename(columns={
+        "latitude": "Latitude", "longitude": "Longitude",
+        "population": "Population",
+        "median_house_value": "Median house value (ᴜsᴅ)"})
+    housing_renamed["Max cluster similarity"] = similarities.max(axis=1)
+    
+    housing_renamed.plot(kind="scatter", x="Longitude", y="Latitude", grid=True,
+                         s=housing_renamed["Population"] / 100, label="Population",
+                         c="Max cluster similarity",
+                         cmap="jet", colorbar=True,
+                         legend=True, sharex=False, figsize=(10, 7))
+    plt.plot(cluster_simil.kmeans_.cluster_centers_[:, 1],
+             cluster_simil.kmeans_.cluster_centers_[:, 0],
+             linestyle="", color="black", marker="X", markersize=20,
+             label="Cluster centers")
+    plt.legend(loc="upper right")
+    save_fig("district_cluster_plot")
+    plt.show()
+    ```
 
 
 
 * **特征缩放**
 
-  当输入的数值属性具有非常大的比例差异，往往会导致机器学习算法性能表现不佳，如房屋数据里的房间总数范围大致从 6 ~ 39320，而收入中位数的范围是 0 ~ 15。（注意：目标值通常不需要缩放）
+  当输入的数值属性之间具有非常大的比例差异，往往会导致机器学习算法性能表现不佳，如房屋数据里的房间总数范围大致从 6 ~ 39320，而收入中位数的范围是 0 ~ 15。（注意：目标值通常不需要缩放）
 
   同比例缩放所有数值属性的常用方法：
 
@@ -858,8 +967,6 @@ housing_labels = strat_train_set["median_house_value"].copy()
     housing_num_min_max_scaled = min_max_scaler.fit_transform(housing_num)
     ```
   
-    
-  
   * **标准化** ——`Scikit-Learn` 中的 `StandardScaler` 转换器
   
     将值减去平均值（使得标准化后数据的均值总是零），然后除以方差（从而使得结果的分布具备单位方差）。
@@ -873,13 +980,13 @@ housing_labels = strat_train_set["median_house_value"].copy()
     housing_num_std_scaled = std_scaler.fit_transform(housing_num)
     ```
     
-    验证
+    验证标准化效果
     
     ```python
     # 输出标准化后数据的数值分布图 —— 均匀分布（并不一定是标准正态分布）
     fig, axs = plt.subplots(1, 2, figsize=(8, 3), sharey=True)
     housing["population"].hist(ax=axs[0], bins=50)
-    housing["population"].apply(np.log).hist(ax=axs[1], bins=50)
+    housing["population"].apply(np.log).hist(ax=axs[1], bins=50) # 以 e 为底
     axs[0].set_xlabel("Population")
     axs[1].set_xlabel("Log of population")
     axs[0].set_ylabel("Number of districts")
@@ -900,7 +1007,6 @@ housing_labels = strat_train_set["median_house_value"].copy()
     # 注：第一百分位以下的收入标注为 1，第九十九百分位以上的收入标注100。这就是为什么下面的分布范围从1到100（而不是 0 到 100）。
     ```
     
-    
   
   特别注意：跟所有转换一样，缩放器**只能用来拟合训练集**（即其中所需的数据如最值、平均值、方差等均从训练集中统计而来），但不能从完整数据集（包括测试集）获取对应数据信息。这样才可以确保在缩放的过程中不会使用测试集的信息，从而更好地模拟实际应用中的情况。这样可以确保模型在预测时对未见过的数据有更好的泛化能力。
 
@@ -908,4 +1014,12 @@ housing_labels = strat_train_set["median_house_value"].copy()
 
 * **转换流水线**
 
+  一般地，许多数据转换的步骤需要以正确的顺序来执行，通常使用`Scikit-Learn` 中的 `Pipeline`类来按顺序对数据进行各种转换。值得注意的是，在 `Pipeline()` 的参数列表中除了最后有一个是估算器之外，前面都必须是转换器（即拥有方法 `fit_transform()`），且命名不能含有双下划线。
+  
+  其工作原理：当调用流水线的 `fit()`方法时，会在所有转换器上按顺序依次调用 `fit_transform()`方法，并将前一个调用的输出作为参数传递给下一个调用方法中，直到传递到最终的估算器时则只会调用其 `fit()`方法。
+  
+  ```python
+  
+  ```
+  
   
