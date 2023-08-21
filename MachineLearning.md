@@ -1,27 +1,19 @@
-# 机器学习
-
----
-
 > 机器学习是一门通过编程让计算机**从数据中学习**的科学。
 
----
-
-## 系统类型
-
-
-
-### 一、
+# 系统类型
 
 根据训练期间接收的监督数量和监督类型，分为四个主要类别：有监督学习、无监督学习、半监督学习和强化学习。
 
-### 有监督学习
+---
 
-#### 概念
+## 有监督学习
+
+概念
 
 * 标签：在有监督学习中，提供给算法的包含所需解决方案的训练集。如垃圾邮件过滤器通过大量的已人为标定是否为垃圾的电子邮件进行训练，然后学习如何对新邮件（新实例）进行分类。
 * 
 
-#### 学习任务\用途
+学习任务\用途
 
 * 分类任务：如垃圾邮件过滤器。
 * 回归：通过给定一组预测器的特征（例如车的里程、使用年限、品牌等）来预测一个目标数值（例如车的价格）。
@@ -30,17 +22,17 @@
 
 ---
 
-### 无监督学习
+## 无监督学习
 
 无监督学习的训练数据都是未经标记的。
 
-#### 概念
+概念
 
 
 
 
 
-#### 学习任务\用途
+学习任务\用途
 
 * 聚类分组：
 * 可视化和降维
@@ -61,7 +53,7 @@
 
 ---
 
-### 半监督学习
+## 半监督学习
 
 只有部分数据是已标记的。通常是无监督算法和有监督算法相结合。
 
@@ -71,7 +63,7 @@
 
 ---
 
-### 强化学习
+## 强化学习
 
 它的学习系统（智能体）能够观察环境，做出选择（自行选择最佳策略），执行动作，并获得回报（或惩罚）。
 
@@ -81,17 +73,15 @@
 
 ---
 
-### 二、
-
 根据系统是否可以从传入的数据流中进行**增量学习**。
 
-### 批量学习
+## 批量学习
 
 系统无法进行增量学习，必须使用所有可用数据进行训练，需要耗费大量时间的计算资源。
 
 通常进行**离线学习**（先训练系统，后直接投入生产环境，停止学习），并在出现新变化时重新训练出新版本的系统。故不适用于应对快速变化的数据（如预测股票）。
 
-### 在线学习
+## 在线学习
 
 循序渐进地给系统提供训练数据（单独或小批量地），逐步积累学习成果。使得每一步学习都很快速且便宜，在计算资源有限时是个很好的选择。
 
@@ -103,17 +93,15 @@
 
 ---
 
-### 三、
-
 根据机器学习系统进行泛化（预测）的方式
 
-### 基于实例学习
+## 基于实例学习
 
 系统学习实例并通过使用相似度度量来比较新实例和已经学习的旧实例（或它们的子集），从而泛化新实例。
 
 
 
-### 基于模型学习
+## 基于模型学习
 
 构建这些实例的模型，然后使用该模型对新实例进行预测。
 
@@ -134,7 +122,7 @@
 
 ---
 
-## 主要挑战
+# 主要挑战
 
 训练数据的数量不足、训练数据不具代表性、低质量数据、无关特征、过拟合训练数据、欠拟合训练数据
 
@@ -165,7 +153,7 @@
 
 
 
-## 机器学习十九问
+# 机器学习十九问
 
 **如何定义机器学习？**
 
@@ -273,11 +261,11 @@
 
 ---
 
-## 项目流程
+# 项目流程
 
 以使用美国加州人口普查的数据建立起预测加州房价中位数的模型。
 
-### 观察大局
+## 观察大局
 
 * 框架问题
 
@@ -300,7 +288,7 @@
 
 ​	
 
-### 获得数据
+## 获得数据
 
 1. 制作从公共网络或私人数据库爬取所需数据的脚本；
 
@@ -520,7 +508,7 @@
 
 
 
-### 从数据探索和可视化中获得洞见
+## 从数据探索和可视化中获得洞见
 
 创建一个训练集的**副本**（若训练集足够大，则直接从中抽样出一个**探索集**也可），并直接在其上操作而不损坏原训练集。
 
@@ -626,7 +614,7 @@ housing = strat_train_set.copy() # 创建副本
   
   
 
-### 数据准备
+## 数据准备
 
 首先确保训练集是原始数据，然后**分离**训练集中的预测器和标签（因为我们不一定对它们使用相同的转换方式）以便单独对其一进行操作。
 
@@ -1018,8 +1006,516 @@ housing_labels = strat_train_set["median_house_value"].copy()
   
   其工作原理：当调用流水线的 `fit()`方法时，会在所有转换器上按顺序依次调用 `fit_transform()`方法，并将前一个调用的输出作为参数传递给下一个调用方法中，直到传递到最终的估算器时则只会调用其 `fit()`方法。
   
-  ```python
+  构造方式：`Pipeline` 是使用 `(key, value)` 对的列表构建的，其中`key`是步骤名称的字符串，而`value`是一个估计器对象。
   
+  ```python
+  # 数值属性的转换流水线
+  # 写法1：
+  from sklearn.pipeline import Pipeline
+  
+  num_pipeline = Pipeline([
+      ("impute", SimpleImputer(strategy="median")),
+      ("standardize", StandardScaler()),
+  ])
+  
+  # 写法2：舍去命名
+  from sklearn.pipeline import make_pipeline
+  
+  num_pipeline = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
+  
+  # 获取转换后数据并查看基本信息
+  housing_num_prepared = num_pipeline.fit_transform(housing_num)
+  housing_num_prepared[:2].round(2) # 展示两组数据
+  
+  num_pipeline.steps # 查看整个流水线的所有步骤的全部内容
+  
+  num_pipeline[1] # 查看第二步的内容
+  
+  num_pipeline[:-1] # 查看倒数第一步的内容
+  
+  num_pipeline.named_steps["simpleimputer"] # 获得指定某名称的转换步骤的内容
+  
+  num_pipeline.set_params(simpleimputer__strategy="median") # 设置某步骤函数的参数
   ```
   
+  到目前为止，我们分别处理了类别列（独热编码）和数值列（上述转换流水线），实际上使用`Scikit-Learn` 中的 `ColumnTransformer`转换器可以处理**所有列**，它会将适当的转换应用于每个列。
   
+  构造方式：需要一个元组列表，其中每个元组包含一个名字、一个转换器，以及一个该转换器能够应用的列名字（或索引）的列表。
+  
+  ```python
+  # 分开处理数值列和文本列(类别列)
+  num_attribs = ["longitude", "latitude", "housing_median_age", "total_rooms",
+                 "total_bedrooms", "population", "households", "median_income"]
+  cat_attribs = ["ocean_proximity"]
+  
+  # 写法1：
+  from sklearn.compose import ColumnTransformer
+  
+  cat_pipeline = make_pipeline(
+      SimpleImputer(strategy="most_frequent"),
+      OneHotEncoder(handle_unknown="ignore"))
+  
+  preprocessing = ColumnTransformer([
+      ("num", num_pipeline, num_attribs),
+      ("cat", cat_pipeline, cat_attribs),
+  ])
+  
+  # 写法2：省去命名
+  from sklearn.compose import make_column_selector, make_column_transformer
+  
+  preprocessing = make_column_transformer(
+      (num_pipeline, make_column_selector(dtype_include=np.number)),
+      (cat_pipeline, make_column_selector(dtype_include=object)),
+  )
+  
+  # 获取转换后数据
+  housing_prepared = preprocessing.fit_transform(housing)
+  
+  # extra: 可以转换为 DataFrame 结构
+  housing_prepared_fr = pd.DataFrame(
+      housing_prepared,
+      columns=preprocessing.get_feature_names_out(),
+      index=housing.index)
+  housing_prepared_fr.head(2)
+  ```
+  
+  值得注意的是，若`cat_pipeline` 返回一个稀疏矩阵，且 `num_pipeline` 返回一个密集矩阵。对于一个`ColumnTransformer`来说，当稀疏矩阵和密集矩阵并存时，它会估算最终矩阵的密度（即单元格的非零比率），如果密度低于给定阈值（ `sprase_threshold = 0.3`）则会返回一个稀疏矩阵，否则返回一个密集矩阵。
+  
+  其他例子
+  
+  ```python
+  # 自定义转换器
+  def column_ratio(X):
+      return X[:, [0]] / X[:, [1]]
+  
+  def ratio_name(function_transformer, feature_names_in):
+      return ["ratio"]  # feature names out
+  
+  
+  # 构造转换流水线
+  def ratio_pipeline():
+      return make_pipeline(
+          SimpleImputer(strategy="median"),
+          FunctionTransformer(column_ratio, feature_names_out=ratio_name),
+          StandardScaler())
+  
+  log_pipeline = make_pipeline(
+      SimpleImputer(strategy="median"),
+      FunctionTransformer(np.log, feature_names_out="one-to-one"),
+      StandardScaler())
+  
+  
+  # 构造默认情况下的转换流水线
+  default_num_pipeline = make_pipeline(SimpleImputer(strategy="median"),
+                                       StandardScaler())
+  
+  
+  # 基于 K-均值聚类算法 的转换器
+  cluster_simil = ClusterSimilarity(n_clusters=10, gamma=1., random_state=42)
+  
+  
+  # 应用至所有列的转换器
+  preprocessing = ColumnTransformer([
+          ("bedrooms", ratio_pipeline(), ["total_bedrooms", "total_rooms"]),
+          ("rooms_per_house", ratio_pipeline(), ["total_rooms", "households"]),
+          ("people_per_house", ratio_pipeline(), ["population", "households"]),
+          ("log", log_pipeline, ["total_bedrooms", "total_rooms", "population",
+                                 "households", "median_income"]),
+          ("geo", cluster_simil, ["latitude", "longitude"]),
+          ("cat", cat_pipeline, make_column_selector(dtype_include=object)),
+      ],
+      remainder=default_num_pipeline)  # one column remaining: housing_median_age
+  # remainder 参数表示对剩余所有列的操作，可以传入转换器，或使用一些预设参数值如下：
+  # "drop"：删除没有被指定转换操作的剩余列，默认为 "drop"
+  # "passthrough"：其他列保持不变，即不进行其他操作
+  
+  
+  housing_prepared = preprocessing.fit_transform(housing) # 应用至全部数据中
+  housing_prepared.shape # 读取矩阵的长度
+  preprocessing.get_feature_names_out() # 获得转换器名称与所作用的列名称
+  ```
+
+
+
+## 选择和训练模型
+
+该步骤的目的是筛选出几个（2~5个）有效的模型，值得注意的是，对每个尝试过的模型都应该妥善保存，包括其超参数值和训练过的参数，以及交叉验证的评分和实际预测结果等，方便对比不同模型的评分以及不同模型造成的错误类型。
+
+* 尝试多个可用模型并互相对比（一般是基于 `RMSE`的大小评估模型效果）
+
+  ```python
+  # 1.加入线性回归模型作为最后的估算器
+  from sklearn.linear_model import LinearRegression
+  
+  lin_reg = make_pipeline(preprocessing, LinearRegression())
+  lin_reg.fit(housing, housing_labels)
+  
+  # 预测并对比预测值和真实值
+  housing_predictions = lin_reg.predict(housing)
+  housing_predictions[:5].round(-2)  # -2 = rounded to the nearest hundred
+  housing_labels.iloc[:5].values
+  
+  # 获得预测值和真实值的误差比率
+  error_ratios = housing_predictions[:5].round(-2) / housing_labels.iloc[:5].values - 1
+  print(", ".join([f"{100 * ratio:.1f}%" for ratio in error_ratios]))
+  
+  # 输出 RMSE 来评估模型
+  from sklearn.metrics import mean_squared_error
+  
+  lin_rmse = mean_squared_error(housing_labels, housing_predictions,
+                                squared=False)
+  lin_rmse
+  
+  
+  
+  # 2.加入决策树算法作为最后的估算器
+  from sklearn.tree import DecisionTreeRegressor
+  
+  tree_reg = make_pipeline(preprocessing, DecisionTreeRegressor(random_state=42))
+  tree_reg.fit(housing, housing_labels)
+  
+  # 预测并输出决策树模型在该训练集下的RMSE
+  housing_predictions = tree_reg.predict(housing)
+  tree_rmse = mean_squared_error(housing_labels, housing_predictions,
+                                squared=False)
+  tree_rmse
+  ```
+
+  若 `RMSE`的数量级与目标值范围相仿或者更高，则说明预测效果不佳；若 `RMSE`的值对于目标值范围来说很小则可能是效果较好，也可能是过拟合（特别是 `RMSE` 为 `0`时）。
+
+* 使用**交叉验证**来进行更好的评估
+
+  * 在上述模型中，我们可以尝试选择表现较好的决策树模型来进行下一步评估。
+
+    1. 使用 `train_test_split`函数将训练集分为较小的训练集和验证机，然后根据这些较小的训练集来训练模型，并对其进行评估
+
+    2. 使用 `Scikit-Learn`的**K-折交叉验证**功能：将训练集随机分割成 `cv`个不同的子集（每个子集成为一个折叠），然后对模型进行 `cv`次**训练和评估**（每次选出其中 1 个折叠进行评估，其余全部用来训练模型），最终会得到包含 `cv`次评估分数的数组。
+
+       注：该功能更倾向于使用效用函数（越大越好）而不是成本函数，故计算分数的函数实质是**负的MSE**，所以通常在其结果前添加负号以变成非负数。
+
+       ```python
+       # K-折交叉验证
+       from sklearn.model_selection import cross_val_score
+       
+       tree_rmses = -cross_val_score(tree_reg, housing, housing_labels,
+                                     scoring="neg_root_mean_squared_error", cv=10) # 分为 10 个折叠
+       
+       pd.Series(tree_rmses).describe() # 获取预测结果的基本数据
+       
+       
+       
+       # 线性回归模型
+       lin_rmses = -cross_val_score(lin_reg, housing, housing_labels,
+                                     scoring="neg_root_mean_squared_error", cv=10)
+       pd.Series(lin_rmses).describe() # 获取预测结果的基本数据
+       # 结果发现，决策树模型确实过拟合了，以至于比线性回归模型的表现还差
+       
+       
+       
+       # 随机森林算法
+       from sklearn.ensemble import RandomForestRegressor
+       
+       forest_reg = make_pipeline(preprocessing,
+                                  RandomForestRegressor(random_state=42))
+       forest_rmses = -cross_val_score(forest_reg, housing, housing_labels,
+                                       scoring="neg_root_mean_squared_error", cv=10)
+       
+       pd.Series(forest_rmses).describe()
+       # 结果发现，随机森林模型的表现较好，但仍很可能过拟合训练集（发现训练误差远低于验证误差，这通常意味着模型已经过拟合了训练集。另一种可能的解释可能是，训练数据和验证数据之间不匹配，但这里的情况并非如此，因为两者都来自同一个数据集，我们已将其混合并分为两部分）
+       
+       # 将使用交叉验证测量的RMSE（“验证误差”）与在训练集上测量的RMSE[“训练误差”]进行比较
+       # 以下是在训练集上预测目标值并测量RMSE
+       forest_reg.fit(housing, housing_labels)
+       housing_predictions = forest_reg.predict(housing)
+       forest_rmse = mean_squared_error(housing_labels, housing_predictions,
+                                        squared=False)
+       forest_rmse
+       ```
+
+
+
+## 微调模型
+
+此时我们已经拥有了一个有效模型的候选列表，现需要对它们进行微调，也就是调节超参数的值，以使得该模型趋于它自身的最佳表现。
+
+一种微调方法是手动调整超参数，这显然耗时费力，以下是几种更好的调节超参数的方法（基于 `Scikit-Learn`中的类或方法）：
+
+* **网格搜索（Grid Search）**
+
+   `GridSearchCV`类接受一个参数字典或参数列表作为输入，其中包含了待调优的参数及其可能的取值范围。它会遍历所有可能的参数组合，并对每一组参数进行**交叉验证**来评估模型的性能。其参数列表如下：
+
+  * `estimator`: 指定要使用的机器学习模型，例如分类器或回归器。
+  * `param_grid`: 参数字典或参数列表，包含待调优的参数及其可能的取值范围。
+  * `scoring`: 评估模型性能的指标，接收字符串（如`'accuracy'`、`'neg_root_mean_squared_error'`等）或可调用对象（如`sklearn.metrics.accuracy_score`）。默认为`'None'`，使用`estimator`的误差估计函数。当然，也可以自定义度量函数。
+  * `cv`: 交叉验证的折数，默认为 `None`则会使用 3-折交叉验证。
+  * `refit`: 是否在搜索结束后使用最佳参数重新拟合整个数据集，默认为 `True`即会重新拟合。
+  * `iid`：默认为`True`，即各个样本`fold`概率分布一致，误差估计为所有样本之和，而非各个fold的平均。
+  * `verbose`：（一般不管）日志冗长度，指定输出的详细程度，表示输出每个参数组合的详细信息，预设 0：不输出训练过程，1：偶尔输出，>1：对每个子模型都输出。
+  * `n_jobs`：（一般不管）指定并行运行的作业数，表示使用所有可用的CPU核心个数，预设 -1：跟CPU核数一致, 1：默认值。
+  * ······
+
+  注：当你不知道超参数该尝试哪些值时，较为简单的方法是尝试 10 的连续幂次（或者若想要得到更细粒度的搜索，则可以使用更小的幂底数）。
+
+  ```python
+  # 以下是利用网格搜索来寻找随机森林模型的超参数值的最佳组合
+  from sklearn.model_selection import GridSearchCV
+  
+  full_pipeline = Pipeline([
+      ("preprocessing", preprocessing),
+      ("random_forest", RandomForestRegressor(random_state=42)),
+  ])
+  param_grid = [
+      {'preprocessing__geo__n_clusters': [5, 8, 10],
+       'random_forest__max_features': [4, 6, 8]},
+      {'preprocessing__geo__n_clusters': [10, 15],
+       'random_forest__max_features': [6, 8, 10]},
+  ] # 一共进行两次网格搜索，第一次进行 3*3 次组合与评估，第二次进行 2*3 次组合与评估
+  
+  grid_search = GridSearchCV(full_pipeline, param_grid, cv=3,
+                             scoring='neg_root_mean_squared_error')
+  grid_search.fit(housing, housing_labels)
+  
+  # 你可以以此查询可调节超参数的列表（前1000个）
+  print(str(full_pipeline.get_params().keys())[:1000] + "...")
+  
+  # 输出网格搜索得到的最佳值
+  grid_search.best_params_
+  
+  # 返回网格搜索过程中评分最高的估算器对象
+  grid_search.best_estimator_
+  
+  # 输出网格搜索过程中各组合的评估分数
+  cv_res = pd.DataFrame(grid_search.cv_results_)
+  cv_res.sort_values(by="mean_test_score", ascending=False, inplace=True) # 将以各组合的分数排序
+  
+  # extra code – these few lines of code just make the DataFrame look nicer
+  cv_res = cv_res[["param_preprocessing__geo__n_clusters",
+                   "param_random_forest__max_features", "split0_test_score",
+                   "split1_test_score", "split2_test_score", "mean_test_score"]]
+  score_cols = ["split0", "split1", "split2", "mean_test_rmse"]
+  cv_res.columns = ["n_clusters", "max_features"] + score_cols
+  cv_res[score_cols] = -cv_res[score_cols].round().astype(np.int64)
+  
+  cv_res.head()
+  ```
+
+  显然，网格搜索是一种暴力枚举，若组合数量较大则会使得成本变高。
+
+* **随机搜索（Randomized Search）**
+
+  适用于超参数的搜索范围较大时。`RandomizedSearchCV`类接收一个字典来指定超参数以及指定了数据范围的随机器，并通过参数 `n_iter`指定迭代次数（即总随机次数），每次迭代都会从每个超参数中按其指定数据范围来取一个随机值，并通过**交叉验证**进行评估。其参数列表与网格搜索相仿，不同的有：
+
+  * `param_distributions`：接受一个字典，每个配对组成为 `key`：超参数名称，`value`：指定了数据范围的随机器（运行时返回一个整数，每次迭代都会重新调用随机器）。
+  * `n_iter`：指定总迭代次数。
+  * `random_state`：随机种子，一般取同一个值（如 42）以保证可以复现实验结果。
+
+  ```python
+  # 以下是利用随机搜索来寻找随机森林模型的超参数值的最佳组合
+  from sklearn.experimental import enable_halving_search_cv
+  from sklearn.model_selection import HalvingRandomSearchCV
+  from sklearn.model_selection import RandomizedSearchCV
+  from scipy.stats import randint
+  
+  param_distribs = {'preprocessing__geo__n_clusters': randint(low=3, high=50),
+                    'random_forest__max_features': randint(low=2, high=20)}
+  
+  rnd_search = RandomizedSearchCV(
+      full_pipeline, param_distributions=param_distribs, n_iter=10, cv=3,
+      scoring='neg_root_mean_squared_error', random_state=42)
+  
+  rnd_search.fit(housing, housing_labels)
+  
+  # extra code – displays the random search results
+  cv_res = pd.DataFrame(rnd_search.cv_results_)
+  cv_res.sort_values(by="mean_test_score", ascending=False, inplace=True)
+  cv_res = cv_res[["param_preprocessing__geo__n_clusters",
+                   "param_random_forest__max_features", "split0_test_score",
+                   "split1_test_score", "split2_test_score", "mean_test_score"]]
+  cv_res.columns = ["n_clusters", "max_features"] + score_cols
+  cv_res[score_cols] = -cv_res[score_cols].round().astype(np.int64)
+  cv_res.head()
+  ```
+
+调整超参数的值后，还可以对**最优模型**（可能有多个）进一步调节与评估，以下是几种调节与评估方法：
+
+* **集成方法**
+
+  将表现最优的若干个模型组合起来，通常组合模型的表现会比单一模型的表现更好（就像随机森林比其所依赖的任何单个决策树模型表现更好一样），特别是当若干单一模型会产生不同类型误差时更是如此。
+
+* **分析最佳模型及其误差**
+
+  通过检查最佳模型以获取洞见，当在进行准确预测时，可以输出超参数调节至最佳后模型的每个属性的相对重要程度
+
+  ```python
+  final_model = rnd_search.best_estimator_  # includes preprocessing
+  feature_importances = final_model["random_forest"].feature_importances_
+  feature_importances.round(2)
+  
+  # 将属性名称与其对应相对重要程度值一起显示
+  sorted(zip(feature_importances,
+             final_model["preprocessing"].get_feature_names_out()),
+             reverse=True)
+  ```
+
+  此后，你可以尝试删除一些不太有用的特征。然后，还应该查看一下系统产生的具体错误，了解其产生原因并解决（通过添加额外的特征、删除没有信息的特征、清除异常值等）。
+
+* **通过测试集评估系统**
+
+  从**测试集**中获取预测器和标签，再使用完整的数据流水线进行数据转换（此时调用的是 `transform()`，而不是 `fit_transform()`），最后获取最终评估结果。
+
+  ```python
+  X_test = strat_test_set.drop("median_house_value", axis=1) # 分离出标签的预测器
+  y_test = strat_test_set["median_house_value"].copy() # 标签
+  
+  # 预测并输出预测误差
+  final_predictions = final_model.predict(X_test)
+  final_rmse = mean_squared_error(y_test, final_predictions, squared=False)
+  print(final_rmse)
+  
+  # 需要知道泛化误差估计的准确度，可以计算泛化误差的 95% 置信区间
+  from scipy import stats
+  
+  confidence = 0.95
+  squared_errors = (final_predictions - y_test) ** 2
+  np.sqrt(stats.t.interval(confidence, len(squared_errors) - 1,
+                           loc=squared_errors.mean(),
+                           scale=stats.sem(squared_errors)))
+  
+  # 也可以手动计算间隔，结果相近
+  m = len(squared_errors)
+  mean = squared_errors.mean()
+  tscore = stats.t.ppf((1 + confidence) / 2, df=m - 1)
+  tmargin = tscore * squared_errors.std(ddof=1) / np.sqrt(m)
+  np.sqrt(mean - tmargin), np.sqrt(mean + tmargin)
+  
+  # 或者，我们可以使用 z-score 而不是 t-score。由于测试集不太小，所以不会有太大的区别
+  zscore = stats.norm.ppf((1 + confidence) / 2)
+  zmargin = zscore * squared_errors.std(ddof=1) / np.sqrt(m)
+  np.sqrt(mean - zmargin), np.sqrt(mean + zmargin)
+  ```
+
+  如果之前进行过大量的超参数调整，这时的评估结果通常会略逊于之前使用交叉验证时的表现结果（因为经过不断调整，系统在验证数据上终于表现良好，但在未知数据集或测试集上可能达不到同样的效果）。当出现上述情况时，**一定不能继续调整超参数**，因为这样也只是让测试集的结果变得好看而并非实质提升对未知数据的泛化效果。
+
+
+
+## 启动、监控和维护系统
+
+......
+
+
+
+# 分类
+
+## MNIST
+
+MNIST数据集是一组手写得70000个数字的图片，并且每张图片都用其代表的数字标记，只要是分类算法，都可以试着在其上执行，相当于机器学习领域的 Hello World。而 `Scikit-Learn` 提供了许多功能帮助你下载流行的数据集，包括MNIST数据集。
+
+`Scikit-Learn` 得到的数据集通常具有类似的字典结构，包括以下 `key` 值：
+
+* `"DESCR"`：描述数据集
+* `"data"`：包含一个数据，每个实例为一行，每个特征为一列
+* `"target"`：包含一个带有标记的数组
+
+```python
+# 获取MNIST数据集
+from sklearn.datasets import fetch_openml
+
+mnist = fetch_openml('mnist_784', as_frame=False)
+
+print(mnist.DESCR)
+
+# 获得MNIST数据集的所有键
+mnist.keys()  # we only use "data" and "target" in this notebook
+
+# 分别获得数据集和标记并了解各自的数组大小
+X, y = mnist.data, mnist.target 
+X
+X.shape
+y
+y.shape
+
+# 将图片重组为 28 * 28 大小的数组(或者说方阵)，即含有 784 个特征，每个特征代表一个像素点的强度（0~255）
+import matplotlib.pyplot as plt
+
+def plot_digit(image_data):
+    image = image_data.reshape(28, 28)
+    plt.imshow(image, cmap="binary")
+    plt.axis("off")
+
+some_digit = X[0]
+plot_digit(some_digit)
+save_fig("some_digit_plot")  # extra code
+plt.show()
+
+# 比较重组后图片和标签值，发现图片特征仍是比较清晰且可辨认的，故采用该大小
+y[0] 
+
+# 取前 60000 个样本作为训练集，其余（约10000个）作为测试集
+X_train, X_test, y_train, y_test = X[:60000], X[60000:], y[:60000], y[60000:] 
+
+
+```
+
+其中，`numpy`中的 `reshape`方法的使用方式：
+
+1. `arr.reshape(a, b)  # 改变维度为 a 行、b 列`
+2. `arr.reshape(m, -1) # 改变维度为 m 行、d 列 （-1表示列数自动计算，d = a * b / m ）`
+3. `arr.reshape(-1, m) # 改变维度为 d 行、m 列 （-1表示行数自动计算，d = a * b / m ）`
+
+
+
+## 训练二元分类器
+
+二元分类器，顾名思义就是对数据在**两个类**中区分，如对于所有数字的图片只尝试识别一个数字 5，其余都是非 5 数字
+
+```python
+# 训练一个识别数字 5 的二元分类器
+# 构造目标向量，为 5 则标记为 True，非 5 则标记为 False
+y_train_5 = (y_train == '5')
+y_test_5 = (y_test == '5')
+
+# 训练随机梯度下降（SGD）分类器
+from sklearn.linear_model import SGDClassifier
+
+sgd_clf = SGDClassifier(random_state=42) # 设置参数 random_state 方便复现
+sgd_clf.fit(X_train, y_train_5)
+
+sgd_clf.predict([some_digit]) # 预测上文某个数据
+```
+
+
+
+## 性能测量
+
+评估一个分类器的几种方法
+
+* **交叉验证**
+
+  ```python
+  # 法一：利用 Scikit-Learn 库函数
+  from sklearn.model_selection import cross_val_score
+  
+  cross_val_score(sgd_clf, X_train, y_train_5, cv=3, scoring="accuracy")
+  
+  # 法二：手动实现交叉验证
+  from sklearn.model_selection import StratifiedKFold
+  from sklearn.base import clone
+  
+  skfolds = StratifiedKFold(n_splits=3)  # add shuffle=True if the dataset is not
+                                         # already shuffled
+  for train_index, test_index in skfolds.split(X_train, y_train_5):
+      clone_clf = clone(sgd_clf)
+      X_train_folds = X_train[train_index]
+      y_train_folds = y_train_5[train_index]
+      X_test_fold = X_train[test_index]
+      y_test_fold = y_train_5[test_index]
+  
+      clone_clf.fit(X_train_folds, y_train_folds)
+      y_pred = clone_clf.predict(X_test_fold)
+      n_correct = sum(y_pred == y_test_fold)
+      print(n_correct / len(y_pred))
+  ```
+
+  
+
+* 
