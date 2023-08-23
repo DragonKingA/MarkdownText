@@ -1518,4 +1518,466 @@ sgd_clf.predict([some_digit]) # 预测上文某个数据
 
   
 
-* 
+* **混淆矩阵**
+
+  评估分类器性能的更好方法是混淆矩阵，总体思路是统计A类别实例被分类器判定为B类别的次数。
+
+  要计算混淆矩阵，需要先有一组预测才能将其与实际目标进行比较，可以使用 `cross_val_predict()`函数同样执行K-折交叉验证但返回的不是评估分数，而是每个折叠的预测，这意味着每个实例都可以得到一个**干净**（指模型预测时使用的数据在其训练期间从未见过）的预测。最后使用 `confusion_matrix()`获取混淆矩阵。
+
+  ```python
+  # 获得预测值
+  from sklearn.model_selection import cross_val_predict
+  
+  y_train_pred = cross_val_predict(sgd_clf, X_train, y_train_5, cv=3)
+  
+  # 获取混淆矩阵
+  from sklearn.metrics import confusion_matrix
+  
+  cm = confusion_matrix(y_train_5, y_train_pred)
+  cm
+  ```
+
+  **混淆矩阵有关的三级指标**
+
+  * 一级指标
+
+    以分类模型中最简单的**二分类**为例。假如我们有一批顾客是否买某种产品的样本数据，顾客买了产品我们标记为positive，没买标记为negative。现在通过分类模型训练这批样本，根据模型结果可以知道模型认为哪些顾客会买(预测的positive)，哪些顾客不会买(预测的negative)。故可以得到以下四个一级指标（T即True表示预测正确，F即False表示预测错误；P即Positive表示正类，N即Negative表示负类）：
+
+    1. **TP**(True Positive)：真实值是positive，模型认为是positive的数量，即模型预测正确的正例数量。
+    2. **FN**(False Negative)：真实值是positive，模型认为是negative的数量，即模型预测错误的正例数量，这是统计学上的第二类错误(Type II Error)。
+    3. **FP**(False Positive)：真实值是negative，模型认为是positive的数量，即模型预测错误的负例数量，这是统计学上的第一类错误(Type I Error)。
+    4. **TN**(True Negative)：真实值是negative，模型认为是negative的数量，即模型预测正确的负例数量。
+
+    ![1](D:\MarkdownText\image_python\image_MachineLearning\1.png)
+
+  * 二级指标
+
+    对于**预测性分类模型**，我们希望模型的预测结果越准确越好，即混淆矩阵中TP、TN的值越大越好，相应FP、FN的值越小越好。显然，为方便判断其中的比例大小关系，衍生出一下四个新的比例指标：
+
+    ![2](D:\MarkdownText\image_python\image_MachineLearning\2.png)
+
+    通过上面的四个二级指标，可以将混淆矩阵中的数量结果转化为0-1之间的比率，便于我们直观地对模型进行评价。
+
+    ```python
+    from sklearn.metrics import precision_score, recall_score
+    
+    # PPV
+    precision_score(y_train_5, y_train_pred)
+    cm[1, 1] / (cm[0, 1] + cm[1, 1]) # 或者直接从混淆矩阵数据得到 TP / (FP + TP)
+    
+    # TPR
+    recall_score(y_train_5, y_train_pred)
+    cm[1, 1] / (cm[1, 0] + cm[1, 1]) # 或者直接从混淆矩阵数据得到 TP / (FN + TP)
+    ```
+
+  * 三级指标
+
+    我们可以很方便地将**精确率**和**召回率**组合成为单一的指标（这两个值的谐波平均值）即在统计学中的 F1分数（F1-Score），计算公式为
+
+    ![3](D:\MarkdownText\image_python\image_MachineLearning\3.png)
+
+    其中，P表示精确率(Precision)，R表示召回率(Recall)，即灵敏度。F1-Score的取值范围（0~1），越接近1说明模型预测效果越好。
+
+    ```python
+    from sklearn.metrics import f1_score
+    f1_score(y_train_5, y_train_pred)
+    cm[1, 1] / (cm[1, 1] + (cm[1, 0] + cm[0, 1]) / 2) # 或者直接从混淆矩阵数据得到
+    ```
+
+  **精度/召回率权衡**
+
+  不同情况下，分类器对精度和召回率的需求不同：
+
+  * 强调**对正类的正确判定**则需要**高精度**（如一个检测视频是否适宜儿童的分类器，显然希望保留下来的所有视频都是“安全”的视频，那么它将追求高精确率，哪怕因低召回率会筛走部分“好”的视频）
+  * 强调**对负类的正确判定**则需要**高召回率**（如一个通过视频监控来检测房前经过的人是否为小偷的分类器，显然不希望放弃任何有嫌疑的人，反过来说一定能判定出没有嫌疑的人，那么它追求高召回率，哪怕因低准确率而收到错误的警报）。
+
+  以 SGD分类器 为例，对于每个实例，它会基于决策函数计算出一个分数值，如果该值大于**阈值**（threshold），则该实例判为正类，否则为负类。显然，提高阈值能提高精度但降低召回率；反之，降低阈值则能提高召回率但降低精度。因此，它们遵循一定的**反比关系**，我们不能同时提高精度和召回率。
+
+  `Scikit-Learn`不允许直接设置阈值，但是可以访问它用于预测的**决策分数**，调用 `decision_function()`方法返回列表中每个实例的分数，然后可以根据这些分数，使用任意阈值进行预测。
+
+  ```python
+  y_scores = sgd_clf.decision_function([some_digit]) # 传递实例列表，获得预测时的决策分数
+  y_scores
+  
+  threshold = 0
+  y_some_digit_pred = (y_scores > threshold) # 分数是否大于阈值 threshold
+  y_some_digit_pred # True
+  
+  threshold = 3000
+  y_some_digit_pred = (y_scores > threshold) # 分数是否大于阈值 threshold
+  y_some_digit_pred # False
+  # 证明提高阈值可以降低召回率
+  ```
+
+  现决定使用什么阈值，使用 `cross_val_predict()`函数获取训练集中所有实例的分数（而不是预测结果），并使用 `precision_recall_curve()`函数来计算所有可能的阈值的精度和召回率，最后绘制精度和召回率关于阈值的曲线图，从中选取表现较好的组合。
+
+  我们可以发现精度曲线比召回率曲线更崎岖，因为提高阈值时，精度也可能会下降（能识别的正类实例的总数也在下降），而召回率只会一直下降，故召回率曲线更平滑。
+
+  ```python
+  # 获取训练集中所有实例的分数
+  y_scores = cross_val_predict(sgd_clf, X_train, y_train_5, cv=3,
+                               method="decision_function") # 指定method参数值为"decision_function"
+  
+  # 计算所有可能的阈值的精度和召回率
+  from sklearn.metrics import precision_recall_curve
+  precisions, recalls, thresholds = precision_recall_curve(y_train_5, y_scores)
+  
+  # 绘制图像
+  plt.figure(figsize=(8, 4))  # extra code – it's not needed, just formatting
+  plt.plot(thresholds, precisions[:-1], "b--", label="Precision", linewidth=2)
+  plt.plot(thresholds, recalls[:-1], "g-", label="Recall", linewidth=2)
+  plt.vlines(threshold, 0, 1.0, "k", "dotted", label="threshold")
+  idx = (thresholds >= threshold).argmax()  # first index ≥ threshold，np.argmax() 会给你最大值的第一个索引，在二元分类器中它表示第一个 True 值。
+  plt.plot(thresholds[idx], precisions[idx], "bo")
+  plt.plot(thresholds[idx], recalls[idx], "go")
+  plt.axis([-50000, 50000, 0, 1])
+  plt.grid()
+  plt.xlabel("Threshold")
+  plt.legend(loc="center right")
+  save_fig("precision_recall_vs_threshold_plot")
+  plt.show()
+  
+  # 或者直接绘制精度和召回率的曲线图（PR曲线）
+  import matplotlib.patches as patches  # extra code – for the curved arrow
+  plt.figure(figsize=(6, 5))  # extra code – not needed, just formatting
+  plt.plot(recalls, precisions, linewidth=2, label="Precision/Recall curve")
+  # extra code – just beautifies and saves Figure 3–6
+  plt.plot([recalls[idx], recalls[idx]], [0., precisions[idx]], "k:")
+  plt.plot([0.0, recalls[idx]], [precisions[idx], precisions[idx]], "k:")
+  plt.plot([recalls[idx]], [precisions[idx]], "ko",
+           label="Point at threshold 3,000")
+  plt.gca().add_patch(patches.FancyArrowPatch(
+      (0.79, 0.60), (0.61, 0.78),
+      connectionstyle="arc3,rad=.2",
+      arrowstyle="Simple, tail_width=1.5, head_width=8, head_length=10",
+      color="#444444"))
+  plt.text(0.56, 0.62, "Higher\nthreshold", color="#333333")
+  plt.xlabel("Recall")
+  plt.ylabel("Precision")
+  plt.axis([0, 1, 0, 1])
+  plt.grid()
+  plt.legend(loc="lower left")
+  save_fig("precision_vs_recall_plot")
+  plt.show()
+  
+  
+  # 假设你决定将精度控制在 90%，你可以搜索到能提供至少 90% 精度的最低阈值
+  threshold_90_precision = thresholds[np.argmax(precisions >= 0.90)]
+  ```
+
+  **受试者工作特征曲线（ROC）**
+
+  绘制的是真正类率（召回率）和假正类率（FPR）。FPR 是被错误分为正类的负类实例比率，它等于 1 - 真负类率（TNR，被正确分类为负类的负类实例比率，也成为特异度）。因此，ROC曲线绘制的是**召回率**和**（1 - 特异度）**的关系。
+
+  虚线表示纯随机分类器的ROC曲线（直线 y = x），一个优秀的分类器应该离这条线**越远越好**。有一种比较分类器性能好坏的方法是测量**ROC曲线下面积**（AUC），一个绝对完美的分类器其`ROC_AUC`等于 1，而纯随机分类器的 `ROC_AUC`等于 0.5，故 AUC 值越接近 1 ，分类器性能越好。`Scikit-Learn`提供计算ROC曲线的 AUC 的函数。
+
+  ```python
+  # 绘制ROC曲线
+  from sklearn.metrics import roc_curve
+  
+  fpr, tpr, thresholds = roc_curve(y_train_5, y_scores)
+  
+  idx_for_threshold_at_90 = (thresholds <= threshold_for_90_precision).argmax()
+  tpr_90, fpr_90 = tpr[idx_for_threshold_at_90], fpr[idx_for_threshold_at_90]
+  
+  plt.figure(figsize=(6, 5))  # extra code – not needed, just formatting
+  plt.plot(fpr, tpr, linewidth=2, label="ROC curve")
+  plt.plot([0, 1], [0, 1], 'k:', label="Random classifier's ROC curve")
+  plt.plot([fpr_90], [tpr_90], "ko", label="Threshold for 90% precision")
+  
+  # extra code – just beautifies and saves Figure 3–7
+  plt.gca().add_patch(patches.FancyArrowPatch(
+      (0.20, 0.89), (0.07, 0.70),
+      connectionstyle="arc3,rad=.4",
+      arrowstyle="Simple, tail_width=1.5, head_width=8, head_length=10",
+      color="#444444"))
+  plt.text(0.12, 0.71, "Higher\nthreshold", color="#333333")
+  plt.xlabel('False Positive Rate (Fall-Out)')
+  plt.ylabel('True Positive Rate (Recall)')
+  plt.grid()
+  plt.axis([0, 1, 0, 1])
+  plt.legend(loc="lower right", fontsize=13)
+  save_fig("roc_curve_plot")
+  plt.show()
+  
+  
+  
+  # 计算 ROC 曲线的 AUC
+  from sklearn.metrics import roc_auc_score
+  
+  roc_auc_score(y_train_5, y_scores)
+  ```
+
+  ROC曲线与精度/召回率曲线（PR曲线）所给予的信息较为相似，但PR曲线主要关心正类，而ROC曲线则兼顾正类和负类，故有一个经验法是：当正类非常少见（或者说比较珍贵）或者你更关注假正类而不是假负类时，应该选择PR曲线，反之则是ROC曲线。（正如上述例子，负类实例即非 5 数字实例显然远多于正类实例，故应使用PR曲线）
+
+综合上述内容，现训练一个随机森林分类器并与SGD分类器作比较
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+forest_clf = RandomForestClassifier(random_state=42)
+
+y_probas_forest = cross_val_predict(forest_clf, X_train, y_train_5, cv=3,
+                                    method="predict_proba")
+
+y_probas_forest[:2]
+
+# Not in the code
+idx_50_to_60 = (y_probas_forest[:, 1] > 0.50) & (y_probas_forest[:, 1] < 0.60)
+print(f"{(y_train_5[idx_50_to_60]).sum() / idx_50_to_60.sum():.1%}")
+
+# 获得预测分数、准确率、召回率、阈值
+y_scores_forest = y_probas_forest[:, 1]
+precisions_forest, recalls_forest, thresholds_forest = precision_recall_curve(
+    y_train_5, y_scores_forest)
+
+# 绘制SGD与随机森林分类器的ROC曲线对比图
+plt.figure(figsize=(6, 5))  # extra code – not needed, just formatting
+plt.plot(recalls_forest, precisions_forest, "b-", linewidth=2,
+         label="Random Forest")
+plt.plot(recalls, precisions, "--", linewidth=2, label="SGD")
+# extra code – just beautifies and saves Figure 3–8
+plt.xlabel("Recall")
+plt.ylabel("Precision")
+plt.axis([0, 1, 0, 1])
+plt.grid()
+plt.legend(loc="lower left")
+save_fig("pr_curve_comparison_plot")
+plt.show()
+
+# 获得各种指标并加以比较
+y_train_pred_forest = y_probas_forest[:, 1] >= 0.5  # positive proba ≥ 50%
+f1_score(y_train_5, y_train_pred_forest)
+
+roc_auc_score(y_train_5, y_scores_forest)
+
+precision_score(y_train_5, y_train_pred_forest)
+
+recall_score(y_train_5, y_train_pred_forest)
+```
+
+
+
+## 多类分类器
+
+又称为多项分类器，可以区分两个以上的类，有些算法可以直接处理多个类（如随机森林分类器、朴素贝叶斯分类器），也有一些是严格的二元分类器（如支持向量机分类器、线性分类器），但也可以通过一些方式来使用多个二元分类器实现多类分类的目的：
+
+* **一对剩余**策略（**OvR**，或称为一对多，one-versus-all）
+
+  每种类别对应一个分类器，每次进行预测时获取每个分类器的决策分数，哪个分类器给的分数最高就将其判为哪个类
+
+  优点：对于 n 种类别的分类任务，它只需要训练 n 个分类器，并且大部分二元分类器不排斥高数据量，这也使得 OvR 策略比较常用。
+
+* **一对一**策略（**OvO**）
+
+  每种**配对关系**（二元关系）对应一个分类器，若有 n 种类别则需要训练 `n * (n - 1) / 2`个二元分类器
+
+  优点：每个分类器只需要用到部分训练集，只对含有其必须区分的两个类的部分进行训练；有些算法在数据规模庞大时表现糟糕（如支持向量机分类器），应用 OvO 策略可以使其在较小的训练集中发挥作用（整体来说，在较小）。
+
+`Scikit-Learn`可以检测到你尝试使用二元分类算法进行多类分类任务，它会根据情况自动运行 OvR 或者 OvO。
+
+```python
+# 训练一个 SVC分类器，它的训练总是 OvO策略
+from sklearn.svm import SVC
+
+svm_clf = SVC(random_state=42)
+svm_clf.fit(X_train[:2000], y_train[:2000])  # y_train, not y_train_5
+
+# 预测
+svm_clf.predict([some_digit])
+
+# 获得预测时候的决策分数
+# 默认为 "ovr" 形态的 n 个分数
+some_digit_scores = svm_clf.decision_function([some_digit])
+some_digit_scores.round(2)
+# 可以设置为展示 OvO策略 下的全部 n * (n - 1) / 2 个分数
+svm_clf.decision_function_shape = "ovo" # default = "ovr"
+some_digit_scores_ovo = svm_clf.decision_function([some_digit])
+some_digit_scores_ovo.round(2)
+
+# 训练分类器时，目标类的列表会存储在 classes_ 属性里（升序排序）
+svm_clf.classes_
+class_id = some_digit_scores.argmax()
+svm_clf.classes_[class_id]
+```
+
+当然，也可以强制 `Scikit-Learn` 使用指定策略。
+
+```python
+# 如指定用OvR策略训练SVC
+from sklearn.multiclass import OneVsRestClassifier
+# from sklearn.multiclass import OneVsOneClassifier # 则使用OvO策略
+
+ovr_clf = OneVsRestClassifier(SVC(random_state=42))
+ovr_clf.fit(X_train[:2000], y_train[:2000])
+
+# 预测
+ovr_clf.predict([some_digit])
+
+# 输出估算器（分类器）数量
+len(ovr_clf.estimators_)
+```
+
+除了通过二元分类器实现多类分类任务，当然可以直接训练一个多类分类器，此时 `Scikit-Learn` 不会运行 OvR 或 OvO 了。
+
+```python
+# 直接训练一个多类分类器，如SGD
+sgd_clf = SGDClassifier(random_state=42)
+sgd_clf.fit(X_train, y_train)
+sgd_clf.predict([some_digit])
+
+# 输出预测分数
+sgd_clf.decision_function([some_digit]).round()
+
+# 评估该分类器（基于精确率的交叉验证）
+cross_val_score(sgd_clf, X_train, y_train, cv=3, scoring="accuracy")
+
+# 对输入数据进行简单缩放（标准化），重新进行评估
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train.astype("float64")) # astype(type) 可以使数据转换为 type 类型
+cross_val_score(sgd_clf, X_train_scaled, y_train, cv=3, scoring="accuracy")
+```
+
+
+
+## 误差分析
+
+重点就是**分析其错误类型**，最直观的办法就是获得**混淆矩阵**，然后将其绘制出来并进行分析
+
+```python
+# 获得混淆矩阵，分析错误类型
+from sklearn.metrics import ConfusionMatrixDisplay
+
+y_train_pred = cross_val_predict(sgd_clf, X_train_scaled, y_train, cv=3) # 获得预测值
+plt.rc('font', size=9)  # extra code – make the text smaller
+ConfusionMatrixDisplay.from_predictions(y_train, y_train_pred) # 传入真实值和预测值，获得混淆矩阵
+plt.show()
+
+# 绘制图像时将数据转换为百分比
+plt.rc('font', size=10)  # extra code
+ConfusionMatrixDisplay.from_predictions(y_train, y_train_pred,
+                                        normalize="true", values_format=".0%")
+plt.show()
+
+# 数据显示转换为错误率（改变样本权重）
+sample_weight = (y_train_pred != y_train)
+plt.rc('font', size=10)  # extra code
+ConfusionMatrixDisplay.from_predictions(y_train, y_train_pred,
+                                        sample_weight=sample_weight,
+                                        normalize="true", values_format=".0%")
+plt.show()
+
+# 用 0 填充对角线，只保留错误
+fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(9, 4))
+plt.rc('font', size=10)
+ConfusionMatrixDisplay.from_predictions(y_train, y_train_pred, ax=axs[0],
+                                        sample_weight=sample_weight,
+                                        normalize="true", values_format=".0%")
+axs[0].set_title("Errors normalized by row")
+ConfusionMatrixDisplay.from_predictions(y_train, y_train_pred, ax=axs[1],
+                                        sample_weight=sample_weight,
+                                        normalize="pred", values_format=".0%")
+axs[1].set_title("Errors normalized by column")
+save_fig("confusion_matrix_plot_2")
+plt.show()
+plt.rc('font', size=14)  # make fonts great again
+# 通过第一张图可以清楚的看到，分类器在大部分目标类上都预测为 8，尽管目标类为 8 时它大部分时候预测正确为 8，但在其他目标类上的预测错误都发生在 8 上。故据此可以将精力花在改进数字 8 的分类错误上（如额外加入像数字 8 的训练数据，又或者开发新特征如应用一个闭环算法来判定数字 8 有两个环，再或者可以对图片进行预处理）。
+```
+
+还有一种办法就是分析单个错误，直接单独查看某些目标类的预测情况，观察预测失败的原因。
+
+```python
+# 如查看数字 3 和数字 5 的预测情况
+cl_a, cl_b = '3', '5'
+X_aa = X_train[(y_train == cl_a) & (y_train_pred == cl_a)]
+X_ab = X_train[(y_train == cl_a) & (y_train_pred == cl_b)]
+X_ba = X_train[(y_train == cl_b) & (y_train_pred == cl_a)]
+X_bb = X_train[(y_train == cl_b) & (y_train_pred == cl_b)]
+
+# extra code – this cell generates and saves Figure 3–11
+size = 5
+pad = 0.2
+plt.figure(figsize=(size, size))
+for images, (label_col, label_row) in [(X_ba, (0, 0)), (X_bb, (1, 0)),
+                                       (X_aa, (0, 1)), (X_ab, (1, 1))]:
+    for idx, image_data in enumerate(images[:size*size]):
+        x = idx % size + label_col * (size + pad)
+        y = idx // size + label_row * (size + pad)
+        plt.imshow(image_data.reshape(28, 28), cmap="binary",
+                   extent=(x, x + 1, y, y + 1))
+plt.xticks([size / 2, size + pad + size / 2], [str(cl_a), str(cl_b)])
+plt.yticks([size / 2, size + pad + size / 2], [str(cl_b), str(cl_a)])
+plt.plot([size + pad / 2, size + pad / 2], [0, 2 * size + pad], "k:")
+plt.plot([0, 2 * size + pad], [size + pad / 2, size + pad / 2], "k:")
+plt.axis([0, 2 * size + pad, 0, 2 * size + pad])
+plt.xlabel("Predicted label")
+plt.ylabel("True label")
+save_fig("error_analysis_digits_plot")
+plt.show()
+# 我们发现，数字3 和 数字5 的主要区别是上侧部分位置，由于SGD分类器是一个线性模型，它所做就是为每个像素分配一个各个类别权重，对于新数据，它将加权后的像素强度汇总并得到一个分数用来分类，显然对于 3 和 5 来说它们仅在部分像素位上有所差异，很容易导致分类器判定混乱。解决方法之一是对图片进行预处理，确保数字处于图片中心位置并且没有旋转，而且这或许能同时减少其他错误的发生率。
+```
+
+
+
+## 多标签分类
+
+有些情况下你希望分类器为每个实例输出**多个类**。假设某分类器经过训练可以识别A、B、C三人的脸，当它识别一张A与C的合照时会输出 `[1, 0, 1]`即 （是A，不是B，是C），这种输出**多个二元标签**的分类系统统称为**多标签分类系统**。
+
+```python
+# knn算法模型支持多标签分类（不是所有的分类器都支持）
+import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+
+# 创建多元标签（这里是二元标签，第一元为判断是否为大于等于7的数字，第二元是判断是否为奇数）
+y_train_large = (y_train >= '7')
+y_train_odd = (y_train.astype('int8') % 2 == 1)
+y_multilabel = np.c_[y_train_large, y_train_odd]
+
+knn_clf = KNeighborsClassifier(algorithm="kd_tree") # 这里 algorithm 默认为 'auto' 会导致下面预测报错
+knn_clf.fit(X_train, y_multilabel)
+
+# 预测
+knn_clf.predict([some_digit]) # [False, True] 即 5 不是大数(7, 8, 9)，5 是一个奇数
+
+# 计算所有标签的F1分数（假设所有标签都同等重要）
+y_train_knn_pred = cross_val_predict(knn_clf, X_train, y_multilabel, cv=3)
+f1_score(y_multilabel, y_train_knn_pred, average="macro")
+
+# 计算所有标签的F1分数，但是给每个标签都设置一个基于自身实例数量的权重，数量越多权重越高
+f1_score(y_multilabel, y_train_knn_pred, average="weighted")
+```
+
+
+
+## 多输出分类
+
+多输出分类是多标签分类的泛化，其标签也可以是多类的（比如它可以有两个以上可能的值）。
+
+```python
+# 比如使用上述knn算法去除图片中的噪声，给它输入一个有噪声的数字图片，它就输出一张干净的数字图片（比起分类，它更像是一个回归任务，故而有时候分类和回归之间的界限比较模糊）
+# 该分类器属于多输出分类，因为输出的时候有多个标签（每个像素点为一个标签），且每个标签值有多种可能的值（0~255）
+np.random.seed(42)  # to make this code example reproducible
+noise = np.random.randint(0, 100, (len(X_train), 784))
+X_train_mod = X_train + noise # 自行制造噪声
+noise = np.random.randint(0, 100, (len(X_test), 784))
+X_test_mod = X_test + noise # 自行制造噪声
+y_train_mod = X_train
+y_test_mod = X_test
+
+# 展示除噪效果
+plt.subplot(121); plot_digit(X_test_mod[0])
+plt.subplot(122); plot_digit(y_test_mod[0])
+save_fig("noisy_digit_example_plot")
+plt.show()
+
+# 进行除噪操作
+knn_clf = KNeighborsClassifier(algorithm = 'ball_tree')
+knn_clf.fit(X_train_mod, y_train_mod)
+clean_digit = knn_clf.predict([X_test_mod[0]])
+plot_digit(clean_digit)
+save_fig("cleaned_digit_example_plot")  # extra code – saves Figure 3–13
+plt.show()
+```
+
