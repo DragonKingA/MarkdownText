@@ -1031,7 +1031,7 @@ int main()
 
 ---
 
-## 树状数组
+## 树状数组（Fenwick）
 
 ---
 
@@ -1505,6 +1505,144 @@ int main()
 * 缺点：拓展性比线段树差，线段树可以解决树状数组能解决的问题（除非卡空间），但反过来就不一定。
 
 * 应用：树状数组维护的结果是**前缀和**，“**动态更新并求解前缀和**”是树状数组在做的事。通常考虑能否将题目问题转化为前缀和问题，用树状数组快速解决。多应用于 **偏序问题** 和 维护公式里的求和式。其中偏序问题一般用的是**权值树状数组**（以原序列的值 x 作为下标，表达数 x 在区间内的出现次数），也常常搭配**离散化处理**技巧。
+
+
+
+### 模板
+
+基于差分：
+
+单点/区间修改、单点/区间查询
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+
+class Fenwick
+{
+public:
+    #define lowbit(x) ((x) & -(x))
+    #define T long long
+
+    int n;
+    vector<T> t1, t2;
+
+    Fenwick() : n(0){}
+    Fenwick(int nn)
+    {
+        n = nn;
+        t1.assign(n + 5, 0);
+        t2.assign(n + 5, 0);
+    }
+
+    void setval(vector<T> arr) // 传入原数组 arr
+    {
+        T last = 0;
+        for(int i = 1; i <= n; ++i)
+        {
+            UPDATE(i, arr[i] - last); // 基于差分
+            last = arr[i];
+        }
+    }
+
+    void UPDATE(int x, T d) // 差分数组上更新
+    {
+        for(int i = x; i <= n; i += lowbit(i))
+        {
+            t1[i] += d;
+            t2[i] += x * d;
+        }
+    }
+    void update(int x, T d) // 单点修改
+    {
+        UPDATE(x, d);
+        UPDATE(x + 1, -d);
+    }
+    void update(int l, int r, T d) // 区间修改
+    {
+        UPDATE(l, d);
+        UPDATE(r + 1, -d);
+    }
+
+    T QUERY(int x) // 差分数组上查询[1, x]前缀和
+    {
+        T res = 0;
+        for(int i = x; i > 0; i -= lowbit(i))
+        {
+            res += (x + 1) * t1[i] - t2[i];
+        }
+        return res;
+    }
+    T query(int x) // 单点查询
+    {
+        return QUERY(x) - QUERY(x - 1);
+    }
+    T query(int l, int r) // 区间查询
+    {
+        return QUERY(r) - QUERY(l - 1);
+    }
+
+    #undef lowbit
+    #undef T
+};
+
+void Solve()
+{
+    int n, q;
+    cin >> n >> q;
+
+    vector<ll> arr(n + 1);
+    for(int i = 1; i <= n; ++i)
+        cin >> arr[i];
+
+    Fenwick tree(n);
+    tree.setval(arr);
+
+    while(q--)
+    {
+        ll op, l, r, d;
+        cin >> op >> l >> r;
+        if(op == 1)
+        {
+            cin >> d;
+            tree.update(l, r, d);
+        }
+        else
+        {
+            cout << tree.query(l, r) << endl;
+        }
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+基于原数组：
+
+
+
+
 
 
 
@@ -3618,7 +3756,947 @@ int main()
 
 
 
+### 模板
 
+不带Lazy-tag
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+
+struct Info{
+    ll val;
+
+    Info(ll a = 0)
+    {
+        val = a;
+    }
+    friend Info operator +(Info a, Info b)
+    {
+        
+        return a;
+    }
+};
+
+class SegTree{
+
+public:
+
+    #define ls (p << 1)
+    #define rs (p << 1 | 1)
+    #define mid (pl + pr >> 1)
+
+    int n;
+    vector<Info> tree;
+    
+    SegTree() : n(0) {}
+    SegTree(int nn, Info X = Info())
+    {
+        init(nn, X);
+    }
+
+    void init(int nn, Info X = Info()) // 初始化初值
+    {
+        n = nn;
+        tree.assign(n << 2, Info());
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = X;
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void setval(vector<Info> arr) // 置值
+    {
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = arr[pl];
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void push_up(ll p)
+    {
+        tree[p] = tree[ls] + tree[rs];
+    }
+
+    void update(ll x, ll p, ll pl, ll pr, Info X) // 单点修改
+    {
+        if(pl == pr)
+        {
+            tree[p] = X;
+            return ;
+        }
+        if(x <= mid) update(x, ls, pl, mid, X);
+        else update(x, rs, mid + 1, pr, X);
+        push_up(p);
+    }
+    void update(ll x, Info X)
+    {
+        update(x, 1, 1, n, X);
+    }
+
+    Info query(ll x, ll p, ll pl, ll pr) // 单点查询
+    {
+        if(pl == pr)
+        {
+            return tree[p];
+        }
+        if(x <= mid) return query(x, ls, pl, mid);
+        else return query(x, rs, mid + 1, pr);
+    }
+    Info query(ll x) 
+    {
+        return query(x, 1, 1, n);
+    }
+
+    Info query_range(ll L, ll R, ll p, ll pl, ll pr) // 区间查询
+    {
+        if(pl >= L && pr <= R)
+        {
+            return tree[p];
+        }
+        if(mid >= R) return query_range(L, R, ls, pl, mid);
+        else if(mid < L) return query_range(L, R, rs, mid + 1, pr);
+        return query_range(L, R, ls, pl, mid) + query_range(L, R, rs, mid + 1, pr);
+    }
+    Info query_range(ll L, ll R)
+    {
+        return query_range(L, R, 1, 1, n);
+    }
+
+    void _debug(ll p, ll pl, ll pr)
+    {
+        auto PRINT = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                // cout << tree[p].val << " "; 
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+        };
+        PRINT(PRINT, p, pl, pr);
+        cout << endl;
+    }
+
+    #undef ls
+    #undef rs
+    #undef mid
+};
+
+void Solve()
+{
+    ll n, q;
+    cin >> n >> q;
+
+    vector<Info> arr(n + 1);
+    for(int i = 1; i <= n; ++i)
+    {
+        ll x; cin >> x;
+        arr[i] = Info(x);
+    }
+
+    SegTree seg(n);
+    seg.setval(arr);
+    while(q--)
+    {
+        ll op, x, y;
+        cin >> op >> x >> y;
+        if(op == 1)
+        {
+            seg.update(x, Info(y));
+        }
+        else
+        {
+            cout << seg.query_range(x, y).val << endl;
+        }
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+带Lazy-tag
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+
+struct Info{
+    ll val;
+
+    Info(ll a = 0) // 注意初值
+    {
+        val = a;
+    }
+    friend Info operator +(Info a, Info b)
+    {
+        
+        return a;
+    }
+};
+
+struct Tag{
+    ll tag1;
+
+    Tag(ll a = -1) // 注意初值
+    {
+        tag1 = a;
+    }
+};
+
+class LazySegTree{
+
+public:
+
+    #define ls (p << 1)
+    #define rs (p << 1 | 1)
+    #define mid (pl + pr >> 1)
+
+    int n;
+    vector<Info> tree;
+    vector<Tag> tag;
+    
+    LazySegTree() : n(0) {}
+    LazySegTree(int nn, Info X = Info(), Tag Y = Tag())
+    {
+        init(nn, X, Y);
+    }
+
+    void init(int nn, Info X = Info(), Tag Y = Tag()) // 初始化初值
+    {
+        n = nn;
+        tree.assign(n << 2, Info());
+        tag.assign(n << 2, Tag());
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = X;
+                tag[p] = Y;
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void setval(vector<Info> arr) // 置值
+    {
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = arr[pl];
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void addTag1(ll p, ll pl, ll pr, ll d) // 记得标记对 tree[p] 的更新，以及标记间的影响
+    {
+
+    }
+    void addTag2(ll p, ll pl, ll pr, ll d);
+    void addTag3(ll p, ll pl, ll pr, ll d);
+    void push_down(ll p, ll pl, ll pr) // 标记优先级越高，越先更新，以此覆盖优先级低的标记
+    {
+        if(tag[p].tag1 != -1)
+        {
+            addTag1(ls, pl, mid, tag[p].tag1);
+            addTag1(rs, mid + 1, pr, tag[p].tag1);
+            tag[p].tag1 = -1;
+        }
+
+    }
+
+    void push_up(ll p)
+    {
+        tree[p] = tree[ls] + tree[rs];
+    }
+
+    void update(ll x, ll p, ll pl, ll pr, Info X) // 单点修改
+    {
+        if(pl == pr)
+        {
+            tree[p] = X;
+            return ;
+        }
+        push_down(p, pl, pr);
+        if(x <= mid) update(x, ls, pl, mid, X);
+        else update(x, rs, mid + 1, pr, X);
+        push_up(p);
+    }
+    void update(ll x, Info X)
+    {
+        update(x, 1, 1, n, X);
+    }
+
+    void update_range(ll L, ll R, ll p, ll pl, ll pr, ll op, ll d) // 区间修改（对第 op 个标记修改）
+    {
+        if(pl >= L && pr <= R)
+        {
+            if(op == 1) addTag1(p, pl, pr, d);
+
+            return ;
+        }
+        push_down(p, pl, pr);
+        if(L <= mid) update_range(L, R, ls, pl, mid, op, d);
+        if(R > mid) update_range(L, R, rs, mid + 1, pr, op, d);
+        push_up(p);
+    }
+    void update_range(ll L, ll R, ll op, ll d)
+    {
+        update_range(L, R, 1, 1, n, op, d);
+    }
+
+    Info query(ll x, ll p, ll pl, ll pr) // 单点查询
+    {
+        if(pl == pr)
+        {
+            return tree[p];
+        }
+        push_down(p, pl, pr);
+        if(x <= mid) return query(x, ls, pl, mid);
+        else return query(x, rs, mid + 1, pr);
+    }
+    Info query(ll x) 
+    {
+        return query(x, 1, 1, n);
+    }
+
+    Info query_range(ll L, ll R, ll p, ll pl, ll pr) // 区间查询
+    {
+        if(pl >= L && pr <= R)
+        {
+            return tree[p];
+        }
+        push_down(p, pl, pr);
+        if(mid >= R) return query_range(L, R, ls, pl, mid);
+        else if(mid < L) return query_range(L, R, rs, mid + 1, pr);
+        return query_range(L, R, ls, pl, mid) + query_range(L, R, rs, mid + 1, pr);
+    }
+    Info query_range(ll L, ll R)
+    {
+        return query_range(L, R, 1, 1, n);
+    }
+
+    void _debug(ll p, ll pl, ll pr)
+    {
+        auto PRINT = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                // cout << tree[p].val << " "; 
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+        };
+        PRINT(PRINT, p, pl, pr);
+        cout << endl;
+    }
+
+    #undef ls
+    #undef rs
+    #undef mid
+};
+
+void Solve()
+{
+    ll n, q;
+    cin >> n >> q;
+
+    vector<Info> arr(n + 1);
+    for(int i = 1; i <= n; ++i)
+    {
+        ll x; cin >> x;
+        arr[i] = Info(x);
+    }
+
+    LazySegTree seg(n);
+    seg.setval(arr);
+    while(q--)
+    {
+        ll op, x, y;
+        cin >> op >> x >> y;
+        if(op == 1)
+        {
+            // seg.update(x, Info(y));
+            seg.update_range(x, y, op, 1);
+        }
+        else
+        {
+            cout << seg.query_range(x, y).val << endl;
+        }
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
+
+
+
+### 例题
+
+
+
+```c++
+1.ABC343 F
+要求维护最大值、次大值以及最大值个数、次大值个数。
+涉及单点修改和区间查询。
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define bll __int128_t
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+const bll mod = (bll)1e31 + 7177;
+
+struct info{
+    ll mx1, mx2;
+    ll cnt1, cnt2;
+    info(ll a = 0, ll b = 0, ll c = 0, ll d = 0)
+    {
+        mx1 = a, mx2 = b, cnt1 = c, cnt2 = d;
+    }
+    friend info operator +(info a, info b)
+    {
+        if(a.mx1 == b.mx1)
+        {
+            if(a.mx2 < b.mx2) swap(a, b);
+            a.cnt1 += b.cnt1;
+            if(a.mx2 == b.mx2)
+            {
+                a.cnt2 += b.cnt2;
+            }
+            return a;
+        }
+        if(a.mx1 < b.mx1) swap(a, b);
+        if(b.mx1 > a.mx2)
+        {
+            a.mx2 = b.mx1;
+            a.cnt2 = b.cnt1;
+        }
+        else if(b.mx1 == a.mx2)
+        {
+            a.cnt2 += b.cnt1;
+        }
+        return a;
+    }
+};
+
+class SegTree{
+
+public:
+
+    #define ls (p << 1)
+    #define rs (p << 1 | 1)
+
+    int n;
+    vector<info> tree;
+    
+    SegTree() : n(0) {}
+    SegTree(int nn, info val = info())
+    {
+        init(nn, val);
+    }
+
+    void init(int nn, info val = info()) // 初始化初值
+    {
+        n = nn;
+        tree.assign(n << 2, info());
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = val;
+                return ;
+            }
+            ll mid = pl + pr >> 1;
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void setval(vector<info> arr) // 置值
+    {
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = arr[pl];
+                return ;
+            }
+            ll mid = pl + pr >> 1;
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void addtag(ll p, ll pl, ll pr)
+    {
+
+    }
+    void push_down(ll p, ll pl, ll pr)
+    {
+
+    }
+    void push_up(ll p)
+    {
+        tree[p] = tree[ls] + tree[rs];
+    }
+
+    void update(ll x, ll p, ll pl, ll pr, info d) // 单点修改
+    {
+        if(pl == pr)
+        {
+            tree[p] = d;
+            return ;
+        }
+        push_down(p, pl, pr);
+        ll mid = pl + pr >> 1;
+        if(x <= mid) update(x, ls, pl, mid, d);
+        else update(x, rs, mid + 1, pr, d);
+        push_up(p);
+    }
+    void update(ll x, info d)
+    {
+        update(x, 1, 1, n, d);
+    }
+
+    void update_range(ll L, ll R, ll p, ll pl, ll pr, info d) // 区间修改
+    {
+        if(pl >= L && pr <= R)
+        {
+
+            return ;
+        }
+        push_down(p, pl, pr);
+        ll mid = pl + pr >> 1;
+        if(L <= mid) update_range(L, R, ls, pl, mid, d);
+        if(R > mid) update_range(L, R, rs, mid + 1, pr, d);
+        push_up(p);
+    }
+    void update_range(ll L, ll R, info d)
+    {
+        update_range(L, R, 1, 1, n, d);
+    }
+
+    info query(ll x, ll p, ll pl, ll pr) // 单点查询
+    {
+        if(pl == pr)
+        {
+            return tree[p];
+        }
+        push_down(p, pl, pr);
+        ll mid = pl + pr >> 1;
+        if(x <= mid) return query(x, ls, pl, mid);
+        else return query(x, rs, mid + 1, pr);
+    }
+    info query(ll x) 
+    {
+        return query(x, 1, 1, n);
+    }
+
+    info query_range(ll L, ll R, ll p, ll pl, ll pr) // 区间查询
+    {
+        if(pl >= L && pr <= R)
+        {
+            return tree[p];
+        }
+        push_down(p, pl, pr);
+        ll mid = pl + pr >> 1;
+        if(mid >= R) return query_range(L, R, ls, pl, mid);
+        else if(mid < L) return query_range(L, R, rs, mid + 1, pr);
+        return query_range(L, R, ls, pl, mid) + query_range(L, R, rs, mid + 1, pr);
+    }
+    info query_range(ll L, ll R)
+    {
+        return query_range(L, R, 1, 1, n);
+    }
+
+    void _debug(ll p, ll pl, ll pr)
+    {
+        if(pl == pr)
+        {
+            // for(auto x : tree[p]) cout << x <<" "; cout << endl;
+            return ;
+        }
+        ll mid = pl + pr >> 1;
+        _debug(ls, pl, mid);
+        _debug(rs, mid + 1, pr);
+    }
+
+    #undef ls
+    #undef rs
+};
+
+void Solve()
+{
+    ll n, q;
+    cin >> n >> q;
+
+    vector<info> arr(n + 1);
+    for(int i = 1; i <= n; ++i)
+    {
+        ll x; cin >> x;
+        arr[i] = info(x, -1, 1, 0);
+    }
+
+    SegTree seg(n);
+    seg.setval(arr);
+    while(q--)
+    {
+        ll op, x, y;
+        cin >> op >> x >> y;
+        if(op == 1)
+        {
+            seg.update(x, info(y, -1, 1, 0));
+        }
+        else
+        {
+            cout << seg.query_range(x, y).cnt2 << endl;
+        }
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+
+
+2.ABC341 E
+涉及区间修改（翻转tag）和区间查询
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define bll __int128_t
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+const bll mod = (bll)1e31 + 7177;
+
+struct Info{
+    ll ch[2];
+    ll good;
+
+    Info(ll a = 0, ll b = 0, ll c = 1) // 注意初值
+    {
+        ch[0] = a;
+        ch[1] = b;
+        good = c;
+    }
+    friend Info operator +(Info a, Info b)
+    {
+        if(a.good && b.good) a.good = (a.ch[1] != b.ch[0]);
+        else a.good = 0;
+        a.ch[1] = b.ch[1];
+        return a;
+    }
+};
+
+struct Tag{
+    ll tag1;
+
+    Tag(ll a = 0) // 注意初值
+    {
+        tag1 = a;
+    }
+};
+
+class SegTree{
+
+public:
+
+    #define ls (p << 1)
+    #define rs (p << 1 | 1)
+    #define mid (pl + pr >> 1)
+
+    int n;
+    vector<Info> tree;
+    vector<Tag> tag;
+    
+    SegTree() : n(0) {}
+    SegTree(int nn, Info X = Info(), Tag Y = Tag())
+    {
+        init(nn, X, Y);
+    }
+
+    void init(int nn, Info X = Info(), Tag Y = Tag()) // 初始化初值
+    {
+        n = nn;
+        tree.assign(n << 2, Info());
+        tag.assign(n << 2, Tag());
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = X;
+                tag[p] = Y;
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void setval(vector<Info> arr) // 置值
+    {
+        auto build = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                tree[p] = arr[pl];
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+            push_up(p);
+        };
+        build(build, 1, 1, n);
+    }
+
+    void addTag1(ll p, ll pl, ll pr, ll d) // 记得标记对 tree[p] 的更新，以及标记间的影响
+    {
+        tag[p].tag1 ^= d;
+        tree[p].ch[0] ^= d;
+        tree[p].ch[1] ^= d;
+    }
+    void addTag2(ll p, ll pl, ll pr, ll d);
+    void addTag3(ll p, ll pl, ll pr, ll d);
+    void push_down(ll p, ll pl, ll pr) // 标记优先级越高，越先更新，以此覆盖优先级低的标记
+    {
+        if(tag[p].tag1 != 0)
+        {
+            addTag1(ls, pl, mid, tag[p].tag1);
+            addTag1(rs, mid + 1, pr, tag[p].tag1);
+            tag[p].tag1 = 0;
+        }
+
+    }
+
+    void push_up(ll p)
+    {
+        tree[p] = tree[ls] + tree[rs];
+    }
+
+    void update(ll x, ll p, ll pl, ll pr, Info X) // 单点修改
+    {
+        if(pl == pr)
+        {
+            tree[p] = X;
+            return ;
+        }
+        push_down(p, pl, pr);
+        if(x <= mid) update(x, ls, pl, mid, X);
+        else update(x, rs, mid + 1, pr, X);
+        push_up(p);
+    }
+    void update(ll x, Info X)
+    {
+        update(x, 1, 1, n, X);
+    }
+
+    void update_range(ll L, ll R, ll p, ll pl, ll pr, ll op, ll d) // 区间修改（对第 op 个标记修改）
+    {
+        if(pl >= L && pr <= R)
+        {
+            if(op == 1) addTag1(p, pl, pr, d);
+
+            return ;
+        }
+        push_down(p, pl, pr);
+        if(L <= mid) update_range(L, R, ls, pl, mid, op, d);
+        if(R > mid) update_range(L, R, rs, mid + 1, pr, op, d);
+        push_up(p);
+    }
+    void update_range(ll L, ll R, ll op, ll d)
+    {
+        update_range(L, R, 1, 1, n, op, d);
+    }
+
+    Info query(ll x, ll p, ll pl, ll pr) // 单点查询
+    {
+        if(pl == pr)
+        {
+            return tree[p];
+        }
+        push_down(p, pl, pr);
+        if(x <= mid) return query(x, ls, pl, mid);
+        else return query(x, rs, mid + 1, pr);
+    }
+    Info query(ll x) 
+    {
+        return query(x, 1, 1, n);
+    }
+
+    Info query_range(ll L, ll R, ll p, ll pl, ll pr) // 区间查询
+    {
+        if(pl >= L && pr <= R)
+        {
+            return tree[p];
+        }
+        push_down(p, pl, pr);
+        if(mid >= R) return query_range(L, R, ls, pl, mid);
+        else if(mid < L) return query_range(L, R, rs, mid + 1, pr);
+        return query_range(L, R, ls, pl, mid) + query_range(L, R, rs, mid + 1, pr);
+    }
+    Info query_range(ll L, ll R)
+    {
+        return query_range(L, R, 1, 1, n);
+    }
+
+    void _debug(ll p, ll pl, ll pr)
+    {
+        auto PRINT = [&](auto self, ll p, ll pl, ll pr)
+        {
+            if(pl == pr)
+            {
+                // cout << tree[p].val << " "; 
+                return ;
+            }
+            self(self, ls, pl, mid);
+            self(self, rs, mid + 1, pr);
+        };
+        PRINT(PRINT, p, pl, pr);
+        cout << endl;
+    }
+
+    #undef ls
+    #undef rs
+    #undef mid
+};
+
+void Solve()
+{
+    ll n, q;
+    cin >> n >> q;
+
+    vector<Info> arr(n + 1);
+    for(int i = 1; i <= n; ++i)
+    {
+        char ch; cin >> ch;
+        ll x = ch - '0';
+        arr[i] = Info(x, x, 1);
+    }
+
+    SegTree seg(n);
+    seg.setval(arr);
+    while(q--)
+    {
+        ll op, x, y;
+        cin >> op >> x >> y;
+        if(op == 1)
+        {
+            seg.update_range(x, y, 1, 1);
+        }
+        else
+        {
+            cout << (seg.query_range(x, y).good ? "Yes" : "No") << endl;
+        }
+    }
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
 
 
@@ -4311,7 +5389,152 @@ int main()
 #### 例题
 
 ```c++
-1.
+1.cf 903 div.3 F
+要求找到树的直径 (a, b)，并求从直径各端出发的最长路
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 4e18;
+
+void Solve()
+{
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> mark(n + 5);
+    for(int i = 0; i < k; ++i)
+    {
+        int u; cin >> u;
+        mark[u] = 1;
+    }
+
+    vector<vector<int>> G(n + 5);
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v;
+        cin >> u >> v;
+        G[u].push_back(v);
+        G[v].push_back(u);
+    }
+    
+    vector<int> dis(n + 5, -1);
+    auto oper = [&](int st) -> int
+    {
+        dis.assign(n + 5, -1);
+        dis[st] = 0;
+        auto dfs = [&](auto self, int u, int fa) -> void
+        {
+            for(auto v : G[u])
+            {
+                if(v == fa) continue;
+                dis[v] = dis[u] + 1;
+                self(self, v, u);
+            }
+        };
+        dfs(dfs, st, -1);
+        
+        int p = -1;
+        for(int i = 1; i <= n; ++i)
+            if(mark[i] && (p == -1 || dis[i] > dis[p]))
+                p = i;
+        return p;
+    };
+
+    int a = oper(1);
+    int b = oper(a);
+    auto f = dis;
+    oper(b);
+
+    for(int i = 1; i <= n; ++i)
+        f[i] = max(f[i], dis[i]);
+
+    int ans = inf;
+    for(int i = 1; i <= n; ++i)
+        ans = min(ans, f[i]);
+    cout << ans << endl;
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+
+// bfs 同理
+void Solve()
+{
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> mark(n + 5);
+    for(int i = 0; i < k; ++i)
+    {
+        int u; cin >> u;
+        mark[u] = 1;
+    }
+
+    vector<vector<int>> G(n + 5);
+    for(int i = 1; i < n; ++i)
+    {
+        int u, v;
+        cin >> u >> v;
+        G[u].push_back(v);
+        G[v].push_back(u);
+    }
+    
+    vector<int> dis(n + 5, -1);
+    auto bfs = [&](int st) -> int
+    {
+        queue<int> q;
+        q.push(st);
+        dis.assign(n + 5, -1);
+        dis[st] = 0;
+        while(!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            for(auto v : G[u])
+            {
+                if(dis[v] == -1)
+                {
+                    dis[v] = dis[u] + 1;
+                    q.push(v);
+                }
+            }
+        }
+        int p = -1;
+        for(int i = 1; i <= n; ++i)
+            if(mark[i] && (p == -1 || dis[i] > dis[p]))
+                p = i;
+        return p;
+    };
+
+    int a = bfs(1);
+    int b = bfs(a);
+    auto f = dis;
+    bfs(b);
+
+    for(int i = 1; i <= n; ++i)
+        f[i] = max(f[i], dis[i]);
+
+    int ans = inf;
+    for(int i = 1; i <= n; ++i)
+        ans = min(ans, f[i]);
+    cout << ans << endl;
+}
 
 
 
@@ -4425,7 +5648,7 @@ int main()
 
 
 
-
+---
 
 
 
@@ -4584,7 +5807,963 @@ int main()
 
 
 
+---
 
+## 拓扑排序
+
+
+
+
+
+---
+
+## 最小生成树
+
+
+
+
+
+---
+
+## 最短路
+
+| 所求最短路径对象     | 边权                  | 算法                                                         |
+| -------------------- | --------------------- | ------------------------------------------------------------ |
+| 一个起点，一个终点   | 非负；无边权或边权为1 | A*算法(<O((m + n)logn))<br />双向广搜(<O((m + n)logn))<br />贪心最优搜索(<O(m + n)) |
+| 一个起点到其他所有点 | 无边权或边权为1       | 简单BFS(O(m + n))                                            |
+|                      | 非负数                | Dijkstra算法-堆优化优先队列(O((m + n)logn))                  |
+|                      | 含负数                | Bellman–Ford算法(O(m * n))，SPFA(<O(m * n))                  |
+| 所有点对之间         | 含负数                | Floyd-Warshall(O(n ^ 3))                                     |
+|                      | 只有 0 和 1           | 传递闭包-bitset优化的Floyd算法(O(n ^ 2))                     |
+
+
+
+### 简单BFS
+
+```c++
+1.最短路计数
+一个起点到所有其他点，且边权为 1 (无边权) -- 邻接表 + BFS
+思路：边确定最短路距离，边更新符合最短路的路径个数
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <queue>
+#include <cstring>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 1e6 + 5, mod = 100003, INF = 0x3f3f3f3f;
+int n, m, s = 1;
+int dis[N], cnt[N], vis[N];
+vector<int> e[N];
+void bfs()
+{
+    memset(dis, 0x3f, sizeof(dis));
+    cnt[1] = 1, vis[1] = 1;
+    queue<int> q;
+    q.push(1);
+    while(!q.empty())
+    {
+        int now = q.front(); q.pop();
+        for(int i = 0; i < e[now].size(); i++)
+        {
+            int to = e[now][i];
+            if(!vis[to])//固定最短路距离
+            {
+                vis[to] = 1;
+                dis[to] = dis[now] + 1;
+                q.push(to);
+            }
+            if(dis[to] == dis[now] + 1)//最短路径数叠加，把 now点 的路径数全部加到 to点 上
+                cnt[to] = (cnt[to] + cnt[now]) % mod;
+        }
+    }
+}
+int main()
+{
+    untie();
+    cin >> n >> m;
+    while(m--)
+    {
+        int u, v;
+        cin >> u >> v;
+        e[u].push_back(v);
+        e[v].push_back(u); //无向图
+    }
+    bfs();
+    for(int i = 1; i <= n; i++)
+    {
+        if(i != 1 && dis[i] == INF) cout << "0\n";
+        else cout << cnt[i] % mod << "\n";
+    }
+    return 0;
+}
+```
+
+
+
+### Floyd 算法
+
+适用于**多源**最短路径问题，可求得所有点对之间的最短路径，复杂度 O(n^3) 只适用于小规模的稠密图(n < 300)
+
+应用 动态规划 的思路，定义 `dp[k][i][j]` 为从第一个点遍历到第 k 个点时，从点 i 到点 j 的最短距离(最小边权和)。
+
+从含有 k - 1 个点的子图拓展到含 k 个点的图，若经历点 k 使得距离更短，则将点 k 接入到 i -> j 路径上，假设 i -> k -> j
+
+此时 distance(i -> k -> j) < distance(i -> j)，则 k 点应用到该状态上，转移方程为
+
+ `dp[k][i][j] = min(dp[k - 1][i][j], dp[k - 1][i][k] + dp[k - 1][k][j])`
+
+由于第一维状态只与第 k - 1 层状态有关，故可以滚动为: 
+
+`dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j])`
+
+```c++
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+typedef long long ll;
+const int N = 305;
+const ll INF = 0x3f3f3f3f3f3f3f3fLL;
+int n, m, q;
+ll dp[N][N];
+
+void floyd()
+{
+    for(int k = 1; k <= n; k++) // 注意遍历中间点的循环在第一重，它可代表 dp 状态的层数
+        for(int i = 1; i <= n; i++)
+            for(int j = 1; j <= n; j++)
+                dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j]);
+}
+
+int main()
+{
+    untie();
+    memset(dp, 0x3f, sizeof(dp));
+    cin >> n >> m >> q;
+    for(int i = 1; i <= m; i++)
+    {
+        int u, v; ll w;
+        cin >> u >> v >> w;
+        dp[u][v] = dp[v][u] = min(dp[u][v], w); // 防止有重边
+    }
+    floyd();
+    while(q--)
+    {
+        int s, t;
+        cin >> s >> t;
+        if(dp[s][t] == INF) cout << "-1";
+        else if(s == t) cout << "0";
+        else cout << dp[s][t];
+        cout << '\n';
+    }
+    return 0;
+}
+```
+
+
+
+#### 传递闭包
+
+适用于处理所有点对间的**优先关系**，复杂度 O(n ^ 2)
+
+在交际网络中，给定若干个元素和若干对二元关系，且关系具有传递性（假如a 与 b有关系，b与c有关系，那么a和c必定有关系）。”
+
+通过传递性推导出尽量多的元素之间的关系"的问题被称为传递闭包。
+
+建立邻接矩阵d，其中 d[i, j] = 1 表示 i 与 j 有关系，d[i, j] = 0表示 i 与 j 没有关系。特别的，d[i, i]始终为 1。
+
+核心代码：
+
+```c++
+for (int k = 1; k <= n; k++)
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            d[i][j] |= d[i][k] & d[k][j];
+```
+
+bitset优化(从n<500优化到接受n<=1000)：
+
+```c++
+bitset<N> dp[N];//N串长度为N的二进制，可以对一整串二进制操作，故省去第 j 层循环
+for(int k = 1; k <= n; k++)//遍历所有点作中间点k，若经历k点能连通 i->k->j 则说明 i 与 j 连通
+    for(int i = 1; i <= n; i++)
+        if(dp[i][k]) 
+            dp[i] |= dp[k];            
+```
+
+例题：
+
+```c++
+1.Cow Contest(传递闭包)
+必须知道任一一头奶牛与其他所有奶牛之间的胜负关系，并依个判定其排名是否确认，最后输出个数即可
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 105;
+int n, m;
+bool dp[N][N];
+void floyd()
+{
+    for(int k = 1; k <= n; k++)//遍历所有点作中间点k，若经历k点能连通 i->k->j 则说明 i 与 j 连通
+        for(int i = 1; i <= n; i++)
+            for(int j = 1; j <= n; j++)
+                dp[i][j] |= dp[i][k] & dp[k][j];
+                //即 if(dp[i][k] && dp[k][j]) dp[i][j] = 1;
+}
+int main()
+{
+    untie();
+    cin >> n >> m;
+    while(m--)
+    {
+        int s, t;
+        cin >> s >> t;
+        dp[s][t] = 1;
+    }
+    floyd();
+    //判定点 i 是否以确定排名：点 i 与其他n-1个点是否都具有连通关系
+    int ans = 0;
+    for(int i = 1; i <= n; i++)
+    {
+        int cnt = 0;
+        for(int j = 1; j <= n; j++)
+            if(dp[i][j] || dp[j][i]) ++cnt;
+        if(cnt == n - 1) ++ans;
+    }
+    cout << ans << endl;
+    return 0;
+}
+
+bitset优化
+#include <iostream>
+#include <algorithm>
+#include <bitset>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+const int N = 105;
+int n, m;
+bitset<N> dp[N];//N串长度为N的二进制，可以对一整串二进制操作，故省去第 j 层循环
+void floyd()
+{
+    for(int k = 1; k <= n; k++)//遍历所有点作中间点k，若经历k点能连通 i->k->j 则说明 i 与 j 连通
+        for(int i = 1; i <= n; i++)
+            if(dp[i][k]) 
+                dp[i] |= dp[k];            
+}
+int main()
+{
+    untie();
+    cin >> n >> m;
+    while(m--)
+    {
+        int s, t;
+        cin >> s >> t;
+        dp[s][t] = 1;
+    }
+    floyd();
+    //判定点 i 是否已确定排名：点 i 与其他n-1个点是否都具有连通关系
+    int ans = 0;
+    for(int i = 1; i <= n; i++)
+    {
+        int cnt = 0;
+        for(int j = 1; j <= n; j++)
+            if(dp[i][j] || dp[j][i]) ++cnt;
+        if(cnt == n - 1) ++ans;
+    }
+    cout << ans;
+    return 0;
+}
+
+
+
+2.MPI Maelstrom
+*题意：本题在于题意难解，给一个邻接矩阵(输入给半边)，求从点 1 到 其他点 所花费最短时间集里面的的最大值
+解法：由于 n <= 100 ，用编码简单的floyd更方便
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include <cstdlib>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+typedef long long ll;
+const int N = 105;
+const ll INF = 0x4ffffffffLL;
+int n, m;
+ll dp[N][N];
+char str[N];
+void floyd()
+{
+    for(int k = 1; k <= n; k++)
+        for(int i = 1; i <= n; i++)
+            for(int j = 1; j <= n; j++)
+                dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j]);
+}
+int main()
+{
+    untie();
+    cin >> n;
+    for(int i = 2; i <= n; i++)
+        for(int j = 1; j < i; j++)
+        {
+            cin >> str;
+            if(str[0] != 'x') dp[i][j] = dp[j][i] = 1LL * atoi(str);
+            else dp[i][j] = dp[j][i] = INF;
+        }
+    floyd();
+    ll _max = 0;
+    for(int i = 1; i <= n; i++) _max = max(_max, dp[1][i]);
+    cout << _max;
+    return 0;
+}
+```
+
+
+
+### Bellman-Ford算法
+
+对于边 (u, v) 有类似于 Dijkstra算法 的松弛操作：`dis[v] = min(dis[v], dis[u] + w(u, v))`
+
+Bellman–Ford 算法所做的，就是不断尝试对图上每一条边进行松弛。我们每进行一轮循环，就对图上所有的边都尝试进行一次松弛操作，当一次循环中没有成功的松弛操作时，算法停止。
+
+由于一次松弛操作会使最短路的边数至少会 +1，而最短路的边数最多为 n - 1，因此整个算法最多执行 n - 1 轮松弛操作，故总时间复杂度为 O(n * m)。
+
+值得注意的是，以 s 点为源点跑 Bellman–Ford 算法时，如果没有给出存在负环的结果，只能说明从 s 点出发不能抵达一个负环，而**不能说明图上不存在负环**。
+
+因此如果需要判断整个图上是否存在负环，最严谨的做法是建立一个**超级源点**，向图上**每个节点**连一条权值为 0 的边，然后以超级源点为起点执行 Bellman–Ford 算法。
+
+```c++
+struct Edge {
+    int u, v, w;
+};
+
+vector<Edge> edge;
+int n, dis[N];
+
+bool bellmanford(int s) 
+{
+    memset(dis, 0x3f, sizeof(dis));
+    dis[s] = 0;
+    bool flag = 0;  // 判断一轮循环过程中是否发生松弛操作
+    for(int i = 1; i <= n; i++) // 最后第 n 轮用于判断点 s 是否能到达负环
+    {
+        flag = 0;
+        for(int j = 0; j < edge.size(); j++) 
+        {
+            int u = edge[j].u, v = edge[j].v, w = edge[j].w;
+
+            // 无穷大与常数加减仍然为无穷大
+            // 因此最短路长度为 inf 的点引出的边不可能发生松弛操作
+            if(dis[u] == inf) continue;
+            
+            if(dis[v] > dis[u] + w) 
+            {
+                dis[v] = dis[u] + w;
+                flag = 1;
+            }
+        }
+        // 没有可以松弛的边时就停止算法
+        if (!flag) break;
+    } 
+    // 第 n 轮循环仍然可以松弛时说明 s 点可以抵达一个负环
+    return flag;
+}
+```
+
+
+
+#### SPFA算法
+
+属于**队列优化**的Bellman-Ford算法
+
+优化原理：很多时候我们并不需要那么多无用的松弛操作。只有上一次被松弛过的结点所连接的边，才有可能引起下一次松弛操作。故用队列来维护「哪些结点可能会引起松弛操作」，这样就能只访问必要的边。
+
+特点：可以用于快速判断 s 点是否能抵达一个负环，只需记录最短路经过了多少条边，当经过了至少 n 条边时，说明 s 点可以抵达一个负环。
+
+```c++
+struct edge {
+  int v, w;
+};
+
+vector<edge> e[N];
+int n, dis[N], cnt[N], vis[N];
+
+bool spfa(int s) 
+{
+    memset(dis, 63, sizeof(dis));
+    dis[s] = 0;
+    vis[s] = 1;
+    queue<int> q;
+    q.push(s);
+    while(!q.empty()) 
+    {
+        int u = q.front();
+        q.pop();
+        vis[u] = 0;
+        for (auto ed : e[u]) 
+        {
+            int v = ed.v, w = ed.w;
+            if(dis[v] > dis[u] + w) 
+            {
+                dis[v] = dis[u] + w;
+                cnt[v] = cnt[u] + 1;  // 记录最短路经过的边数
+
+                // 在不经过负环的情况下，最短路至多经过 n - 1 条边
+                // 因此如果经过了多于 n 条边，一定说明经过了负环
+                if (cnt[v] >= n) return false;
+                
+                if (!vis[v]) q.push(v), vis[v] = 1;
+            }
+        }
+    }
+    return true;
+}
+```
+
+
+
+### Dijkstra算法
+
+适用于单源最短路径问题
+
+稀疏图：n 较大，用 dijkstra + 优先队列，便于获取最短距离的点  O((m + n)logn)
+
+稠密图：n^2 约等于 m，不用优先队列优化，直接在所有节点中找距离最短的点  O(n^2)
+
+模板：
+
+```c++
+#include <iostream>
+#include <algorithm>
+#include <queue>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+typedef long long ll;
+
+const ll inf = (1LL << 31) - 1;
+const int N = 1e5 + 5;
+
+struct edge{
+    int to; ll w;
+    edge(int a = 0, ll b = 0){ to = a, w = b;}
+};
+struct node{
+    int id; ll dis;//dis 为该点到起点的距离
+    node(int a = 0, ll b = 0){ id = a, dis = b;}
+    bool operator <(const node &x)const{ return dis > x.dis;}
+};
+
+int n, m, s = 1;//起点s
+int pre[N];//pre[i] 记录前驱节点即 点 i 的上一个点的编号，用于打印路径
+ll dis[N];//记录 所有节点 到 起点s 的距离
+bool vis[N];//记录是否已找到 节点i 的 最短距离
+vector<edge> e[N];
+
+void print_path(int t)//从 终点n 递归打印
+{
+    if(t == s) { printf("%d", s); return;}
+    print_path(pre[t]);
+    printf("%d ", t);
+}
+
+void dijkstra()
+{
+    for(int i = 0; i <= n; i++) {dis[i] = inf, vis[i] = 0;}
+    dis[s] = 0;
+    priority_queue<node> q;
+    q.push(node(s, dis[s]));
+    while(!q.empty())
+    {
+        node u = q.top(); q.pop();
+        if(vis[u.id]) continue;
+        vis[u.id] = 1;
+        for(int i = 0; i < e[u.id].size(); i++)//遍历邻居
+        {
+            edge ne = e[u.id][i];
+            if(!vis[ne.to] && dis[ne.to] > u.dis + ne.w)//更新邻居点的最短距离
+            {
+                dis[ne.to] = u.dis + ne.w;
+                q.push(node(ne.to, dis[ne.to]));
+                // pre[ne.to] = u.id;
+            }
+        }
+    }
+    // print_path(n);//打印路径
+}
+
+int main()
+{
+    scanf("%d%d%d", &n, &m, &s);
+    for(int i = 0; i <= n; i++) e[i].clear();
+    for(int i = 0; i < m; i++)
+    {
+        int u, v; ll w;
+        scanf("%d%d%lld", &u, &v, &w);
+        e[u].push_back(edge(v, w));
+        // e[v].push_back(edge(u, w)); //双向边
+    }
+    dijkstra();
+    for(int i = 1; i <= n; i++) 
+    {
+        if(i != 1) printf(" ");
+        printf("%lld", dis[i]);
+    }
+    return 0;
+}
+```
+
+例题：
+
+```c++
+1.Til the Cows Come Home
+要分析出这是个无向图
+#include <iostream>
+#include <algorithm>
+#include <queue>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+typedef long long ll;
+const ll inf = (1LL << 31) - 1;
+const int N = 1e3 + 5;
+
+struct edge{
+    int to; ll w;
+};
+struct node{
+    int id; ll dis;//dis 为该点到起点的距离
+    bool operator <(const node &x)const{ return dis > x.dis;}
+};
+
+int n, m, s = 1;//起点s
+ll dis[N];//记录 所有节点 到 起点s 的距离
+bool vis[N];//记录是否已找到 节点i 的 最短距离
+vector<edge> e[N];
+
+void dijkstra()
+{
+    for(int i = 1; i <= n; i++) dis[i] = inf;
+    dis[s] = 0;
+    priority_queue<node> q;
+    node sta = {s, 0};
+    q.push(sta);
+    while(!q.empty())
+    {
+        node u = q.top(); q.pop();
+        if(vis[u.id]) continue;
+        vis[u.id] = 1;
+        for(int i = 0; i < e[u.id].size(); i++)//遍历邻居
+        {
+            edge ne = e[u.id][i];
+            if(!vis[ne.to] && dis[ne.to] > u.dis + ne.w)//更新邻居点的最短距离
+            {
+                dis[ne.to] = u.dis + ne.w;
+                node next = {ne.to, dis[ne.to]};
+                q.push(next);
+            }
+        }
+    }
+}
+
+int main()
+{
+    scanf("%d%d", &m, &n);
+    for(int i = 0; i < m; i++)
+    {
+        int u, v; ll w;
+        scanf("%d%d%lld", &u, &v, &w);
+        edge e1 = {v, w}, e2 = {u, w};
+        e[u].push_back(e1);
+        e[v].push_back(e2); //双向边
+    }
+    dijkstra();
+    printf("%lld", dis[n]);
+    return 0;
+}
+
+
+
+*2.Heavy Transportation
+题意：图里有不同载重限度的路段，一条完整的路上由不同的路段连接，货车重量需能经过其中最小载重限度的路段，整条路才算连通。
+求 1 ~ n 路上 各路段都采取最大限重连接后 的最小限重路段的限重，即邻居点找最长边连接。
+最长路径问题，题目较特殊，采用非优先队列写法，用邻接矩阵存储方便。
+实际上该题应用最大生成树更合适，但现在拿来练习 Dijkstra算法的变形写法，有点类似动态规划。
+#include <iostream>
+#include <algorithm>
+#include <queue>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+typedef long long ll;
+const int N = 1e3 + 5;
+int n, m, s = 1;//起点s
+int dp[N];//dp[i] 定义为 从 起点1 到 点i 路上的最小限重值
+int gra[N][N];
+bool vis[N];
+void dijkstra()
+{
+    for(int i = 1; i <= n; i++) dp[i] = gra[1][i];//状态初始化为直连情况下的限重值，这样来对比非直连哪个限重更高
+    memset(vis, 0, sizeof(vis));
+    dp[1] = 0;
+    vis[1] = 1;
+    //最大生成树，遍历 n-1 次，即取前 n - 1 大的边来连通 n 个点
+    for(int i = 1; i < n; i++)
+    {
+        int _max = -1, ne = 0;
+        for(int j = 1; j <= n; j++)//寻找最大限重的中间点
+            if(!vis[j] && dp[j] > _max)
+                _max = dp[j], ne = j;
+        vis[ne] = 1;
+        for(int j = 1; j <= n; j++)//更新dp状态，如果经历 中间点ne 的 非直连路中最小限重值更大，就取该非直连路径
+            dp[j] = max(dp[j], min(dp[ne], gra[ne][j]));
+    }
+}
+int main()
+{
+    int T;
+    scanf("%d", &T);
+    for(int k = 1; k <= T; k++)j
+    {
+        scanf("%d%d", &n, &m);
+        memset(gra, -1, sizeof(gra));//求最长路径，初始化为无穷小，可判断点 i 与 j 是否为邻居
+        for(int i = 0; i < m; i++)
+        {
+            int u, v, w;
+            scanf("%d%d%d", &u, &v, &w);// All streets can be travelled in both directions.无向图
+            gra[u][v] = gra[v][u] = w;// gra[u][v] = gra[v][u] = max(gra[u][v], w);//该题无重边
+        }
+        dijkstra();
+        printf("Scenario #%d:\n%d\n\n", k, dp[n]);//Terminate the output for the scenario with a blank line.案例之间有空行
+    }
+    return 0;
+}
+
+前向星或邻接表 + 优先队列
+#include <iostream>
+#include <algorithm>
+#include <queue>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+const int inf = (1LL << 31) - 1;
+const int N = 1e5 + 5;
+struct edge{
+    int to, w;
+};
+struct node{
+    int id, dis;//dis 为该点到起点的距离
+    bool operator <(const node &x)const{ return dis < x.dis;}
+};
+int n, m, s = 1;
+int dis[N];//记录 所有节点 到 起点s 的距离
+bool vis[N];//记录是否已找到 节点i 的 最短距离
+vector<edge> e[N];
+void dijkstra()
+{
+    for(int i = 0; i <= n; i++) {dis[i] = 0, vis[i] = 0;}
+    dis[s] = inf;
+    priority_queue<node> q;
+    node sta = {s, dis[s]};
+    q.push(sta);
+    while(!q.empty())
+    {
+        node u = q.top(); q.pop();
+        if(vis[u.id]) continue;
+        vis[u.id] = 1;
+        for(int i = 0; i < e[u.id].size(); i++)//遍历邻居
+        {
+            edge ne = e[u.id][i];
+            if(vis[ne.to]) continue;
+            if(dis[ne.to] < min(dis[u.id], ne.w))
+            {
+                dis[ne.to] = min(dis[u.id], ne.w);
+                node next = {ne.to, dis[ne.to]};
+                q.push(next);
+            }
+        }
+    }
+}
+int main()
+{
+    int T;
+    scanf("%d", &T);
+    for(int k = 1; k <= T; k++)
+    {
+        scanf("%d%d", &n, &m);
+        for(int i = 0; i <= n; i++) e[i].clear();
+        for(int i = 0; i < m; i++)
+        {
+            int u, v, w;
+            scanf("%d%d%d", &u, &v, &w);
+            edge e1 = {v, w}, e2 = {u, w};
+            e[u].push_back(e1);
+            e[v].push_back(e2); //双向边
+        }
+        dijkstra();
+        printf("Scenario #%d:\n%d\n\n", k, dis[n]);//Terminate the output for the scenario with a blank line.案例之间有空行
+    }
+    return 0;
+}
+
+
+
+*3.昂贵的聘礼（Dijkstra + 枚举限制区间）
+题意：有多样物品，每样物品可能有若干件替代品(以更低代价购得原品)，寻找 购得第一件物品所需最低总价钱的购买方案
+     并且 能否购买i物品 受限于 购买的前一样物品j 与 i物品的地位系数差，|p[i] - p[j]| <= limit 才能购买
+分析：对于第一件物品，它是必购买的，也就是购买的终点，可直接购买(增设原点)，也可购买其替代品集合中的某一件以代替购买
+    故图中含有 原点0到每个物品的单向边(边权为物品本身的价钱) 和 物品间具有替代关系的单向边(边权为优惠价)
+重点：虽然对所有路径全域条件为 p[i] - limit <= p[j] <= p[i] + limit，但若直接以此为条件不符合题意，涉及区间长度并非 limit 而是 2*limit
+     故由于地位系数都是整数，对于一整条路径，满足题意的条件有 [p[i] - limit, p[j]] [p[i] - limit + 1, p[j] + 1] ··· [p[i], p[j] + limit]
+     所以存在多个基于不同松弛条件的最短路，现枚举不同的松弛条件(区间)，并从所得的所有最短路中选出最小代价的最短路。
+     而每条最短路必定经过 终点-点1，那么 对所有路径的全域范围 可简化为 只针对所有最短路的全域范围 [p[1] - limit, p[1] + limit]
+16ms
+#include <iostream>
+#include <algorithm>
+#include <queue>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+typedef long long ll;
+const ll INF = 0x3f3f3f3f3f3f3f3fLL;
+const int N = 105;
+struct edge{
+    int to; ll w;
+    edge(int a = 0, ll b = 0){ to = a, w = b;}
+};
+struct node{
+    int id; ll dis;
+    node(int a = 0, ll b = 0){ id = a, dis = b;}
+    bool operator <(const node &x)const{ return dis > x.dis;}
+};
+int n, limit, s = 0;
+int level[N];
+ll dis[N];
+bool vis[N];
+vector<edge> e[N];
+ll dijkstra(int l, int r)
+{
+    memset(dis, 0x3f, sizeof(dis));
+    memset(vis, 0, sizeof(vis));
+    dis[s] = 0;
+    priority_queue<node> q;
+    q.push(node(s, 0));
+    while(!q.empty())
+    {
+        node u = q.top(); q.pop();
+        if(vis[u.id]) continue;
+        vis[u.id] = 1;
+        for(int i = 0; i < e[u.id].size(); i++)
+        {
+            edge ne = e[u.id][i];
+            if(!vis[ne.to] && level[ne.to] >= l && level[ne.to] <= r && dis[ne.to] > u.dis + ne.w)
+            {
+                dis[ne.to] = u.dis + ne.w;
+                q.push(node(ne.to, dis[ne.to]));
+            }
+        }
+    }
+    return dis[1];//返回到达终点1的当前最小价值
+}
+int main()
+{
+    scanf("%d%d", &limit, &n);
+    for(int v = 1; v <= n; v++)
+    {
+        int k; ll w;
+        scanf("%lld%d%d", &w, &level[v], &k);
+        e[0].push_back(edge(v, w));
+        while(k--)
+        {
+            int u; ll c;
+            scanf("%d%lld", &u, &c);
+            e[u].push_back(edge(v, c));
+        }
+    }
+    ll ans = INF;
+    for(int l = level[1] - limit; l <= level[1]; l++)
+        ans = min(ans, dijkstra(l, l + limit));
+    printf("%lld", ans);
+    return 0;
+}
+79ms(由于 N <= 100，完全可以用邻接矩阵，结合dp思想解决。)
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+typedef long long ll;
+const ll INF = 0x3f3f3f3f3f3f3f3fLL;
+const int N = 105;
+int n, limit, s = 0;
+int level[N];
+ll dis[N], gra[N][N];
+bool vis[N];
+ll dijkstra(int l, int r)
+{
+    memset(dis, 0x3f, sizeof(dis));
+    memset(vis, 0, sizeof(vis));
+    dis[s] = 0;
+    for(int i = 0; i <= n; i++)//从 自设原点0 到 点n 共 n + 1 个点，也就是子图大小拓展至全图大小
+    {
+        int ind = -1;
+        for(int j = 0; j <= n; j++)//寻找当前未使用的最短边，同时也是在确定以ind为终点的最短路是否已确定
+            if(!vis[j] && (ind == -1 || dis[j] < dis[ind])) ind = j;
+        vis[ind] = 1;//不论是直连(初始状态)或非直连(已经过更新)，以ind为终点的最短路此时便能确定
+        for(int j = 1; j <= n; j++)//遍历所有终点的最短路，更新其状态，判断接入或不接 0与ind的直连边(或者是终点为ind的最短路径)
+            if(level[j] >= l && level[j] <= r)
+                dis[j] = min(dis[j], dis[ind] + gra[ind][j]);
+    }
+    return dis[1];
+}
+int main()
+{
+    memset(gra, 0x3f, sizeof(gra));
+    scanf("%d%d", &limit, &n);
+    for(int v = 1; v <= n; v++)
+    {
+        int u, k; ll c, w;
+        scanf("%lld%d%d", &w, &level[v], &k);
+        gra[0][v] = w;
+        while(k--) scanf("%d%lld", &u, &c), gra[u][v] = c;
+    }
+    ll ans = INF;
+    for(int l = level[1] - limit; l <= level[1]; l++)
+        ans = min(ans, dijkstra(l, l + limit));
+    printf("%lld", ans);
+    return 0;
+}
+
+
+
+4.Frogger（最短路径中最长路段最小值 -- 最短路极大极小问题）
+题意：求最短路中最长路段的最小值，起点1 与 终点2 均唯一确定
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+using namespace std;
+typedef double db;
+const int N = 205;
+struct p{
+    int x, y;
+    p(int a = 0, int b = 0){ x = a, y = b;}
+}point[N];
+db getdis(p e1, p e2) { return 1.0 * (e1.x - e2.x) * (e1.x - e2.x) + 1.0 * (e1.y - e2.y) * (e1.y - e2.y);}
+int n, T = 0, s = 1, sx, sy, ex, ey;
+db dis[N];
+bool vis[N];
+db dijkstra()
+{
+    dis[s] = 0;
+    memset(vis, 0, sizeof(vis));
+    for(int i = 2; i <= n; i++) dis[i] = getdis(point[1], point[i]);
+    for(int i = 1; i <= n; i++)//子图拓展
+    {
+        int ind = -1;
+        for(int j = 1; j <= n; j++)//找现存最短路径
+            if(!vis[j] && (ind == -1 || dis[j] < dis[ind])) ind = j;
+        vis[ind] = 1;
+        for(int j = 1; j <= n; j++)//更新最短路中最大路段的最小值
+            dis[j] = min(dis[j], max(dis[ind], getdis(point[ind],point[j])));
+    }    
+    return sqrt(dis[2]);
+}
+int main()
+{
+    while(~scanf("%d", &n), n)
+    {
+        for(int i = 1, x, y; i <= n; i++)
+            scanf("%d%d", &x, &y), point[i] = p(x, y);
+        printf("Scenario #%d\nFrog Distance = %.3lf\n\n", ++T, dijkstra());
+    }
+    return 0;
+}
+
+
+
+*5.通往奥格瑞玛的道路 (最短路 + 二分答案 求解极大极小问题)
+题意：在所有符合血量条件的路径中，都有一个城市最大收费 x，得出其在所有路径中的最小值
+思路：用dijkstra维护血量消耗，尽量使其符合血量条件；二分最大收费 x，大于该 x 的二分值的城市不走，二分完毕后得到的便是最小值。
+#include <iostream>
+#include <algorithm>
+#include <queue>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+typedef long long ll;
+const int N = 1e4 + 5;
+struct edge{
+    int to; ll w;
+    edge(int a = 0, ll b = 0){ to = a, w = b;}
+};
+struct node{
+    int id; ll dis;//dis 为该点到起点的距离
+    node(int a = 0, ll b = 0){ id = a, dis = b;}
+    bool operator <(const node &x)const{ return dis > x.dis;}
+};
+int n, m, blood, s = 1;//起点s
+ll dis[N], cost[N];
+bool vis[N];
+vector<edge> e[N];
+bool dijkstra(ll mid)
+{
+    if(mid < cost[s]) return 0;//优化，若起点都走不了，就返回
+    memset(dis, 0x3f, sizeof(dis));
+    memset(vis, 0, sizeof(vis));
+    dis[s] = 0;
+    priority_queue<node> q;
+    q.push(node(s, dis[s]));
+    while(!q.empty())
+    {
+        node u = q.top(); q.pop();
+        if(vis[u.id]) continue;
+        vis[u.id] = 1;
+        for(int i = 0; i < e[u.id].size(); i++)
+        {
+            edge ne = e[u.id][i];
+            if(!vis[ne.to] && mid >= cost[ne.to] && dis[ne.to] > u.dis + ne.w)
+            {
+                dis[ne.to] = u.dis + ne.w;
+                if(ne.to == n) return dis[n] <= blood;//到n点
+                q.push(node(ne.to, dis[ne.to]));
+            }
+        }
+    }
+    return 0;//无法到达点 n
+}
+int main()
+{
+    ll l = 1, r = 1, ans = -1;
+    scanf("%d%d%d", &n, &m, &blood);
+    for(int i = 1; i <= n; i++) scanf("%lld", &cost[i]), r = max(r, cost[i]);
+    for(int i = 0; i < m; i++)
+    {
+        int u, v; ll w;
+        scanf("%d%d%lld", &u, &v, &w);
+        e[u].push_back(edge(v, w));
+        e[v].push_back(edge(u, w)); //双向边
+    }
+    while(l <= r)
+    {
+        ll mid = (l + r) >> 1;
+        if(dijkstra(mid)) r = mid - 1, ans = mid;
+        else l = mid + 1;
+    }
+    if(ans == -1) printf("AFK");//一个符合条件的路径都没有
+    else printf("%lld\n", ans);
+    return 0;
+}
+```
 
 
 
@@ -6047,7 +8226,7 @@ void getlps(string p)
 {
     int plen = p.size();
     lps[0] = 0;//首字符没有真前后缀（不能为自身）
-    for(int i = 1; i < plen; i++)
+    for(int i = 1; i < plen; i++) // 或直接 for(int i = 1, j = 0; ···)，省去 int j = lps[i - 1]
     {
         int j = lps[i - 1];
         while(j > 0 && p[i] != p[j]) j = lps[j - 1];
@@ -6455,9 +8634,9 @@ int main()
 
 ---
 
-## 基础线性dp
+## 线性dp
 
-
+### 基础例题
 
 ```c++
 1.P8707 [蓝桥杯 2020 省 AB1] 走方格
@@ -6584,6 +8763,93 @@ int main()
 ```
 
 
+
+### 进阶例题
+
+```c++
+1.ABC344 F
+dp嵌套dp
+https://www.cnblogs.com/onlyblues/p/18064351
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define bll __int128_t
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+const bll mod = (bll)1e31 + 7177;
+
+void Solve()
+{
+    int n;
+    cin >> n;
+
+    vector<vector<ll>> P(n + 5, vector<ll>(n + 5)), R(n + 5, vector<ll>(n + 5)), D(n + 5, vector<ll>(n + 5));
+    for(int i = 1; i <= n; ++i)
+        for(int j = 1; j <= n; ++j)
+            cin >> P[i][j];
+    for(int i = 1; i <= n; ++i)
+        for(int j = 1; j < n; ++j)
+            cin >> R[i][j];
+    for(int i = 1; i < n; ++i)
+        for(int j = 1; j <= n; ++j)
+            cin >> D[i][j];
+
+    vector<vector<ll>> f(n + 5, vector<ll>(n + 5, linf)), g(n + 5, vector<ll>(n + 5, 0));
+    f[1][1] = 0;
+    for(int i = 1; i <= n; ++i)
+    {
+        for(int j = 1; j <= n; ++j)
+        {
+            // 选择中间点 (u, v)，定义为最后一次进行操作 1 的点，使更新当前dp所需要的后层属性固定可求
+            vector<vector<ll>> h(i + 5, vector<ll>(j + 5, linf));
+            h[i][j] = 0;
+            for(int u = i; u >= 0; --u)
+                for(int v = j; v >= 0; --v)
+                    if(!(u == i && v == j))
+                        h[u][v] = min(h[u + 1][v] + D[u][v], h[u][v + 1] + R[u][v]);
+
+            for(int u = 1; u <= i; ++u)
+            {
+                for(int v = 1; v <= j; ++v)
+                {
+                    ll c = (max(0LL, h[u][v] - g[u][v]) + P[u][v] - 1) / P[u][v];
+                    ll t = f[u][v] + c + i - u + j - v;
+                    ll m = g[u][v] + c * P[u][v] - h[u][v];
+                    if(t < f[i][j])
+                    {
+                        f[i][j] = t;
+                        g[i][j] = m;
+                    }
+                    else if(t == f[i][j])
+                    {
+                        g[i][j] = max(g[i][j], m);
+                    }
+                }
+            }
+        }
+    }
+
+    cout << f[n][n] << endl;
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
 
 
@@ -6712,7 +8978,7 @@ int main()
 #include <iostream>
 #include <algorithm>
 #include <vector>
-using namespace std;，。
+using namespace std;
 #define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
 int n, W;
 int main()
@@ -9393,8 +11659,81 @@ int main()
 
 
 
+3.ABC341 F
+基于01背包的树形dp —— dp[u] = max{ ∑dp[v] } + 1 (v ∈ S)
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define bll __int128_t
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 5e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+const bll mod = (bll)1e31 + 7177;
 
+void Solve()
+{
+    int n, m;
+    cin >> n >> m;
 
+    vector<vector<int>> G(n + 5);
+    vector<pair<int, int>> E(m + 5);
+    vector<ll> A(n + 5), cost(n + 5);
+    while(m--)
+    {
+        int u, v; cin >> u >> v;
+        E.emplace_back(u, v);
+    }
+    for(int i = 1; i <= n; ++i) cin >> cost[i];
+    for(int i = 1; i <= n; ++i) cin >> A[i];
+    for(auto [u, v] : E)
+    {
+        if(cost[u] > cost[v]) G[u].push_back(v);
+        else if(cost[v] > cost[u]) G[v].push_back(u);
+    }
+
+    ll ans = 0;
+    vector<ll> f(n + 5, 0);
+    for(int i = 1; i <= n; ++i)
+    {
+        if(A[i] == 0) continue;
+        auto dfs = [&](auto self, int u) -> ll
+        {
+            if (f[u]) return f[u];
+            if(G[u].size() == 0) return 1;
+
+            ll res = 0;
+            vector<ll> dp(cost[u], 0);
+            for(auto v : G[u])
+            {
+               for(int j = cost[u] - 1; j >= cost[v]; --j)
+                {
+                    dp[j] = max(dp[j], dp[j - cost[v]] + self(self, v));
+                    res = max(res, dp[j]);
+                }
+            }
+            return f[u] = res + 1;            
+        };
+        ans += A[i] * dfs(dfs, i);
+    }
+    cout << ans << endl;
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
 
 
 
@@ -9469,6 +11808,151 @@ int main()
 
 
 
+
+```
+
+---
+
+## 数位dp
+
+**引入**
+
+数位是指把一个数字按照个、十、百、千等等一位一位地拆开，关注它**每一位上的数字**。如果拆的是十进制数，那么每一位数字都是 0~9，其他进制可类比十进制。
+
+数位 DP 用来解决一类特定问题，它们具有如下特征：
+
+1. 要求统计满足一定条件的数的数量（即，最终目的为**计数**）；
+2. 这些条件经过转化后可以使用**「数位」**的思想去理解和判断；
+3. 输入会提供一个数字区间 `[a, b]`（有时也只提供**上界** `n`）来作为统计的限制；
+4. 上界很大（比如 `1e18`），暴力枚举显然会超时。
+
+
+
+**基本原理**
+
+考虑人类计数的方式，最朴素的计数就是从小到大开始依次加一。但我们发现对于位数比较多的数，这样的过程中有许多重复的部分。例如，从 7000 数到 7999、从 8000 数到 8999、和从 9000 数到 9999 的过程非常相似，它们都是后三位从 000 变到 999，不一样的地方只有千位这一位，所以我们可以把这些过程归并起来，将这些过程中产生的计数答案也都存在一个通用的数组里。此数组根据题目具体要求设置状态，用递推或 DP 的方式进行状态转移。
+
+数位 DP 中通常会利用常规计数问题技巧，比如把一个区间内的答案拆成两部分相减（即 `ans[l, r] = ans[0, r] - ans[0, l - 1]` ）
+
+那么有了通用答案数组，接下来就是统计答案。统计答案可以选择**记忆化搜索**，也可以选择**循环迭代递推**。为了不重不漏地统计所有不超过上限的答案，要**从高到低枚举每一位**，再考虑每一位都可以填哪些数字，最后利用通用答案数组统计答案。
+
+### 模板
+
+```c++
+// 如果一个正整数每一个数位都是 互不相同 的，我们称它是 特殊整数 。
+// 给你一个 正整数 n (n >= 1)，请你返回区间 [1, n] 之间特殊整数的数目。
+#include <bits/stdc++.h>
+using namespace std;
+class Solution 
+{
+public:
+    // 记忆化搜索
+    int dp[15][1050][2][2];
+    int countSpecialNumbers(int n) 
+    {
+        string str = to_string(n);
+        int len = str.size();
+        // pos 表示当前遍历到的数位，此处 pos = 0 最高位，pos = len - 1 为个位
+        // mask 表示前面数位所填入的数字集合(表示 0 ~ 9 的存在)
+        // is_limit 表示前一位是否为数字 n 对应数位上的数值，即前一位是否达到上界
+        // is_num 表示前一位是否填了数字，可避免计入前导零
+        function<int(int, int, bool, bool)> dfs = [&](int pos, int mask, bool is_limit, bool is_num) -> int
+        {
+            if(dp[pos][mask][is_limit][is_num]) return dp[pos][mask][is_limit][is_num];
+            if(pos == len) // 填完全部位数，特判是否全空
+                return is_num;
+
+            int res = 0;
+            if(!is_num) // 仍然不填
+                res += dfs(pos + 1, mask, false, false);
+		   
+            // 当前位上界 up 取决于上一位是否达到上界
+            int up = is_limit ? str[pos] - '0' : 9;
+            
+            // 若前一位填过数字，则当前数位范围为 [0, up] 否则为 [1, up]
+            for(int x = !is_num; x <= up; ++x) 
+                if(((mask >> x) & 1) == 0) // 前面没有填过数字 x（判断整数特殊性）
+                    res += dfs(pos + 1, mask | (1 << x), is_limit && x == up, true);
+            return (dp[pos][mask][is_limit][is_num] = res);
+        };
+        // 从数字的高位到低位搜索
+        return dfs(0, 0, true, false);
+    }
+};
+```
+
+
+
+### **例题**
+
+
+
+```c++
+1.ABC 336 E
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 4e18;
+
+ll dp[20][150][150][2][2], a[20];
+
+void Solve()
+{
+    ll n;
+    cin >> n;
+
+    int len = 0;
+    while(n)
+    {
+        a[++len] = n % 10;
+        n /= 10;
+    }
+
+    // cur 为当前数字 % mod 后的值，sum 为其数位和
+    function<ll(int, int, int, int, bool, bool)> dfs = [&](int pos, int cur, int sum, int mod, bool islimit, bool isnum) -> ll
+    {
+        if(pos == 0)
+            return cur == 0 && sum == mod && isnum;
+
+        if(~dp[pos][cur][sum][islimit][isnum]) return dp[pos][cur][sum][islimit][isnum];
+
+        ll res = 0;
+        if(!isnum)
+            res += dfs(pos - 1, cur, sum, mod, false, false);
+
+        int up = islimit ? a[pos] : 9;
+        for(int x = !isnum; x <= up; ++x)
+            res += dfs(pos - 1, (cur * 10LL + x) % mod, sum + x, mod, islimit && x == up, true);
+        return (dp[pos][cur][sum][islimit][isnum] = res);
+    };
+
+    ll ans = 0;
+    for(int i = 1; i <= 126; ++i)
+    {
+        memset(dp, -1, sizeof dp);
+        ans += dfs(len, 0, 0, i, true, false);
+    }
+    cout << ans << endl;
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
 
 ```
 
@@ -10853,11 +13337,102 @@ int main()
 
 # 六、数论
 
+---
+
+## 基础知识
+
+### 整除
+
+定义：设 a, b ∈ Z，a ≠ 0，则可将 b 可以被 a 整除记作 a | b。
 
 
 
+```c++
+ABC341 D
+求[1, X]中能被 N 所整除的正整数个数 -> X / N
+那么能恰好被 N 和 M 其一所整除的数有 (X / N) + (X / M) - (X / lcm(N, M)) * 2 个
+#include <bits/stdc++.h>
+using namespace std;
+#define untie() {cin.tie(0)->sync_with_stdio(false), cout.tie(0);}
+#define ll long long
+#define bll __int128_t
+#define all(v) v.begin(), v.end()
+#define endl '\n'
+#define gcd(a, b) __gcd(a, b)
+#define mk(a, b) make_pair((a), (b))
+#define lowbit(x) ((x) & -(x))
+const int N = 2e5 + 10, inf = 1e9;
+const ll linf = 1e18;
+const bll mod = (bll)1e31 + 7177;
+
+void Solve()
+{
+    ll n, m, k;
+    cin >> n >> m >> k;
+
+    ll L = n * m / gcd(n, m);
+    ll l = 0, r = 9LL * linf;
+    while(l + 1 < r)
+    {
+        ll mid = l - (l - r) / 2;
+        ll cur = mid / n + mid / m - 2 * (mid / L);
+        if(cur < k) l = mid;
+        else r = mid;
+    }
+    cout << r << endl;
+}
+
+int main()
+{
+    untie();
+    int T = 1;
+    // cin >> T;
+    while(T--)
+    {
+        Solve();
+    }
+    return 0;
+}
+```
 
 
+
+---
+
+## 裴蜀定理
+
+设 a, b 是不全为 0 的整数，对任意整数 x, y，满足 gcd(a, b) | ax + by，则存在整数 x, y，使得 `ax + by = gcd(a, b)`成立。
+
+
+
+---
+
+## 拓展欧几里得
+
+```c++
+#define ll long long
+ll exgcd(ll a, ll b, ll &x, ll &y)
+{
+    /*
+        ax + by = gcd(a, b)                   => 特解 x0, y0
+        aX + bY = k  	    ，k % g == 0      => 特解 X0 = x0 * k / g, Y0 = y0 * k / g
+        									  通解  X = X0 + (b / g) * t
+        									        Y = Y0 - (a / g) * t
+        									  t 为任意整数（可正可负）
+        返回 gcd(a, b)，x = x0，y = y0
+        注意依据题意转化为 aX + bY = k 的通解
+    */
+    if(!b)
+    {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    ll g = exgcd(b, a % b, y, x);
+    y -= a / b * x;
+    return g;
+}
+```
 
 
 
